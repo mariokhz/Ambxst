@@ -4,6 +4,7 @@ import Quickshell.Hyprland
 import "../workspaces"
 import "../theme"
 import "../clock"
+import "../systray"
 
 PanelWindow {
     id: panel
@@ -40,7 +41,18 @@ PanelWindow {
             font.pixelSize: 12
         }
     }
+    
+    SysTray {
+        bar: panel
+        anchors {
+            right: clockComponent.left
+            verticalCenter: parent.verticalCenter
+            rightMargin: 16
+        }
+    }
+    
     Clock {
+        id: clockComponent
         anchors {
             right: parent.right
             verticalCenter: parent.verticalCenter
