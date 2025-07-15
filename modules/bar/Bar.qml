@@ -6,6 +6,7 @@ import "../workspaces"
 import "../theme"
 import "../clock"
 import "../systray"
+import "../launcher"
 
 PanelWindow {
     id: panel
@@ -36,6 +37,10 @@ PanelWindow {
             anchors.right: parent.right
             anchors.margins: 4
             spacing: 4
+
+            LauncherButton {
+                id: launcherButton
+            }
 
             Workspaces {
                 bar: QtObject {

@@ -10,6 +10,7 @@ Singleton {
     property bool sidebarLeftOpen: false
     property bool sidebarRightOpen: false
     property bool overviewOpen: false
+    property bool launcherOpen: false
     property bool workspaceShowNumbers: false
     property bool superReleaseMightTrigger: true
 
