@@ -4,6 +4,7 @@ import "../theme/"
 
 QtObject {
     readonly property QtObject rounding: QtObject {
+        readonly property real global: 16
         readonly property real full: 12
         readonly property real medium: 8
         readonly property real small: 4

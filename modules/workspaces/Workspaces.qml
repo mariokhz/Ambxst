@@ -7,6 +7,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Widgets
 import Qt5Compat.GraphicalEffects
+import "../theme"
 import "color_utils.js" as ColorUtils
 
 Item {
@@ -16,7 +17,7 @@ Item {
     property bool borderless: ConfigOptions.bar.borderless
     readonly property HyprlandMonitor monitor: Hyprland.monitorFor(bar?.screen || null)
     readonly property Toplevel activeWindow: ToplevelManager.activeToplevel
-    
+
     readonly property int workspaceGroup: Math.floor((monitor?.activeWorkspace?.id - 1 || 0) / ConfigOptions.bar.workspaces.shown)
     property list<bool> workspaceOccupied: []
     property int widgetPadding: 4
@@ -28,9 +29,11 @@ Item {
     property int workspaceIndexInGroup: (monitor?.activeWorkspace?.id - 1 || 0) % ConfigOptions.bar.workspaces.shown
 
     function updateWorkspaceOccupied() {
-        workspaceOccupied = Array.from({ length: ConfigOptions.bar.workspaces.shown }, (_, i) => {
+        workspaceOccupied = Array.from({
+            length: ConfigOptions.bar.workspaces.shown
+        }, (_, i) => {
             return Hyprland.workspaces.values.some(ws => ws.id === workspaceGroup * ConfigOptions.bar.workspaces.shown + i + 1);
-        })
+        });
     }
 
     Component.onCompleted: updateWorkspaceOccupied()
@@ -47,10 +50,16 @@ Item {
     }
 
     implicitWidth: rowLayout.implicitWidth + rowLayout.spacing * 2
-    implicitHeight: 40
+    implicitHeight: 36
+
+    Rectangle {
+        anchors.fill: parent
+        color: Colors.surface
+        radius: Appearance.rounding.global
+    }
 
     WheelHandler {
-        onWheel: (event) => {
+        onWheel: event => {
             if (event.angleDelta.y < 0)
                 Hyprland.dispatch(`workspace r+1`);
             else if (event.angleDelta.y > 0)
@@ -62,10 +71,10 @@ Item {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.BackButton
-        onPressed: (event) => {
+        onPressed: event => {
             if (event.button === Qt.BackButton) {
                 Hyprland.dispatch(`togglespecialworkspace`);
-            } 
+            }
         }
     }
 
@@ -85,8 +94,8 @@ Item {
                 implicitWidth: workspaceButtonWidth
                 implicitHeight: workspaceButtonWidth
                 radius: Appearance.rounding.full
-                property var leftOccupied: (workspaceOccupied[index-1] && !(!activeWindow?.activated && monitor?.activeWorkspace?.id === index))
-                property var rightOccupied: (workspaceOccupied[index+1] && !(!activeWindow?.activated && monitor?.activeWorkspace?.id === index+2))
+                property var leftOccupied: (workspaceOccupied[index - 1] && !(!activeWindow?.activated && monitor?.activeWorkspace?.id === index))
+                property var rightOccupied: (workspaceOccupied[index + 1] && !(!activeWindow?.activated && monitor?.activeWorkspace?.id === index + 2))
                 property var radiusLeft: leftOccupied ? 0 : Appearance.rounding.full
                 property var radiusRight: rightOccupied ? 0 : Appearance.rounding.full
 
@@ -94,9 +103,9 @@ Item {
                 bottomLeftRadius: radiusLeft
                 topRightRadius: radiusRight
                 bottomRightRadius: radiusRight
-                
+
                 color: ColorUtils.transparentize(Appearance.m3colors.m3secondaryContainer, 0.4)
-                opacity: (workspaceOccupied[index] && !(!activeWindow?.activated && monitor?.activeWorkspace?.id === index+1)) ? 1 : 0
+                opacity: (workspaceOccupied[index] && !(!activeWindow?.activated && monitor?.activeWorkspace?.id === index + 1)) ? 1 : 0
 
                 Behavior on opacity {
                     animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
@@ -159,26 +168,23 @@ Item {
                 Layout.fillHeight: true
                 onPressed: Hyprland.dispatch(`workspace ${workspaceValue}`)
                 width: workspaceButtonWidth
-                
+
                 background: Item {
                     id: workspaceButtonBackground
                     implicitWidth: workspaceButtonWidth
                     implicitHeight: workspaceButtonWidth
                     property var biggestWindow: {
-                        const windowsInThisWorkspace = HyprlandData.windowList.filter(w => w.workspace.id == button.workspaceValue)
+                        const windowsInThisWorkspace = HyprlandData.windowList.filter(w => w.workspace.id == button.workspaceValue);
                         return windowsInThisWorkspace.reduce((maxWin, win) => {
-                            const maxArea = (maxWin?.size?.[0] ?? 0) * (maxWin?.size?.[1] ?? 0)
-                            const winArea = (win?.size?.[0] ?? 0) * (win?.size?.[1] ?? 0)
-                            return winArea > maxArea ? win : maxWin
-                        }, null)
+                            const maxArea = (maxWin?.size?.[0] ?? 0) * (maxWin?.size?.[1] ?? 0);
+                            const winArea = (win?.size?.[0] ?? 0) * (win?.size?.[1] ?? 0);
+                            return winArea > maxArea ? win : maxWin;
+                        }, null);
                     }
                     property var mainAppIconSource: Quickshell.iconPath(AppSearch.guessIcon(biggestWindow?.class), "image-missing")
 
                     StyledText {
-                        opacity: GlobalStates.workspaceShowNumbers
-                            || ((ConfigOptions?.bar.workspaces.alwaysShowNumbers && (!ConfigOptions?.bar.workspaces.showAppIcons || !workspaceButtonBackground.biggestWindow || GlobalStates.workspaceShowNumbers))
-                            || (GlobalStates.workspaceShowNumbers && !ConfigOptions?.bar.workspaces.showAppIcons)
-                            )  ? 1 : 0
+                        opacity: GlobalStates.workspaceShowNumbers || ((ConfigOptions?.bar.workspaces.alwaysShowNumbers && (!ConfigOptions?.bar.workspaces.showAppIcons || !workspaceButtonBackground.biggestWindow || GlobalStates.workspaceShowNumbers)) || (GlobalStates.workspaceShowNumbers && !ConfigOptions?.bar.workspaces.showAppIcons)) ? 1 : 0
                         z: 3
 
                         anchors.centerIn: parent
@@ -187,29 +193,20 @@ Item {
                         font.pixelSize: Appearance.font.pixelSize.small - ((text.length - 1) * (text !== "10") * 2)
                         text: `${button.workspaceValue}`
                         elide: Text.ElideRight
-                        color: (monitor?.activeWorkspace?.id == button.workspaceValue) ? 
-                            Appearance.m3colors.m3onPrimary : 
-                            (workspaceOccupied[index] ? Appearance.m3colors.m3onSecondaryContainer : 
-                                Appearance.colors.colOnLayer1Inactive)
+                        color: (monitor?.activeWorkspace?.id == button.workspaceValue) ? Appearance.m3colors.m3onPrimary : (workspaceOccupied[index] ? Appearance.m3colors.m3onSecondaryContainer : Appearance.colors.colOnLayer1Inactive)
 
                         Behavior on opacity {
                             animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                         }
                     }
                     Rectangle {
-                        opacity: (ConfigOptions?.bar.workspaces.alwaysShowNumbers
-                            || GlobalStates.workspaceShowNumbers
-                            || (ConfigOptions?.bar.workspaces.showAppIcons && workspaceButtonBackground.biggestWindow)
-                            ) ? 0 : 1
+                        opacity: (ConfigOptions?.bar.workspaces.alwaysShowNumbers || GlobalStates.workspaceShowNumbers || (ConfigOptions?.bar.workspaces.showAppIcons && workspaceButtonBackground.biggestWindow)) ? 0 : 1
                         visible: opacity > 0
                         anchors.centerIn: parent
                         width: workspaceButtonWidth * 0.18
                         height: width
                         radius: width / 2
-                        color: (monitor?.activeWorkspace?.id == button.workspaceValue) ? 
-                            Appearance.m3colors.m3onPrimary : 
-                            (workspaceOccupied[index] ? Appearance.m3colors.m3onSecondaryContainer : 
-                                Appearance.colors.colOnLayer1Inactive)
+                        color: (monitor?.activeWorkspace?.id == button.workspaceValue) ? Appearance.m3colors.m3onPrimary : (workspaceOccupied[index] ? Appearance.m3colors.m3onSecondaryContainer : Appearance.colors.colOnLayer1Inactive)
 
                         Behavior on opacity {
                             animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
@@ -219,18 +216,14 @@ Item {
                         anchors.centerIn: parent
                         width: workspaceButtonWidth
                         height: workspaceButtonWidth
-                        opacity: !ConfigOptions?.bar.workspaces.showAppIcons ? 0 :
-                            (workspaceButtonBackground.biggestWindow && !GlobalStates.workspaceShowNumbers && ConfigOptions?.bar.workspaces.showAppIcons) ? 
-                            1 : workspaceButtonBackground.biggestWindow ? workspaceIconOpacityShrinked : 0
-                            visible: opacity > 0
+                        opacity: !ConfigOptions?.bar.workspaces.showAppIcons ? 0 : (workspaceButtonBackground.biggestWindow && !GlobalStates.workspaceShowNumbers && ConfigOptions?.bar.workspaces.showAppIcons) ? 1 : workspaceButtonBackground.biggestWindow ? workspaceIconOpacityShrinked : 0
+                        visible: opacity > 0
                         IconImage {
                             id: mainAppIcon
                             anchors.bottom: parent.bottom
                             anchors.right: parent.right
-                            anchors.bottomMargin: (!GlobalStates.workspaceShowNumbers && ConfigOptions?.bar.workspaces.showAppIcons) ? 
-                                (workspaceButtonWidth - workspaceIconSize) / 2 : workspaceIconMarginShrinked
-                            anchors.rightMargin: (!GlobalStates.workspaceShowNumbers && ConfigOptions?.bar.workspaces.showAppIcons) ? 
-                                (workspaceButtonWidth - workspaceIconSize) / 2 : workspaceIconMarginShrinked
+                            anchors.bottomMargin: (!GlobalStates.workspaceShowNumbers && ConfigOptions?.bar.workspaces.showAppIcons) ? (workspaceButtonWidth - workspaceIconSize) / 2 : workspaceIconMarginShrinked
+                            anchors.rightMargin: (!GlobalStates.workspaceShowNumbers && ConfigOptions?.bar.workspaces.showAppIcons) ? (workspaceButtonWidth - workspaceIconSize) / 2 : workspaceIconMarginShrinked
 
                             source: workspaceButtonBackground.mainAppIconSource
                             implicitSize: (!GlobalStates.workspaceShowNumbers && ConfigOptions?.bar.workspaces.showAppIcons) ? workspaceIconSize : workspaceIconSizeShrinked
