@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
 import "../workspaces"
 import "../theme"
 import "../corners"
@@ -40,7 +39,7 @@ Item {
         anchors.top: parent.top
         anchors.right: notchRect.left
         corner: RoundCorner.CornerEnum.TopRight
-        size: 25
+        size: 20
         color: Colors.surface
     }
 
@@ -55,16 +54,6 @@ Item {
         topRightRadius: 0
         bottomLeftRadius: 36
         bottomRightRadius: 36
-
-        layer.enabled: true
-        layer.effect: DropShadow {
-            horizontalOffset: 0
-            verticalOffset: 0
-            radius: 8
-            samples: 16
-            color: Qt.rgba(Colors.shadow.r, Colors.shadow.g, Colors.shadow.b, 1)
-            transparentBorder: true
-        }
 
         Item {
             id: stackContainer
@@ -154,7 +143,7 @@ Item {
         anchors.top: parent.top
         anchors.left: notchRect.right
         corner: RoundCorner.CornerEnum.TopLeft
-        size: 25
+        size: 20
         color: Colors.surface
     }
 }

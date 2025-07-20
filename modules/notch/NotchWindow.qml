@@ -1,3 +1,4 @@
+import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -23,9 +24,6 @@ PanelWindow {
     WlrLayershell.keyboardFocus: (GlobalStates.launcherOpen || GlobalStates.dashboardOpen) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
     exclusionMode: ExclusionMode.Ignore
-
-    implicitHeight: notchContainer.implicitHeight
-    implicitWidth: notchContainer.implicitWidth
     WlrLayershell.layer: WlrLayer.Top
     mask: Region {
         item: notchContainer
@@ -136,6 +134,16 @@ PanelWindow {
         id: notchContainer
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
+
+        layer.enabled: true
+        layer.effect: DropShadow {
+            horizontalOffset: 0
+            verticalOffset: 0
+            radius: 8
+            samples: 16
+            color: Qt.rgba(Colors.shadow.r, Colors.shadow.g, Colors.shadow.b, 1)
+            transparentBorder: true
+        }
 
         defaultViewComponent: defaultViewComponent
         launcherViewComponent: launcherViewComponent
