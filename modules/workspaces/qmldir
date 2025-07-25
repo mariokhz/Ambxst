@@ -1,6 +1,0 @@
-module workspaces
-singleton HyprlandData 1.0 HyprlandData.qml
-singleton ConfigOptions 1.0 ConfigOptions.qml
-singleton Appearance 1.0 Appearance.qml
-Workspaces 1.0 Workspaces.qml
-StyledText 1.0 StyledText.qml

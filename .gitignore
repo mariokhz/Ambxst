@@ -3,3 +3,4 @@ ii
 modules/theme/Colors.qml
 caelestia
 quickshell-docs
+.qmlls.ini
