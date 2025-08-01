@@ -52,8 +52,8 @@ Item {
         color: Colors.background
         topLeftRadius: 0
         topRightRadius: 0
-        bottomLeftRadius: GlobalStates.roundness > 0 ? GlobalStates.roundness + 16 : 0
-        bottomRightRadius: GlobalStates.roundness > 0 ? GlobalStates.roundness + 16 : 0
+        bottomLeftRadius: GlobalStates.roundness > 0 ? (GlobalStates.notchOpen ? GlobalStates.roundness + 16 : GlobalStates.roundness + 4) : 0
+        bottomRightRadius: GlobalStates.roundness > 0 ? (GlobalStates.notchOpen ? GlobalStates.roundness + 16 : GlobalStates.roundness + 4) : 0
 
         Item {
             id: stackContainer

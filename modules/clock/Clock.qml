@@ -8,7 +8,7 @@ StyledContainer {
     property string currentTime: ""
 
     Layout.preferredWidth: timeDisplay.implicitWidth + 18
-    Layout.preferredHeight: timeDisplay.implicitHeight + 18
+    Layout.preferredHeight: 36
 
     Text {
         id: timeDisplay

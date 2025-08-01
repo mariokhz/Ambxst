@@ -29,7 +29,7 @@ Item {
         spacing: 8
 
         Repeater {
-            model: ["Overview", "System", "Quick Settings"]
+            model: ["Widgets", "Pins", "Kanban"]
 
             Button {
                 required property int index
