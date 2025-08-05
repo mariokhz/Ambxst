@@ -163,9 +163,7 @@ Item {
             id: previewOverlay
             anchors.fill: parent
             radius: Configuration.roundness - 4
-            color: pressed ? Qt.rgba(Colors.adapter.surfaceContainerHighest.r, Colors.adapter.surfaceContainerHighest.g, Colors.adapter.surfaceContainerHighest.b, 0.3) : 
-                   hovered ? Qt.rgba(Colors.adapter.surfaceContainer.r, Colors.adapter.surfaceContainer.g, Colors.adapter.surfaceContainer.b, 0.2) : 
-                   "transparent"
+            color: pressed ? Qt.rgba(Colors.adapter.surfaceContainerHighest.r, Colors.adapter.surfaceContainerHighest.g, Colors.adapter.surfaceContainerHighest.b, 0.3) : hovered ? Qt.rgba(Colors.adapter.surfaceContainer.r, Colors.adapter.surfaceContainer.g, Colors.adapter.surfaceContainer.b, 0.2) : "transparent"
             border.color: Colors.adapter.surfaceContainerHighest
             border.width: 2
             visible: windowPreview.hasContent
