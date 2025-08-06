@@ -9,6 +9,8 @@ Singleton {
 
     property var screens: ({})
     property var panels: ({})
+    property string currentActiveModule: ""
+    property string lastFocusedScreen: ""
 
     function getForScreen(screenName) {
         if (!screens[screenName]) {
@@ -34,6 +36,56 @@ Singleton {
         delete panels[screenName];
     }
 
+    function setActiveModule(moduleName) {
+        if (!Hyprland.focusedMonitor) return;
+        
+        let focusedScreenName = Hyprland.focusedMonitor.name;
+        
+        // Clear all modules on all screens first
+        clearAll();
+        
+        // Set the active module on the focused screen
+        if (moduleName && moduleName !== "") {
+            let focusedScreen = getForScreen(focusedScreenName);
+            if (moduleName === "launcher") {
+                focusedScreen.launcher = true;
+            } else if (moduleName === "dashboard") {
+                focusedScreen.dashboard = true;
+            } else if (moduleName === "overview") {
+                focusedScreen.overview = true;
+            }
+            currentActiveModule = moduleName;
+        } else {
+            currentActiveModule = "";
+        }
+        
+        lastFocusedScreen = focusedScreenName;
+    }
+
+    function moveActiveModuleToFocusedScreen() {
+        if (!Hyprland.focusedMonitor || !currentActiveModule) return;
+        
+        let newFocusedScreen = Hyprland.focusedMonitor.name;
+        
+        // Don't do anything if we're already on the same screen
+        if (newFocusedScreen === lastFocusedScreen) return;
+        
+        // Clear all screens
+        clearAll();
+        
+        // Set the active module on the newly focused screen
+        let focusedScreen = getForScreen(newFocusedScreen);
+        if (currentActiveModule === "launcher") {
+            focusedScreen.launcher = true;
+        } else if (currentActiveModule === "dashboard") {
+            focusedScreen.dashboard = true;
+        } else if (currentActiveModule === "overview") {
+            focusedScreen.overview = true;
+        }
+        
+        lastFocusedScreen = newFocusedScreen;
+    }
+
     Component {
         id: screenPropertiesComponent
         QtObject {
@@ -50,6 +102,14 @@ Singleton {
             screenProps.launcher = false;
             screenProps.dashboard = false;
             screenProps.overview = false;
+        }
+    }
+
+    // Monitor focus changes
+    Connections {
+        target: Hyprland
+        function onFocusedMonitorChanged() {
+            moveActiveModuleToFocusedScreen();
         }
     }
 }

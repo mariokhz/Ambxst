@@ -35,9 +35,7 @@ PanelWindow {
         active: screenVisibilities.launcher || screenVisibilities.dashboard || screenVisibilities.overview
 
         onCleared: {
-            screenVisibilities.launcher = false;
-            screenVisibilities.dashboard = false;
-            screenVisibilities.overview = false;
+            Visibilities.setActiveModule("");
         }
     }
 
@@ -82,16 +80,14 @@ PanelWindow {
 
                 onClicked: {
                     // Cycle through views: default -> dashboard -> overview -> launcher -> default
-                    if (screenVisibilities.dashboard) {
-                        screenVisibilities.dashboard = false;
-                        screenVisibilities.overview = true;
-                    } else if (screenVisibilities.overview) {
-                        screenVisibilities.overview = false;
-                        screenVisibilities.launcher = true;
-                    } else if (screenVisibilities.launcher) {
-                        screenVisibilities.launcher = false;
+                    if (Visibilities.currentActiveModule === "dashboard") {
+                        Visibilities.setActiveModule("overview");
+                    } else if (Visibilities.currentActiveModule === "overview") {
+                        Visibilities.setActiveModule("launcher");
+                    } else if (Visibilities.currentActiveModule === "launcher") {
+                        Visibilities.setActiveModule("");
                     } else {
-                        screenVisibilities.dashboard = true;
+                        Visibilities.setActiveModule("dashboard");
                     }
                 }
 
@@ -138,12 +134,12 @@ PanelWindow {
                 anchors.fill: parent
 
                 onItemSelected: {
-                    screenVisibilities.launcher = false;
+                    Visibilities.setActiveModule("");
                 }
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {
-                        screenVisibilities.launcher = false;
+                        Visibilities.setActiveModule("");
                         event.accepted = true;
                     }
                 }
@@ -171,7 +167,7 @@ PanelWindow {
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {
-                        screenVisibilities.overview = false;
+                        Visibilities.setActiveModule("");
                         event.accepted = true;
                     }
                 }
@@ -198,7 +194,7 @@ PanelWindow {
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {
-                        screenVisibilities.dashboard = false;
+                        Visibilities.setActiveModule("");
                         event.accepted = true;
                     }
                 }
@@ -251,9 +247,7 @@ PanelWindow {
         // Handle global keyboard events
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Escape && (screenVisibilities.launcher || screenVisibilities.dashboard || screenVisibilities.overview)) {
-                screenVisibilities.launcher = false;
-                screenVisibilities.dashboard = false;
-                screenVisibilities.overview = false;
+                Visibilities.setActiveModule("");
                 event.accepted = true;
             }
         }
@@ -266,7 +260,6 @@ PanelWindow {
             if (screenVisibilities.launcher) {
                 notchContainer.stackView.push(launcherViewComponent);
                 Qt.callLater(() => {
-                    notchPanel.forceActiveFocus();
                     // Additional focus to ensure search input gets focus
                     let currentItem = notchContainer.stackView.currentItem;
                     if (currentItem && currentItem.children[0] && currentItem.children[0].focusSearchInput) {

@@ -14,16 +14,12 @@ Item {
 
         onPressed: {
             console.log("Launcher shortcut pressed");
-            let visibilities = Visibilities.getForActive();
-            if (!visibilities) return;
             
-            // Toggle launcher - si ya está abierto, se cierra; si no, abre launcher y cierra dashboard
-            if (visibilities.launcher) {
-                visibilities.launcher = false;
+            // Toggle launcher - if already open, close it; otherwise open launcher
+            if (Visibilities.currentActiveModule === "launcher") {
+                Visibilities.setActiveModule("");
             } else {
-                visibilities.dashboard = false;
-                visibilities.overview = false;
-                visibilities.launcher = true;
+                Visibilities.setActiveModule("launcher");
             }
         }
     }
@@ -36,16 +32,12 @@ Item {
 
         onPressed: {
             console.log("Dashboard shortcut pressed");
-            let visibilities = Visibilities.getForActive();
-            if (!visibilities) return;
             
-            // Toggle dashboard - si ya está abierto, se cierra; si no, abre dashboard y cierra launcher
-            if (visibilities.dashboard) {
-                visibilities.dashboard = false;
+            // Toggle dashboard - if already open, close it; otherwise open dashboard
+            if (Visibilities.currentActiveModule === "dashboard") {
+                Visibilities.setActiveModule("");
             } else {
-                visibilities.launcher = false;
-                visibilities.overview = false;
-                visibilities.dashboard = true;
+                Visibilities.setActiveModule("dashboard");
             }
         }
     }
@@ -58,16 +50,12 @@ Item {
 
         onPressed: {
             console.log("Overview shortcut pressed");
-            let visibilities = Visibilities.getForActive();
-            if (!visibilities) return;
             
-            // Toggle overview - si ya está abierto, se cierra; si no, abre overview y cierra otros
-            if (visibilities.overview) {
-                visibilities.overview = false;
+            // Toggle overview - if already open, close it; otherwise open overview
+            if (Visibilities.currentActiveModule === "overview") {
+                Visibilities.setActiveModule("");
             } else {
-                visibilities.launcher = false;
-                visibilities.dashboard = false;
-                visibilities.overview = true;
+                Visibilities.setActiveModule("overview");
             }
         }
     }
