@@ -13,6 +13,8 @@ import "./overview"
 PanelWindow {
     id: notchPanel
 
+    required property ShellScreen screen
+
     anchors {
         top: true
         bottom: true
@@ -24,10 +26,13 @@ PanelWindow {
 
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
+    // Monitor this screen's focus status
+    readonly property bool isScreenFocused: Hyprland.focusedMonitor && Hyprland.focusedMonitor.name === screen.name
+
     HyprlandFocusGrab {
         id: focusGrab
         windows: [notchPanel]
-        active: GlobalStates.launcherOpen || GlobalStates.dashboardOpen || GlobalStates.overviewOpen
+        active: isScreenFocused && (GlobalStates.launcherOpen || GlobalStates.dashboardOpen || GlobalStates.overviewOpen)
 
         onCleared: {
             GlobalStates.launcherOpen = false;
@@ -249,7 +254,7 @@ PanelWindow {
     Connections {
         target: GlobalStates
         function onLauncherOpenChanged() {
-            if (GlobalStates.launcherOpen) {
+            if (GlobalStates.launcherOpen && isScreenFocused) {
                 notchContainer.stackView.push(launcherViewComponent);
                 Qt.callLater(() => {
                     notchPanel.requestActivate();
@@ -260,7 +265,7 @@ PanelWindow {
                         currentItem.children[0].focusSearchInput();
                     }
                 });
-            } else {
+            } else if (!GlobalStates.launcherOpen) {
                 if (notchContainer.stackView.depth > 1) {
                     notchContainer.stackView.pop();
                 }
@@ -268,13 +273,13 @@ PanelWindow {
         }
 
         function onDashboardOpenChanged() {
-            if (GlobalStates.dashboardOpen) {
+            if (GlobalStates.dashboardOpen && isScreenFocused) {
                 notchContainer.stackView.push(dashboardViewComponent);
                 Qt.callLater(() => {
                     notchPanel.requestActivate();
                     notchPanel.forceActiveFocus();
                 });
-            } else {
+            } else if (!GlobalStates.dashboardOpen) {
                 if (notchContainer.stackView.depth > 1) {
                     notchContainer.stackView.pop();
                 }
@@ -282,13 +287,13 @@ PanelWindow {
         }
 
         function onOverviewOpenChanged() {
-            if (GlobalStates.overviewOpen) {
+            if (GlobalStates.overviewOpen && isScreenFocused) {
                 notchContainer.stackView.push(overviewViewComponent);
                 Qt.callLater(() => {
                     notchPanel.requestActivate();
                     notchPanel.forceActiveFocus();
                 });
-            } else {
+            } else if (!GlobalStates.overviewOpen) {
                 if (notchContainer.stackView.depth > 1) {
                     notchContainer.stackView.pop();
                 }
