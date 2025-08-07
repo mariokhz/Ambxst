@@ -190,8 +190,8 @@ PanelWindow {
     Component {
         id: dashboardViewComponent
         Item {
-            implicitWidth: 900
-            implicitHeight: 400
+            implicitWidth: 950
+            implicitHeight: 450
 
             Dashboard {
                 id: dashboardItem
