@@ -27,6 +27,13 @@ PanelWindow {
     property string currentWallpaper: wallpaperPaths.length > 0 ? wallpaperPaths[currentIndex] : ""
     property bool initialLoadCompleted: false
 
+    // Update directory watcher when wallpaperDir changes
+    onWallpaperDirChanged: {
+        console.log("Wallpaper directory changed to:", wallpaperDir);
+        directoryWatcher.path = wallpaperDir;
+        scanWallpapers.running = true;
+    }
+
     onCurrentWallpaperChanged: {
         if (currentWallpaper && initialLoadCompleted) {
             console.log("Wallpaper changed to:", currentWallpaper);
@@ -75,7 +82,10 @@ PanelWindow {
 
     Component.onCompleted: {
         GlobalStates.wallpaperManager = wallpaper;
+        // Initial scan
         scanWallpapers.running = true;
+        // Start directory monitoring
+        directoryWatcher.reload();
         forceActiveFocus();
     }
 
@@ -147,6 +157,37 @@ PanelWindow {
         }
     }
 
+    // Directory watcher using FileView to monitor the wallpaper directory
+    FileView {
+        id: directoryWatcher
+        path: wallpaperDir
+        watchChanges: true
+        printErrors: false
+        
+        onFileChanged: {
+            console.log("Wallpaper directory changed, rescanning...");
+            wallpaperWatcher.stop();
+            scanWallpapers.running = true;
+        }
+        
+        onLoadFailed: {
+            // Directory doesn't exist or can't be read, use fallback
+            scanFallback.running = true;
+        }
+    }
+
+    // Auto-updating wallpaper scanner using FileView and Timer
+    Timer {
+        id: wallpaperWatcher
+        interval: 5000 // Check every 5 seconds (reduced frequency since we have FileView watching)
+        running: true
+        repeat: true
+        
+        onTriggered: {
+            scanWallpapers.running = true;
+        }
+    }
+
     Process {
         id: scanWallpapers
         running: false
@@ -158,19 +199,24 @@ PanelWindow {
                 if (files.length === 0) {
                     scanFallback.running = true;
                 } else {
-                    wallpaperPaths = files.sort();
-                    if (wallpaperPaths.length > 0) {
-                        if (wallpaperConfig.adapter.currentWall) {
-                            const savedIndex = wallpaperPaths.indexOf(wallpaperConfig.adapter.currentWall);
-                            if (savedIndex !== -1) {
-                                currentIndex = savedIndex;
+                    // Only update if the list has actually changed
+                    const newFiles = files.sort();
+                    if (JSON.stringify(newFiles) !== JSON.stringify(wallpaperPaths)) {
+                        console.log("Wallpaper directory updated. Found", newFiles.length, "images");
+                        wallpaperPaths = newFiles;
+                        if (wallpaperPaths.length > 0) {
+                            if (wallpaperConfig.adapter.currentWall) {
+                                const savedIndex = wallpaperPaths.indexOf(wallpaperConfig.adapter.currentWall);
+                                if (savedIndex !== -1) {
+                                    currentIndex = savedIndex;
+                                } else {
+                                    currentIndex = 0;
+                                    wallpaperConfig.adapter.currentWall = wallpaperPaths[0];
+                                }
                             } else {
                                 currentIndex = 0;
                                 wallpaperConfig.adapter.currentWall = wallpaperPaths[0];
                             }
-                        } else {
-                            currentIndex = 0;
-                            wallpaperConfig.adapter.currentWall = wallpaperPaths[0];
                         }
                     }
                 }
