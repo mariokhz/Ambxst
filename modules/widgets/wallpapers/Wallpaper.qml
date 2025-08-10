@@ -165,6 +165,9 @@ PanelWindow {
             property string wallPath: ""
 
             onCurrentWallChanged: {
+                console.log("DEBUG: currentWall changed to:", currentWall);
+                console.log("DEBUG: current wallpaper is:", wallpaper.currentWallpaper);
+                console.log("DEBUG: initialLoadCompleted:", wallpaper.initialLoadCompleted);
                 // Solo actualizar si el cambio viene del archivo JSON y es diferente al actual
                 if (currentWall && currentWall !== wallpaper.currentWallpaper && wallpaper.initialLoadCompleted) {
                     console.log("Loading wallpaper from JSON:", currentWall);
@@ -174,6 +177,8 @@ PanelWindow {
                     } else {
                         console.warn("Saved wallpaper not found in current list:", currentWall);
                     }
+                } else if (currentWall && !wallpaper.initialLoadCompleted) {
+                    console.log("DEBUG: Deferring wallpaper load until scan completes");
                 }
             }
 
@@ -273,10 +278,7 @@ PanelWindow {
                 var fileType = getFileType(checkThumbnailExists.sourcePath);
                 
                 if (fileType === 'gif') {
-                    generateGifThumbnail.sourcePath = checkThumbnailExists.sourcePath;
-                    generateGifThumbnail.thumbnailPath = checkThumbnailExists.thumbnailPath;
-                    generateGifThumbnail.callback = checkThumbnailExists.callback;
-                    generateGifThumbnail.running = true;
+                    generateGifThumbnail.generateThumbnail(checkThumbnailExists.sourcePath, checkThumbnailExists.thumbnailPath, checkThumbnailExists.callback);
                 }
             }
         }
@@ -292,23 +294,118 @@ PanelWindow {
         property string thumbnailPath: ""
         property var callback: null
         
+        function generateThumbnail(source, thumbnail, completionCallback) {
+            sourcePath = source;
+            thumbnailPath = thumbnail;
+            callback = completionCallback;
+            
+            console.log("DEBUG: Starting FFmpeg thumbnail generation");
+            console.log("DEBUG: Source:", sourcePath);
+            console.log("DEBUG: Thumbnail:", thumbnailPath);
+            
+            // Set command before running
+            command = ["ffmpeg", "-i", sourcePath, "-vf", "select=eq(n\\,0),scale=200:200:force_original_aspect_ratio=decrease,pad=200:200", "-vframes", "1", "-f", "image2", "-update", "1", "-y", thumbnailPath];
+            running = true;
+        }
+        
         onRunningChanged: {
-            if (running && sourcePath && thumbnailPath) {
-                command = ["ffmpeg", "-i", sourcePath, "-vf", "select=eq(n\\,0),scale=200:200:force_original_aspect_ratio=decrease,pad=200:200:(ow-iw)/2:(oh-ih)/2", "-vframes", "1", "-f", "image2", "-update", "1", "-y", thumbnailPath];
+            if (!running) {
+                console.log("DEBUG: FFmpeg process finished");
+                // Use a delay to allow file system to sync, then check if file exists
+                Qt.callLater(function() {
+                    if (thumbnailPath) {
+                        checkFinalThumbnail.sourcePath = sourcePath;
+                        checkFinalThumbnail.thumbnailPath = thumbnailPath;
+                        checkFinalThumbnail.callback = callback;
+                        checkFinalThumbnail.running = true;
+                    }
+                });
             }
         }
         
         stdout: StdioCollector {
             onStreamFinished: {
-                console.log("GIF thumbnail generated:", generateGifThumbnail.thumbnailPath);
-                if (generateGifThumbnail.callback) generateGifThumbnail.callback();
+                if (text.length > 0) {
+                    console.log("DEBUG: FFmpeg stdout:", text);
+                }
             }
         }
         
         stderr: StdioCollector {
             onStreamFinished: {
                 if (text.length > 0) {
-                    console.warn("FFmpeg GIF error:", text);
+                    console.log("DEBUG: FFmpeg stderr:", text);
+                }
+            }
+        }
+    }
+    
+    // Proceso separado para verificar que la miniatura se generó correctamente
+    Process {
+        id: checkFinalThumbnail
+        running: false
+        command: []
+        
+        property string sourcePath: ""
+        property string thumbnailPath: ""
+        property var callback: null
+        
+        onRunningChanged: {
+            if (running && thumbnailPath) {
+                command = ["test", "-f", thumbnailPath];
+            } else if (!running) {
+                // Process finished - check exit status via a simple ls command
+                // If test succeeded, the file exists, so we can call the callback
+                verifyThumbnailExists.sourcePath = sourcePath;
+                verifyThumbnailExists.thumbnailPath = thumbnailPath;
+                verifyThumbnailExists.callback = callback;
+                verifyThumbnailExists.running = true;
+            }
+        }
+    }
+    
+    // Alternative verification using ls command to get clear output
+    Process {
+        id: verifyThumbnailExists
+        running: false
+        command: []
+        
+        property string sourcePath: ""
+        property string thumbnailPath: ""
+        property var callback: null
+        
+        onRunningChanged: {
+            if (running && thumbnailPath) {
+                command = ["ls", "-la", thumbnailPath];
+            }
+        }
+        
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (text.length > 0 && text.indexOf("No such file") === -1) {
+                    // File exists and ls succeeded
+                    console.log("DEBUG: Thumbnail verified successfully:", verifyThumbnailExists.thumbnailPath);
+                    if (verifyThumbnailExists.callback) verifyThumbnailExists.callback();
+                } else {
+                    // File doesn't exist, use fallback
+                    console.warn("DEBUG: Thumbnail verification failed, using original file for Matugen");
+                    if (verifyThumbnailExists.sourcePath) {
+                        matugenProcess.command = ["matugen", "image", verifyThumbnailExists.sourcePath, "-c", Qt.resolvedUrl("../../../assets/matugen/config.toml").toString().replace("file://", "")];
+                        matugenProcess.running = true;
+                    }
+                }
+            }
+        }
+        
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.length > 0) {
+                    // ls failed - file doesn't exist, use fallback
+                    console.warn("DEBUG: Thumbnail verification failed (stderr), using original file for Matugen");
+                    if (verifyThumbnailExists.sourcePath) {
+                        matugenProcess.command = ["matugen", "image", verifyThumbnailExists.sourcePath, "-c", Qt.resolvedUrl("../../../assets/matugen/config.toml").toString().replace("file://", "")];
+                        matugenProcess.running = true;
+                    }
                 }
             }
         }
@@ -336,18 +433,24 @@ PanelWindow {
                         
                         // Initialize wallpaper selection
                         if (wallpaperPaths.length > 0 && !initialLoadCompleted) {
+                            console.log("DEBUG: Initializing wallpaper selection");
                             if (wallpaperConfig.adapter.currentWall) {
+                                console.log("DEBUG: Found saved wallpaper:", wallpaperConfig.adapter.currentWall);
                                 var savedIndex = wallpaperPaths.indexOf(wallpaperConfig.adapter.currentWall);
                                 if (savedIndex !== -1) {
+                                    console.log("DEBUG: Loading saved wallpaper at index:", savedIndex);
                                     currentIndex = savedIndex;
                                 } else {
+                                    console.log("DEBUG: Saved wallpaper not found, using first wallpaper");
                                     currentIndex = 0;
                                     wallpaperConfig.adapter.currentWall = wallpaperPaths[0];
                                 }
                             } else {
+                                console.log("DEBUG: No saved wallpaper, using first one");
                                 currentIndex = 0;
                                 wallpaperConfig.adapter.currentWall = wallpaperPaths[0];
                             }
+                            console.log("DEBUG: Setting initialLoadCompleted to true");
                             initialLoadCompleted = true;
                         }
                     }
