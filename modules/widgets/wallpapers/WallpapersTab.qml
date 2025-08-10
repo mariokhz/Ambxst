@@ -133,62 +133,41 @@ Rectangle {
                             }
                         }
 
-                        Image {
+                        Loader {
                             anchors.fill: parent
-                            source: {
-                                if (!GlobalStates.wallpaperManager) return "";
+                            sourceComponent: {
+                                if (!GlobalStates.wallpaperManager) return null;
                                 
                                 var fileType = GlobalStates.wallpaperManager.getFileType(modelData);
                                 if (fileType === 'image') {
-                                    return "file://" + modelData;
-                                } else {
-                                    // Usar miniatura generada para GIFs
-                                    var thumbnailPath = GlobalStates.wallpaperManager.getThumbnailForWallpaper(modelData);
-                                    return "file://" + thumbnailPath;
+                                    return staticImageComponent;
+                                } else if (fileType === 'gif') {
+                                    return animatedImageComponent;
                                 }
-                            }
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            smooth: true
-                            
-                            property bool thumbnailGenerationAttempted: false
-                            
-                            onStatusChanged: {
-                                // Si falla cargar la miniatura, generar una nueva (solo una vez)
-                                if (status === Image.Error && !thumbnailGenerationAttempted && GlobalStates.wallpaperManager) {
-                                    thumbnailGenerationAttempted = true;
-                                    var fileType = GlobalStates.wallpaperManager.getFileType(modelData);
-                                    if (fileType === 'gif') {
-                                        var thumbnailPath = GlobalStates.wallpaperManager.getThumbnailForWallpaper(modelData);
-                                        console.log("Generating thumbnail for:", modelData);
-                                        GlobalStates.wallpaperManager.generateThumbnail(modelData, thumbnailPath, function() {
-                                            // Recargar imagen cuando la miniatura esté lista
-                                            var currentSource = source;
-                                            source = "";
-                                            source = currentSource;
-                                        });
-                                    }
-                                }
+                                return staticImageComponent; // fallback
                             }
                             
-                            // Mostrar placeholder mientras se genera la miniatura
-                            Rectangle {
-                                anchors.fill: parent
-                                color: Colors.surfaceContainerHigh
-                                visible: parent.status === Image.Error || parent.status === Image.Null
-                                
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: {
-                                        if (!GlobalStates.wallpaperManager) return "";
-                                        var fileType = GlobalStates.wallpaperManager.getFileType(modelData);
-                                        return fileType === 'gif' ? "GIF" : "IMG";
-                                    }
-                                    color: Colors.adapter.onSurface
-                                    font.family: Config.theme.font
-                                    font.pixelSize: 10
-                                    font.bold: true
-                                }
+                            property string sourceFile: modelData
+                        }
+                        
+                        Component {
+                            id: staticImageComponent
+                            Image {
+                                source: parent.sourceFile ? "file://" + parent.sourceFile : ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                smooth: true
+                            }
+                        }
+                        
+                        Component {
+                            id: animatedImageComponent
+                            AnimatedImage {
+                                source: parent.sourceFile ? "file://" + parent.sourceFile : ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                smooth: true
+                                playing: true
                             }
                         }
 

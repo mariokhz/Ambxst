@@ -22,7 +22,6 @@ PanelWindow {
 
     property string wallpaperDir: wallpaperConfig.adapter.wallPath || Quickshell.env("HOME") + "/Wallpapers"
     property string fallbackDir: Quickshell.env("PWD") + "/assets/wallpapers_example"
-    property string thumbnailDir: Quickshell.env("HOME") + "/.cache/ambyst/wallpaper-thumbnails"
     property list<string> wallpaperPaths: []
     property int currentIndex: 0
     property string currentWallpaper: wallpaperPaths.length > 0 ? wallpaperPaths[currentIndex] : ""
@@ -40,29 +39,6 @@ PanelWindow {
         return 'unknown';
     }
 
-    function generateThumbnailPath(sourcePath) {
-        // Crear hash simple del path para nombre único
-        var hash = 0;
-        for (var i = 0; i < sourcePath.length; i++) {
-            var charCode = sourcePath.charCodeAt(i);
-            hash = ((hash << 5) - hash) + charCode;
-            hash = hash & hash; // Convertir a 32bit integer
-        }
-        var fileName = sourcePath.split('/').pop().split('.')[0];
-        return thumbnailDir + "/" + Math.abs(hash) + "_" + fileName + ".jpg";
-    }
-
-    function getThumbnailForWallpaper(wallpaperPath) {
-        if (!wallpaperPath) return "";
-        
-        var fileType = getFileType(wallpaperPath);
-        if (fileType === 'image') {
-            return wallpaperPath; // Usar imagen original para imágenes estáticas
-        } else {
-            return generateThumbnailPath(wallpaperPath);
-        }
-    }
-
     // Update directory watcher when wallpaperDir changes
     onWallpaperDirChanged: {
         console.log("Wallpaper directory changed to:", wallpaperDir);
@@ -75,21 +51,9 @@ PanelWindow {
         if (currentWallpaper && initialLoadCompleted) {
             console.log("Wallpaper changed to:", currentWallpaper);
             
-            // Generar miniatura si es necesario y usar para Matugen
-            var thumbnailPath = getThumbnailForWallpaper(currentWallpaper);
-            var fileType = getFileType(currentWallpaper);
-            
-            if (fileType === 'gif') {
-                // Generar miniatura primero, luego ejecutar Matugen
-                generateThumbnail(currentWallpaper, thumbnailPath, function() {
-                    matugenProcess.command = ["matugen", "image", thumbnailPath, "-c", Qt.resolvedUrl("../../../assets/matugen/config.toml").toString().replace("file://", "")];
-                    matugenProcess.running = true;
-                });
-            } else {
-                // Usar imagen original para imágenes estáticas
-                matugenProcess.command = ["matugen", "image", currentWallpaper, "-c", Qt.resolvedUrl("../../../assets/matugen/config.toml").toString().replace("file://", "")];
-                matugenProcess.running = true;
-            }
+            // Usar directamente el archivo para Matugen
+            matugenProcess.command = ["matugen", "image", currentWallpaper, "-c", Qt.resolvedUrl("../../../assets/matugen/config.toml").toString().replace("file://", "")];
+            matugenProcess.running = true;
         }
     }
 
@@ -143,8 +107,6 @@ PanelWindow {
 
     Component.onCompleted: {
         GlobalStates.wallpaperManager = wallpaper;
-        // Crear directorio de miniaturas si no existe
-        createThumbnailDir.running = true;
         // Initial scan
         scanWallpapers.running = true;
         // Start directory monitoring
@@ -239,176 +201,6 @@ PanelWindow {
         }
         
         // Remove onLoadFailed to prevent premature fallback activation
-    }
-
-    // Proceso para crear directorio de miniaturas
-    Process {
-        id: createThumbnailDir
-        running: false
-        command: ["mkdir", "-p", thumbnailDir]
-        
-        stdout: StdioCollector {
-            onStreamFinished: {
-                console.log("Thumbnail directory ready:", thumbnailDir);
-            }
-        }
-    }
-
-    // Proceso para verificar si existe miniatura
-    Process {
-        id: checkThumbnailExists
-        running: false
-        command: []
-        
-        property string sourcePath: ""
-        property string thumbnailPath: ""
-        property var callback: null
-        
-        stdout: StdioCollector {
-            onStreamFinished: {
-                // Si test tiene éxito (código 0), la miniatura existe
-                if (checkThumbnailExists.callback) checkThumbnailExists.callback();
-            }
-        }
-        
-        stderr: StdioCollector {
-            onStreamFinished: {
-                // Si test falla, la miniatura no existe, generarla
-                console.log("Generating thumbnail for:", checkThumbnailExists.sourcePath);
-                var fileType = getFileType(checkThumbnailExists.sourcePath);
-                
-                if (fileType === 'gif') {
-                    generateGifThumbnail.generateThumbnail(checkThumbnailExists.sourcePath, checkThumbnailExists.thumbnailPath, checkThumbnailExists.callback);
-                }
-            }
-        }
-    }
-
-    // Proceso para generar miniatura de GIF
-    Process {
-        id: generateGifThumbnail
-        running: false
-        command: []
-        
-        property string sourcePath: ""
-        property string thumbnailPath: ""
-        property var callback: null
-        
-        function generateThumbnail(source, thumbnail, completionCallback) {
-            sourcePath = source;
-            thumbnailPath = thumbnail;
-            callback = completionCallback;
-            
-            console.log("DEBUG: Starting FFmpeg thumbnail generation");
-            console.log("DEBUG: Source:", sourcePath);
-            console.log("DEBUG: Thumbnail:", thumbnailPath);
-            
-            // Set command before running
-            command = ["ffmpeg", "-i", sourcePath, "-vf", "select=eq(n\\,0),scale=200:200:force_original_aspect_ratio=decrease,pad=200:200", "-vframes", "1", "-f", "image2", "-update", "1", "-y", thumbnailPath];
-            running = true;
-        }
-        
-        onRunningChanged: {
-            if (!running) {
-                console.log("DEBUG: FFmpeg process finished");
-                // Use a delay to allow file system to sync, then check if file exists
-                Qt.callLater(function() {
-                    if (thumbnailPath) {
-                        checkFinalThumbnail.sourcePath = sourcePath;
-                        checkFinalThumbnail.thumbnailPath = thumbnailPath;
-                        checkFinalThumbnail.callback = callback;
-                        checkFinalThumbnail.running = true;
-                    }
-                });
-            }
-        }
-        
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text.length > 0) {
-                    console.log("DEBUG: FFmpeg stdout:", text);
-                }
-            }
-        }
-        
-        stderr: StdioCollector {
-            onStreamFinished: {
-                if (text.length > 0) {
-                    console.log("DEBUG: FFmpeg stderr:", text);
-                }
-            }
-        }
-    }
-    
-    // Proceso separado para verificar que la miniatura se generó correctamente
-    Process {
-        id: checkFinalThumbnail
-        running: false
-        command: []
-        
-        property string sourcePath: ""
-        property string thumbnailPath: ""
-        property var callback: null
-        
-        onRunningChanged: {
-            if (running && thumbnailPath) {
-                command = ["test", "-f", thumbnailPath];
-            } else if (!running) {
-                // Process finished - check exit status via a simple ls command
-                // If test succeeded, the file exists, so we can call the callback
-                verifyThumbnailExists.sourcePath = sourcePath;
-                verifyThumbnailExists.thumbnailPath = thumbnailPath;
-                verifyThumbnailExists.callback = callback;
-                verifyThumbnailExists.running = true;
-            }
-        }
-    }
-    
-    // Alternative verification using ls command to get clear output
-    Process {
-        id: verifyThumbnailExists
-        running: false
-        command: []
-        
-        property string sourcePath: ""
-        property string thumbnailPath: ""
-        property var callback: null
-        
-        onRunningChanged: {
-            if (running && thumbnailPath) {
-                command = ["ls", "-la", thumbnailPath];
-            }
-        }
-        
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text.length > 0 && text.indexOf("No such file") === -1) {
-                    // File exists and ls succeeded
-                    console.log("DEBUG: Thumbnail verified successfully:", verifyThumbnailExists.thumbnailPath);
-                    if (verifyThumbnailExists.callback) verifyThumbnailExists.callback();
-                } else {
-                    // File doesn't exist, use fallback
-                    console.warn("DEBUG: Thumbnail verification failed, using original file for Matugen");
-                    if (verifyThumbnailExists.sourcePath) {
-                        matugenProcess.command = ["matugen", "image", verifyThumbnailExists.sourcePath, "-c", Qt.resolvedUrl("../../../assets/matugen/config.toml").toString().replace("file://", "")];
-                        matugenProcess.running = true;
-                    }
-                }
-            }
-        }
-        
-        stderr: StdioCollector {
-            onStreamFinished: {
-                if (text.length > 0) {
-                    // ls failed - file doesn't exist, use fallback
-                    console.warn("DEBUG: Thumbnail verification failed (stderr), using original file for Matugen");
-                    if (verifyThumbnailExists.sourcePath) {
-                        matugenProcess.command = ["matugen", "image", verifyThumbnailExists.sourcePath, "-c", Qt.resolvedUrl("../../../assets/matugen/config.toml").toString().replace("file://", "")];
-                        matugenProcess.running = true;
-                    }
-                }
-            }
-        }
     }
 
     Process {
