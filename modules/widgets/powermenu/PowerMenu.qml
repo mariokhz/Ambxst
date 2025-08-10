@@ -10,6 +10,7 @@ ActionGrid {
 
     layout: "row"
     buttonSize: 48
+    iconSize: 24
     spacing: 8
 
     // Forzar foco al abrir

@@ -12,6 +12,7 @@ FocusScope {
     property alias actions: repeater.model
     property string layout: "row" // "row" or "grid"
     property int buttonSize: 48
+    property int iconSize: 24
     property int spacing: 4
     property int columns: 3 // para layout grid
 
@@ -160,10 +161,17 @@ FocusScope {
                     contentItem: Text {
                         text: modelData.icon || ""
                         font.family: Icons.font
-                        font.pixelSize: 24
-                        color: actionButton.pressed ? Colors.background : Colors.adapter.primary
+                        font.pixelSize: root.iconSize
+                        color: actionButton.pressed ? Colors.background : (index === root.currentIndex ? Colors.adapter.primary : Colors.adapter.overBackground)
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Config.animDuration / 2
+                                easing.type: Easing.OutQuart
+                            }
+                        }
                     }
 
                     onClicked: triggerAction()
