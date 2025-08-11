@@ -6,35 +6,41 @@ import qs.modules.globals
 import qs.modules.services
 import qs.config
 
+// Componente principal para el selector de fondos de pantalla.
 Rectangle {
+    // Configuración de estilo y layout del componente.
     color: Colors.background
     anchors.fill: parent
     anchors.margins: 4
     radius: Config.roundness > 0 ? Config.roundness : 0
 
+    // Propiedades personalizadas para la funcionalidad del componente.
     property string searchText: ""
     readonly property int gridRows: 3
     readonly property int gridColumns: 5
     property int selectedIndex: GlobalStates.wallpaperSelectedIndex
     property bool navigationInProgress: false
 
-    // Timer para limitar la velocidad de navegación
+    // Timer para limitar la velocidad de navegación con las teclas.
     Timer {
         id: navigationTimer
         interval: Config.animDuration / 2
         onTriggered: navigationInProgress = false
     }
 
+    // Función para enfocar el campo de búsqueda.
     function focusSearch() {
         wallpaperSearchInput.focusInput();
     }
 
+    // Llama a focusSearch una vez que el componente se ha completado.
     Component.onCompleted: {
         Qt.callLater(() => {
             focusSearch();
         });
     }
 
+    // Propiedad calculada que filtra los fondos de pantalla según el texto de búsqueda.
     property var filteredWallpapers: {
         if (!GlobalStates.wallpaperManager)
             return [];
@@ -47,18 +53,20 @@ Rectangle {
         });
     }
 
+    // Layout principal con una fila para la barra lateral y la cuadrícula.
     Row {
         anchors.fill: parent
         anchors.margins: 8
         spacing: 8
 
-        // Sidebar izquierdo con search y opciones
+        // Columna para el buscador y las opciones.
         Column {
-            width: parent.width - wallpaperGridContainer.width - 8  // Expandir para llenar el espacio restante
+            // El ancho se calcula dinámicamente para llenar el espacio.
+            width: parent.width - wallpaperGridContainer.width - 8
             height: parent.height + 4
             spacing: 8
 
-            // Barra de búsqueda
+            // Barra de búsqueda.
             SearchInput {
                 id: wallpaperSearchInput
                 width: parent.width
@@ -68,9 +76,9 @@ Rectangle {
                 clearOnEscape: false
                 radius: Config.roundness > 0 ? Config.roundness - 8 : 0
 
+                // Manejo de eventos de búsqueda y teclado.
                 onSearchTextChanged: text => {
                     searchText = text;
-                    // Auto-highlight first wallpaper when text is entered
                     if (text.length > 0 && filteredWallpapers.length > 0) {
                         GlobalStates.wallpaperSelectedIndex = 0;
                         selectedIndex = 0;
@@ -90,7 +98,7 @@ Rectangle {
                     if (filteredWallpapers.length > 0 && !navigationInProgress) {
                         navigationInProgress = true;
                         navigationTimer.restart();
-                        
+
                         if (selectedIndex < filteredWallpapers.length - 1) {
                             let newIndex = selectedIndex + gridColumns;
                             if (newIndex >= filteredWallpapers.length) {
@@ -111,7 +119,7 @@ Rectangle {
                     if (filteredWallpapers.length > 0 && selectedIndex > 0 && !navigationInProgress) {
                         navigationInProgress = true;
                         navigationTimer.restart();
-                        
+
                         let newIndex = selectedIndex - gridColumns;
                         if (newIndex < 0) {
                             newIndex = 0;
@@ -122,7 +130,7 @@ Rectangle {
                     } else if (selectedIndex === 0 && searchText.length === 0 && !navigationInProgress) {
                         navigationInProgress = true;
                         navigationTimer.restart();
-                        
+
                         GlobalStates.wallpaperSelectedIndex = -1;
                         selectedIndex = -1;
                         wallpaperGrid.currentIndex = -1;
@@ -142,7 +150,7 @@ Rectangle {
                     if (event.key === Qt.Key_Left && filteredWallpapers.length > 0 && !navigationInProgress) {
                         navigationInProgress = true;
                         navigationTimer.restart();
-                        
+
                         if (selectedIndex > 0) {
                             GlobalStates.wallpaperSelectedIndex = selectedIndex - 1;
                             selectedIndex = selectedIndex - 1;
@@ -156,7 +164,7 @@ Rectangle {
                     } else if (event.key === Qt.Key_Right && filteredWallpapers.length > 0 && !navigationInProgress) {
                         navigationInProgress = true;
                         navigationTimer.restart();
-                        
+
                         if (selectedIndex < filteredWallpapers.length - 1) {
                             GlobalStates.wallpaperSelectedIndex = selectedIndex + 1;
                             selectedIndex = selectedIndex + 1;
@@ -170,7 +178,7 @@ Rectangle {
                     } else if (event.key === Qt.Key_Home && filteredWallpapers.length > 0 && !navigationInProgress) {
                         navigationInProgress = true;
                         navigationTimer.restart();
-                        
+
                         GlobalStates.wallpaperSelectedIndex = 0;
                         selectedIndex = 0;
                         wallpaperGrid.currentIndex = 0;
@@ -178,7 +186,7 @@ Rectangle {
                     } else if (event.key === Qt.Key_End && filteredWallpapers.length > 0 && !navigationInProgress) {
                         navigationInProgress = true;
                         navigationTimer.restart();
-                        
+
                         GlobalStates.wallpaperSelectedIndex = filteredWallpapers.length - 1;
                         selectedIndex = filteredWallpapers.length - 1;
                         wallpaperGrid.currentIndex = selectedIndex;
@@ -187,10 +195,10 @@ Rectangle {
                 }
             }
 
-            // Área placeholder para opciones futuras
+            // Área placeholder para opciones futuras.
             Rectangle {
                 width: parent.width
-                height: parent.height - 36 - 16
+                height: parent.height - wallpaperSearchInput.height - 8
                 color: Colors.surfaceContainer
                 radius: Config.roundness > 0 ? Config.roundness : 0
                 border.color: Colors.adapter.outline
@@ -208,7 +216,7 @@ Rectangle {
             }
         }
 
-        // Grid de wallpapers a la derecha
+        // Contenedor para la cuadrícula de fondos de pantalla.
         Rectangle {
             id: wallpaperGridContainer
             width: wallpaperWidth * gridColumns
@@ -220,7 +228,7 @@ Rectangle {
             clip: true
 
             readonly property int wallpaperHeight: height / gridRows
-            readonly property int wallpaperWidth: wallpaperHeight  // Mantener cuadrados
+            readonly property int wallpaperWidth: wallpaperHeight
 
             ScrollView {
                 id: scrollView
@@ -234,71 +242,41 @@ Rectangle {
                     model: filteredWallpapers
                     currentIndex: selectedIndex
 
-                    // Función para centrar el elemento seleccionado en el scroll
-                    function centerCurrentItem() {
-                        if (currentIndex >= 0 && currentIndex < count) {
-                            // Calcular fila y posición Y del elemento actual
-                            let currentRow = Math.floor(currentIndex / gridColumns);
-                            let itemY = currentRow * cellHeight;
-                            let itemCenterY = itemY + cellHeight / 2;
-
-                            // Calcular posición ideal del scroll para centrar el elemento
-                            let scrollViewHeight = scrollView.height;
-                            let contentHeight = Math.ceil(count / gridColumns) * cellHeight;
-                            let targetScrollY = itemCenterY - scrollViewHeight / 2;
-
-                            // Asegurar que está dentro de los límites
-                            targetScrollY = Math.max(0, Math.min(targetScrollY, contentHeight - scrollViewHeight));
-
-                            // Aplicar el scroll con animación suave
-                            if (contentHeight > scrollViewHeight) {
-                                let normalizedPosition = targetScrollY / (contentHeight - scrollViewHeight);
-                                scrollPositionAnimation.to = Math.max(0, Math.min(1, normalizedPosition));
-                                scrollPositionAnimation.start();
-                            }
-                        }
-                    }
-
-                    // Animación para el scroll suave
-                    NumberAnimation {
-                        id: scrollPositionAnimation
-                        target: scrollView.ScrollBar.vertical
-                        property: "position"
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                    // Sincronizar currentIndex con selectedIndex
+                    // Sincronizar currentIndex con selectedIndex y centrar la vista.
                     onCurrentIndexChanged: {
                         if (currentIndex !== selectedIndex) {
                             GlobalStates.wallpaperSelectedIndex = currentIndex;
                             selectedIndex = currentIndex;
                         }
-                        // Centrar el elemento cuando cambie la selección
-                        Qt.callLater(centerCurrentItem);
+                        if (currentIndex >= 0) {
+                            positionViewAtIndex(currentIndex, GridView.Center);
+                        }
                     }
 
+                    // Elemento de realce para el wallpaper seleccionado.
                     highlight: Rectangle {
-                        color: "transparent"
-                        border.color: Colors.adapter.primary
-                        border.width: 2
+                        color: Colors.adapter.primary
+                        opacity: 0.2
+                        radius: Config.roundness > 0 ? Config.roundness + 4 : 0
                         visible: selectedIndex >= 0
                         z: 5
 
                         Behavior on x {
                             NumberAnimation {
-                                duration: Config.animDuration
+                                duration: Config.animDuration / 2
                                 easing.type: Easing.OutQuart
                             }
                         }
 
                         Behavior on y {
                             NumberAnimation {
-                                duration: Config.animDuration
+                                duration: Config.animDuration / 2
                                 easing.type: Easing.OutQuart
                             }
                         }
                     }
 
+                    // Delegado para cada elemento de la cuadrícula.
                     delegate: Rectangle {
                         width: wallpaperGridContainer.wallpaperWidth
                         height: wallpaperGridContainer.wallpaperHeight
@@ -313,6 +291,7 @@ Rectangle {
                         property bool isHovered: false
                         property bool isSelected: selectedIndex === index
 
+                        // Carga la imagen o el GIF según el tipo de archivo.
                         Loader {
                             anchors.fill: parent
                             sourceComponent: {
@@ -325,23 +304,22 @@ Rectangle {
                                 } else if (fileType === 'gif') {
                                     return animatedImageComponent;
                                 }
-                                return staticImageComponent; // fallback
+                                return staticImageComponent; // Fallback
                             }
 
                             property string sourceFile: modelData
                         }
 
-                        // Highlight border para navegación por teclado
+                        // Borde de resaltado para navegación por teclado.
                         Rectangle {
                             anchors.fill: parent
                             color: "transparent"
                             border.color: Colors.adapter.primary
-                            // border.width: 2
+                            border.width: parent.isSelected ? 2 : 0
                             radius: 4
-                            visible: parent.isSelected
                             z: 15
 
-                            Behavior on opacity {
+                            Behavior on border.width {
                                 NumberAnimation {
                                     duration: Config.animDuration
                                     easing.type: Easing.OutQuart
@@ -349,7 +327,7 @@ Rectangle {
                             }
                         }
 
-                        // Etiqueta "CURRENT" para wallpaper actual
+                        // Etiqueta "CURRENT" para el fondo de pantalla activo.
                         Rectangle {
                             visible: parent.isCurrentWallpaper
                             anchors.bottom: parent.bottom
@@ -357,6 +335,8 @@ Rectangle {
                             anchors.right: parent.right
                             height: 24
                             color: Colors.adapter.surfaceContainerLowest
+                            z: 10
+                            clip: true
 
                             Text {
                                 anchors.centerIn: parent
@@ -368,6 +348,7 @@ Rectangle {
                             }
                         }
 
+                        // Componente para imágenes estáticas.
                         Component {
                             id: staticImageComponent
                             Image {
@@ -378,6 +359,7 @@ Rectangle {
                             }
                         }
 
+                        // Componente para imágenes animadas (GIFs).
                         Component {
                             id: animatedImageComponent
                             AnimatedImage {
@@ -385,13 +367,13 @@ Rectangle {
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
                                 smooth: true
-                                playing: false  // Solo se anima al hacer hover
+                                playing: parent.isHovered // Solo se anima al hacer hover
                             }
                         }
 
-                        // Etiqueta con nombre del archivo al hacer hover o seleccionar
+                        // Etiqueta con el nombre del archivo al hacer hover o seleccionar.
                         Rectangle {
-                            visible: (parent.isHovered || parent.isSelected) && !parent.isCurrentWallpaper
+                            visible: parent.isHovered || parent.isSelected
                             anchors.bottom: parent.bottom
                             anchors.left: parent.left
                             anchors.right: parent.right
@@ -409,11 +391,11 @@ Rectangle {
                                 font.family: Config.theme.font
                                 font.pixelSize: 14
 
-                                readonly property bool needsScroll: width > parent.width - 8
+                                readonly property bool needsScroll: paintedWidth > parent.width - 8
 
                                 SequentialAnimation {
                                     id: scrollAnimation
-                                    // running: hoverText.needsScroll && parent.visible
+                                    running: hoverText.needsScroll && parent.visible
                                     loops: Animation.Infinite
 
                                     PauseAnimation {
@@ -422,7 +404,7 @@ Rectangle {
                                     NumberAnimation {
                                         target: hoverText
                                         property: "x"
-                                        to: hoverText.parent.width - hoverText.width - 4
+                                        to: parent.width - paintedWidth - 4
                                         duration: 2000
                                         easing.type: Easing.InOutQuad
                                     }
@@ -438,19 +420,9 @@ Rectangle {
                                     }
                                 }
                             }
-
-                            onVisibleChanged: {
-                                if (visible) {
-                                    hoverText.x = 4;
-                                    if (hoverText.needsScroll) {
-                                        scrollAnimation.restart();
-                                    }
-                                } else {
-                                    scrollAnimation.stop();
-                                }
-                            }
                         }
 
+                        // Manejo de eventos de ratón.
                         MouseArea {
                             anchors.fill: parent
                             hoverEnabled: true
@@ -458,52 +430,37 @@ Rectangle {
 
                             onEntered: {
                                 parent.isHovered = true;
-                                // Sincronizar selección con hover
                                 GlobalStates.wallpaperSelectedIndex = index;
                                 selectedIndex = index;
                                 wallpaperGrid.currentIndex = index;
-
-                                if (!parent.isCurrentWallpaper) {
-                                    parent.color = Colors.surfaceContainerHigh;
-                                }
-                                // Activar animación de GIF al hacer hover
-                                var loader = parent.children[0]; // El Loader
-                                if (loader && loader.item && loader.item.hasOwnProperty('playing')) {
-                                    loader.item.playing = true;
-                                }
                             }
                             onExited: {
                                 parent.isHovered = false;
                                 if (!parent.isCurrentWallpaper) {
                                     parent.color = Colors.surface;
                                 }
-                                // Desactivar animación de GIF al salir del hover
-                                var loader = parent.children[0]; // El Loader
-                                if (loader && loader.item && loader.item.hasOwnProperty('playing')) {
-                                    loader.item.playing = false;
-                                }
                             }
                             onPressed: parent.scale = 0.95
                             onReleased: parent.scale = 1.0
 
                             onClicked: {
-                                // Aplicar wallpaper seleccionado
                                 if (GlobalStates.wallpaperManager) {
                                     GlobalStates.wallpaperManager.setWallpaper(modelData);
                                 }
                             }
                         }
 
+                        // Animaciones de color y escala.
                         Behavior on color {
                             ColorAnimation {
-                                duration: Config.animDuration
+                                duration: Config.animDuration / 2
                                 easing.type: Easing.OutCubic
                             }
                         }
 
                         Behavior on scale {
                             NumberAnimation {
-                                duration: Config.animDuration
+                                duration: Config.animDuration / 3
                                 easing.type: Easing.OutCubic
                             }
                         }
