@@ -118,20 +118,11 @@ Rectangle {
                         width: wallpaperGridContainer.wallpaperWidth
                         height: wallpaperGridContainer.wallpaperHeight
                         color: Colors.surface
-                        border.color: isCurrentWallpaper ? Colors.adapter.primary : "transparent"
-                        border.width: isCurrentWallpaper ? 2 : 0
 
                         property bool isCurrentWallpaper: {
                             if (!GlobalStates.wallpaperManager)
                                 return false;
                             return GlobalStates.wallpaperManager.currentWallpaper === modelData;
-                        }
-
-                        Behavior on border.color {
-                            ColorAnimation {
-                                duration: Config.animDuration
-                                easing.type: Easing.OutCubic
-                            }
                         }
 
                         Loader {
@@ -150,6 +141,25 @@ Rectangle {
                             }
 
                             property string sourceFile: modelData
+                        }
+
+                        // Etiqueta "CURRENT" para wallpaper actual
+                        Rectangle {
+                            visible: parent.isCurrentWallpaper
+                            anchors.bottom: parent.bottom
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            height: 24
+                            color: Colors.adapter.surfaceContainerLowest
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "CURRENT"
+                                color: Colors.adapter.primary
+                                font.family: Config.theme.font
+                                font.pixelSize: 11
+                                font.weight: Font.Bold
+                            }
                         }
 
                         Component {
