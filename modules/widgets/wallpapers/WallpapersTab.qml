@@ -159,7 +159,7 @@ Rectangle {
                                 text: "CURRENT"
                                 color: Colors.adapter.primary
                                 font.family: Config.theme.font
-                                font.pixelSize: 11
+                                font.pixelSize: 14
                                 font.weight: Font.Bold
                             }
                         }
@@ -194,16 +194,56 @@ Rectangle {
                             height: 24
                             color: Colors.adapter.surfaceContainerLowest
                             z: 10
+                            clip: true
 
                             Text {
-                                anchors.fill: parent
-                                anchors.margins: 4
+                                id: hoverText
+                                anchors.verticalCenter: parent.verticalCenter
+                                x: 4
                                 text: modelData ? modelData.split('/').pop() : ""
                                 color: Colors.adapter.overBackground
                                 font.family: Config.theme.font
-                                font.pixelSize: 10
-                                verticalAlignment: Text.AlignVCenter
-                                elide: Text.ElideRight
+                                font.pixelSize: 14
+
+                                readonly property bool needsScroll: width > parent.width - 8
+
+                                SequentialAnimation {
+                                    id: scrollAnimation
+                                    running: hoverText.needsScroll && parent.visible
+                                    loops: Animation.Infinite
+
+                                    PauseAnimation {
+                                        duration: 1000
+                                    }
+                                    NumberAnimation {
+                                        target: hoverText
+                                        property: "x"
+                                        to: hoverText.parent.width - hoverText.width - 4
+                                        duration: 2000
+                                        easing.type: Easing.InOutQuad
+                                    }
+                                    PauseAnimation {
+                                        duration: 1000
+                                    }
+                                    NumberAnimation {
+                                        target: hoverText
+                                        property: "x"
+                                        to: 4
+                                        duration: 2000
+                                        easing.type: Easing.InOutQuad
+                                    }
+                                }
+                            }
+
+                            onVisibleChanged: {
+                                if (visible) {
+                                    hoverText.x = 4;
+                                    if (hoverText.needsScroll) {
+                                        scrollAnimation.restart();
+                                    }
+                                } else {
+                                    scrollAnimation.stop();
+                                }
                             }
                         }
 

@@ -50,7 +50,7 @@ PanelWindow {
     onCurrentWallpaperChanged: {
         if (currentWallpaper && initialLoadCompleted) {
             console.log("Wallpaper changed to:", currentWallpaper);
-            
+
             // Usar directamente el archivo para Matugen
             matugenProcess.command = ["matugen", "image", currentWallpaper, "-c", Qt.resolvedUrl("../../../assets/matugen/config.toml").toString().replace("file://", "")];
             matugenProcess.running = true;
@@ -194,12 +194,12 @@ PanelWindow {
         path: wallpaperDir
         watchChanges: true
         printErrors: false
-        
+
         onFileChanged: {
             console.log("Wallpaper directory changed, rescanning...");
             scanWallpapers.running = true;
         }
-        
+
         // Remove onLoadFailed to prevent premature fallback activation
     }
 
@@ -210,7 +210,9 @@ PanelWindow {
 
         stdout: StdioCollector {
             onStreamFinished: {
-                var files = text.trim().split("\n").filter(function(f) { return f.length > 0; });
+                var files = text.trim().split("\n").filter(function (f) {
+                    return f.length > 0;
+                });
                 if (files.length === 0) {
                     console.log("No wallpapers found in main directory, using fallback");
                     usingFallback = true;
@@ -222,7 +224,7 @@ PanelWindow {
                     if (JSON.stringify(newFiles) !== JSON.stringify(wallpaperPaths)) {
                         console.log("Wallpaper directory updated. Found", newFiles.length, "images");
                         wallpaperPaths = newFiles;
-                        
+
                         // Initialize wallpaper selection
                         if (wallpaperPaths.length > 0 && !initialLoadCompleted) {
                             console.log("DEBUG: Initializing wallpaper selection");
@@ -272,13 +274,15 @@ PanelWindow {
 
         stdout: StdioCollector {
             onStreamFinished: {
-                var files = text.trim().split("\n").filter(function(f) { return f.length > 0; });
+                var files = text.trim().split("\n").filter(function (f) {
+                    return f.length > 0;
+                });
                 console.log("Using fallback wallpapers. Found", files.length, "images");
-                
+
                 // Only use fallback if we don't already have main wallpapers loaded
                 if (usingFallback) {
                     wallpaperPaths = files.sort();
-                    
+
                     // Initialize fallback wallpaper selection
                     if (wallpaperPaths.length > 0 && !initialLoadCompleted) {
                         currentIndex = 0;
@@ -334,8 +338,9 @@ PanelWindow {
         Loader {
             anchors.fill: parent
             sourceComponent: {
-                if (!parent.source) return null;
-                
+                if (!parent.source)
+                    return null;
+
                 var fileType = getFileType(parent.source);
                 if (fileType === 'image') {
                     return staticImageComponent;
@@ -344,7 +349,7 @@ PanelWindow {
                 }
                 return staticImageComponent; // fallback
             }
-            
+
             property string sourceFile: parent.source
         }
 
