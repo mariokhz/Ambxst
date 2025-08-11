@@ -13,6 +13,7 @@ Rectangle {
     radius: Config.roundness > 0 ? Config.roundness : 0
 
     property string searchText: ""
+    readonly property int gridRows: 3
     readonly property int gridColumns: 5
 
     function focusSearch() {
@@ -99,7 +100,7 @@ Rectangle {
             border.width: 0
             clip: true
 
-            readonly property int wallpaperHeight: height / 3  // Siempre 3 filas
+            readonly property int wallpaperHeight: height / gridRows
             readonly property int wallpaperWidth: wallpaperHeight  // Mantener cuadrados
 
             ScrollView {
