@@ -326,7 +326,7 @@ PanelWindow {
                 NumberAnimation {
                     target: wallImage
                     property: "scale"
-                    to: 1.05
+                    to: 1.01
                     duration: Config.animDuration
                     easing.type: Easing.OutCubic
                 }
