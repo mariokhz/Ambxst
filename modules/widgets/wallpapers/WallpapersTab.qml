@@ -212,23 +212,32 @@ Rectangle {
                             let currentRow = Math.floor(currentIndex / gridColumns);
                             let itemY = currentRow * cellHeight;
                             let itemCenterY = itemY + cellHeight / 2;
-
+                            
                             // Calcular posición ideal del scroll para centrar el elemento
                             let scrollViewHeight = scrollView.height;
                             let contentHeight = Math.ceil(count / gridColumns) * cellHeight;
                             let targetScrollY = itemCenterY - scrollViewHeight / 2;
-
+                            
                             // Asegurar que está dentro de los límites
                             targetScrollY = Math.max(0, Math.min(targetScrollY, contentHeight - scrollViewHeight));
-
-                            // Aplicar el scroll
+                            
+                            // Aplicar el scroll con animación suave
                             if (contentHeight > scrollViewHeight) {
                                 let normalizedPosition = targetScrollY / (contentHeight - scrollViewHeight);
-                                scrollView.ScrollBar.vertical.position = Math.max(0, Math.min(1, normalizedPosition));
+                                scrollPositionAnimation.to = Math.max(0, Math.min(1, normalizedPosition));
+                                scrollPositionAnimation.start();
                             }
                         }
                     }
 
+                    // Animación para el scroll suave
+                    NumberAnimation {
+                        id: scrollPositionAnimation
+                        target: scrollView.ScrollBar.vertical
+                        property: "position"
+                        duration: Config.animDuration / 2
+                        easing.type: Easing.OutQuart
+                    }
                     // Sincronizar currentIndex con selectedIndex
                     onCurrentIndexChanged: {
                         if (currentIndex !== selectedIndex) {
