@@ -11,6 +11,7 @@ Item {
     
     // Señales para diferentes tipos de animación
     signal destroyFinished()
+    signal appearFinished()
     
     // Animación de destrucción (actual destroyAnimation)
     ParallelAnimation {
@@ -49,12 +50,55 @@ Item {
         }
     }
     
+    // Animación de aparición (inversa a destroyAnimation)
+    ParallelAnimation {
+        id: appearAnimation
+        running: false
+        
+        NumberAnimation {
+            target: root.targetItem?.anchors
+            property: "leftMargin"
+            from: root.parentWidth / 8 + root.dismissOvershoot
+            to: 0
+            duration: Config.animDuration
+            easing.type: Easing.OutBack
+            easing.overshoot: 1.1
+        }
+        
+        NumberAnimation {
+            target: root.targetItem
+            property: "scale"
+            from: 0.8
+            to: 1.0
+            duration: Config.animDuration
+            easing.type: Easing.OutQuad
+        }
+        
+        NumberAnimation {
+            target: root.targetItem
+            property: "opacity"
+            from: 0.0
+            to: 1.0
+            duration: Config.animDuration
+            easing.type: Easing.OutQuad
+        }
+        
+        onFinished: {
+            root.appearFinished();
+        }
+    }
+    
     // Función pública para ejecutar animación de destrucción
     function startDestroy() {
         destroyAnimation.running = true;
     }
     
-    // Placeholder para futuras animaciones como:
+    // Función pública para ejecutar animación de aparición
+    function startAppear() {
+        appearAnimation.running = true;
+    }
+    
+    // Futuras animaciones:
     // function startSlideIn() { ... }
     // function startBounce() { ... }
     // function startFadeIn() { ... }
