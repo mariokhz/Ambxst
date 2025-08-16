@@ -235,7 +235,7 @@ Rectangle {
                         border.color: Colors.adapter.primary
                         border.width: 2
                         visible: selectedIndex >= 0
-                        z: 4
+                        z: 10
 
                         // Borde interior original
                         Rectangle {
@@ -253,7 +253,7 @@ Rectangle {
                                 anchors.right: parent.right
                                 height: 24
                                 color: Colors.background
-                                z: 10
+                                z: 6
                                 clip: true
 
                                 property var currentItem: wallpaperGrid.currentItem

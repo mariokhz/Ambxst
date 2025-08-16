@@ -3,7 +3,7 @@ import qs.modules.widgets.dashboard
 import qs.modules.services
 
 Item {
-    implicitWidth: 940
+    implicitWidth: 1000
     implicitHeight: 430
 
     Dashboard {
