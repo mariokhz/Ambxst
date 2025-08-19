@@ -15,6 +15,12 @@ Rectangle {
     property int selectedIndex: GlobalStates.launcherSelectedIndex
     signal itemSelected
 
+    onSelectedIndexChanged: {
+        if (selectedIndex === -1 && resultsList.count > 0) {
+            resultsList.positionViewAtIndex(0, ListView.Beginning);
+        }
+    }
+
     function clearSearch() {
         GlobalStates.clearLauncherState();
         searchInput.focusInput();
