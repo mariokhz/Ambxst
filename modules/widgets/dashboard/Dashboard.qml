@@ -18,11 +18,11 @@ NotchAnimationBehavior {
         property int currentTab: 0
     }
 
-    readonly property var tabModel: ["", "", "", ""]
+    readonly property var tabModel: ["", "", "", "", ""]
     readonly property int tabCount: tabModel.length
     readonly property int tabSpacing: 8
 
-    readonly property int tabWidth: 40
+    readonly property int tabWidth: 48
     readonly property real nonAnimWidth: 400 + tabWidth + 16 // contenido + pestañas + spacing
 
     implicitWidth: nonAnimWidth
@@ -46,7 +46,8 @@ NotchAnimationBehavior {
             Rectangle {
                 id: tabHighlight
                 width: parent.width
-                height: (parent.height - root.tabSpacing * (root.tabCount - 1)) / root.tabCount
+                height: width
+                // height: (parent.height - root.tabSpacing * (root.tabCount - 1)) / root.tabCount
                 x: 0
                 y: root.state.currentTab * (height + root.tabSpacing)
                 color: Qt.rgba(Colors.surfaceContainer.r, Colors.surfaceContainer.g, Colors.surfaceContainer.b, Config.opacity)
@@ -76,7 +77,8 @@ NotchAnimationBehavior {
                         text: modelData
                         flat: true
                         width: tabsContainer.width
-                        implicitHeight: (tabsContainer.height - root.tabSpacing * (root.tabCount - 1)) / root.tabCount
+                        height: width
+                        // implicitHeight: (tabsContainer.height - root.tabSpacing * (root.tabCount - 1)) / root.tabCount
 
                         background: Rectangle {
                             color: "transparent"
@@ -106,7 +108,7 @@ NotchAnimationBehavior {
 
                         Behavior on scale {
                             NumberAnimation {
-                                duration: Config.animDuration / 3
+                                duration: Config.animDuration / 2
                                 easing.type: Easing.OutCubic
                             }
                         }
@@ -174,6 +176,12 @@ NotchAnimationBehavior {
                     id: wallpapersPane
                     sourceComponent: wallpapersComponent
                 }
+
+                // Assistant Tab
+                DashboardPane {
+                    id: assistantPane
+                    sourceComponent: assistantComponent
+                }
             }
         }
     }
@@ -224,5 +232,10 @@ NotchAnimationBehavior {
     Component {
         id: wallpapersComponent
         WallpapersTab {}
+    }
+
+    Component {
+        id: assistantComponent
+        AssistantTab {}
     }
 }
