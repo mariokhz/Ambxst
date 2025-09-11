@@ -263,6 +263,23 @@ Rectangle {
     implicitHeight: mainLayout.implicitHeight
     color: "transparent"
 
+    // MouseArea global para detectar clicks en cualquier espacio vacío
+    MouseArea {
+        anchors.fill: parent
+        enabled: root.deleteMode || root.renameMode
+        z: -10 // Muy por debajo para que no interfiera con otros componentes
+
+        onClicked: {
+            if (root.deleteMode) {
+                console.log("DEBUG: Clicked on empty space globally - canceling delete mode");
+                root.cancelDeleteMode();
+            } else if (root.renameMode) {
+                console.log("DEBUG: Clicked on empty space globally - canceling rename mode");
+                root.cancelRenameMode();
+            }
+        }
+    }
+
     Behavior on height {
         NumberAnimation {
             duration: Config.animDuration
@@ -1191,6 +1208,23 @@ Rectangle {
 
             highlightMoveDuration: Config.animDuration / 2
             highlightMoveVelocity: -1
+        }
+    }
+
+    // MouseArea para detectar clicks en espacios vacíos y cancelar modos
+    MouseArea {
+        anchors.fill: resultsList
+        enabled: root.deleteMode || root.renameMode
+        z: -1 // Debajo de los items para que no interfiera con sus MouseAreas
+        
+        onClicked: {
+            if (root.deleteMode) {
+                console.log("DEBUG: Clicked on empty space - canceling delete mode");
+                root.cancelDeleteMode();
+            } else if (root.renameMode) {
+                console.log("DEBUG: Clicked on empty space - canceling rename mode");
+                root.cancelRenameMode();
+            }
         }
     }
 

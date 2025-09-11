@@ -309,6 +309,23 @@ Rectangle {
     implicitHeight: mainLayout.implicitHeight
     color: "transparent"
 
+    // MouseArea global para detectar clicks en cualquier espacio vacío
+    MouseArea {
+        anchors.fill: parent
+        enabled: root.deleteMode || root.imageDeleteMode
+        z: -10 // Muy por debajo para que no interfiera con otros componentes
+        
+        onClicked: {
+            if (root.deleteMode) {
+                console.log("DEBUG: Clicked on empty space globally - canceling delete mode");
+                root.cancelDeleteMode();
+            } else if (root.imageDeleteMode) {
+                console.log("DEBUG: Clicked on empty space globally - canceling image delete mode");
+                root.cancelImageDeleteMode();
+            }
+        }
+    }
+
     Behavior on height {
         NumberAnimation {
             duration: Config.animDuration
@@ -1030,6 +1047,23 @@ Rectangle {
                         highlightMoveDuration: Config.animDuration / 2
                         highlightMoveVelocity: -1
                     }
+
+                    // MouseArea para detectar clicks en espacios vacíos de imágenes y cancelar modos
+                    MouseArea {
+                        anchors.fill: imageResultsList
+                        enabled: root.deleteMode || root.imageDeleteMode
+                        z: -1 // Debajo de los items para que no interfiera con sus MouseAreas
+                        
+                        onClicked: {
+                            if (root.deleteMode) {
+                                console.log("DEBUG: Clicked on empty space in images - canceling delete mode");
+                                root.cancelDeleteMode();
+                            } else if (root.imageDeleteMode) {
+                                console.log("DEBUG: Clicked on empty space in images - canceling image delete mode");
+                                root.cancelImageDeleteMode();
+                            }
+                        }
+                    }
                 }
             }
 
@@ -1494,6 +1528,23 @@ Rectangle {
 
                     highlightMoveDuration: Config.animDuration / 2
                     highlightMoveVelocity: -1
+                }
+
+                // MouseArea para detectar clicks en espacios vacíos de texto y cancelar modos
+                MouseArea {
+                    anchors.fill: textResultsList
+                    enabled: root.deleteMode || root.imageDeleteMode
+                    z: -1 // Debajo de los items para que no interfiera con sus MouseAreas
+                    
+                    onClicked: {
+                        if (root.deleteMode) {
+                            console.log("DEBUG: Clicked on empty space in text - canceling delete mode");
+                            root.cancelDeleteMode();
+                        } else if (root.imageDeleteMode) {
+                            console.log("DEBUG: Clicked on empty space in text - canceling image delete mode");
+                            root.cancelImageDeleteMode();
+                        }
+                    }
                 }
 
                 // Mensaje cuando no hay elementos
