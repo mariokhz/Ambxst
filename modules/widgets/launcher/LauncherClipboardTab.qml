@@ -50,6 +50,12 @@ Rectangle {
     property int originalSelectedImageIndex: -1
     property int imageDeleteButtonIndex: 0 // 0 = cancel, 1 = trash
 
+    // Options menu state
+    property bool textOptionsMenuOpen: false
+    property bool imageOptionsMenuOpen: false
+    property int textMenuItemIndex: -1
+    property int imageMenuItemIndex: -1
+
     property int imgSize: 78
 
     signal itemSelected
@@ -602,7 +608,7 @@ Rectangle {
                         orientation: ListView.Horizontal
                         spacing: 8
                         clip: true
-                        interactive: !root.deleteMode && !root.imageDeleteMode
+                        interactive: !root.deleteMode && !root.imageDeleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen
 
                         model: root.imageItems
                         currentIndex: root.selectedImageIndex
@@ -641,6 +647,7 @@ Rectangle {
                                 id: imageMouseArea
                                 anchors.fill: parent
                                 hoverEnabled: true
+                                enabled: !root.deleteMode && !root.imageDeleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                                 // Variables para gestos táctiles y long press
@@ -653,7 +660,7 @@ Rectangle {
 
                                 onEntered: {
                                     // Solo cambiar la selección si no estamos en ningún modo activo
-                                    if (!root.imageDeleteMode && !root.deleteMode) {
+                                    if (!root.imageDeleteMode && !root.deleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen) {
                                         if (!root.isImageSectionFocused) {
                                             root.isImageSectionFocused = true;
                                             root.selectedIndex = -1;
@@ -699,6 +706,8 @@ Rectangle {
 
                                         // Click derecho - mostrar menú contextual
                                         console.log("DEBUG: Right click detected on image, showing context menu");
+                                        root.imageMenuItemIndex = index;
+                                        root.imageOptionsMenuOpen = true;
                                         imageContextMenu.popup(mouse.x, mouse.y);
                                     }
                                 }
@@ -752,6 +761,11 @@ Rectangle {
                                 // Menú contextual para imágenes
                                 OptionsMenu {
                                     id: imageContextMenu
+
+                                    onClosed: {
+                                        root.imageOptionsMenuOpen = false;
+                                        root.imageMenuItemIndex = -1;
+                                    }
 
                                     items: [
                                         {
@@ -866,7 +880,7 @@ Rectangle {
                             color: "transparent"
                             z: 5
                             radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-                            visible: root.isImageSectionFocused
+                            visible: root.isImageSectionFocused && (root.imageOptionsMenuOpen ? root.selectedImageIndex === root.imageMenuItemIndex : true)
 
                             Rectangle {
                                 anchors.fill: parent
@@ -1053,7 +1067,7 @@ Rectangle {
                         anchors.fill: imageResultsList
                         enabled: root.deleteMode || root.imageDeleteMode
                         z: -1 // Debajo de los items para que no interfiera con sus MouseAreas
-                        
+
                         onClicked: {
                             if (root.deleteMode) {
                                 console.log("DEBUG: Clicked on empty space in images - canceling delete mode");
@@ -1061,6 +1075,21 @@ Rectangle {
                             } else if (root.imageDeleteMode) {
                                 console.log("DEBUG: Clicked on empty space in images - canceling image delete mode");
                                 root.cancelImageDeleteMode();
+                            }
+                        }
+                    }
+
+                    // MouseArea para cerrar el menú contextual de imágenes al hacer click fuera
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: root.imageOptionsMenuOpen
+                        z: 5 // Por encima de los items pero por debajo del menú
+
+                        onClicked: {
+                            if (root.imageOptionsMenuOpen) {
+                                console.log("DEBUG: Clicked outside image menu - closing options menu");
+                                root.imageOptionsMenuOpen = false;
+                                root.imageMenuItemIndex = -1;
                             }
                         }
                     }
@@ -1126,11 +1155,12 @@ Rectangle {
                         color: "transparent"
                         radius: 16
 
-                        MouseArea {
-                            id: mouseArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            MouseArea {
+                                id: mouseArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                enabled: !root.deleteMode && !root.imageDeleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                             // Variables para gestos táctiles
                             property real startX: 0
@@ -1142,7 +1172,7 @@ Rectangle {
 
                             onEntered: {
                                 // Solo cambiar la selección si no estamos en ningún modo activo
-                                if (!root.deleteMode && !root.imageDeleteMode) {
+                                if (!root.deleteMode && !root.imageDeleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen) {
                                     if (root.isImageSectionFocused) {
                                         root.isImageSectionFocused = false;
                                         root.selectedImageIndex = -1;
@@ -1187,6 +1217,8 @@ Rectangle {
 
                                     // Click derecho - mostrar menú contextual
                                     console.log("DEBUG: Right click detected, showing context menu");
+                                    root.textMenuItemIndex = index;
+                                    root.textOptionsMenuOpen = true;
                                     contextMenu.popup(mouse.x, mouse.y);
                                 }
                             }
@@ -1404,6 +1436,11 @@ Rectangle {
                         OptionsMenu {
                             id: contextMenu
 
+                            onClosed: {
+                                root.textOptionsMenuOpen = false;
+                                root.textMenuItemIndex = -1;
+                            }
+
                             items: [
                                 {
                                     text: "Copy",
@@ -1516,7 +1553,7 @@ Rectangle {
                     highlight: Rectangle {
                         color: root.deleteMode ? Colors.adapter.error : Colors.adapter.primary
                         radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-                        visible: root.selectedIndex >= 0 && !root.isImageSectionFocused
+                        visible: root.selectedIndex >= 0 && !root.isImageSectionFocused && (root.textOptionsMenuOpen ? root.selectedIndex === root.textMenuItemIndex : true)
 
                         Behavior on color {
                             ColorAnimation {
@@ -1535,7 +1572,7 @@ Rectangle {
                     anchors.fill: textResultsList
                     enabled: root.deleteMode || root.imageDeleteMode
                     z: -1 // Debajo de los items para que no interfiera con sus MouseAreas
-                    
+
                     onClicked: {
                         if (root.deleteMode) {
                             console.log("DEBUG: Clicked on empty space in text - canceling delete mode");
@@ -1543,6 +1580,21 @@ Rectangle {
                         } else if (root.imageDeleteMode) {
                             console.log("DEBUG: Clicked on empty space in text - canceling image delete mode");
                             root.cancelImageDeleteMode();
+                        }
+                    }
+                }
+
+                // MouseArea para cerrar el menú contextual de texto al hacer click fuera
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: root.textOptionsMenuOpen
+                    z: 5 // Por encima de los items pero por debajo del menú
+
+                    onClicked: {
+                        if (root.textOptionsMenuOpen) {
+                            console.log("DEBUG: Clicked outside text menu - closing options menu");
+                            root.textOptionsMenuOpen = false;
+                            root.textMenuItemIndex = -1;
                         }
                     }
                 }

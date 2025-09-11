@@ -34,6 +34,10 @@ Rectangle {
     property int renameButtonIndex: 0 // 0 = cancel, 1 = confirm
     property string pendingRenamedSession: "" // Track session to select after rename
 
+    // Options menu state
+    property bool optionsMenuOpen: false
+    property int menuItemIndex: -1
+
     signal itemSelected
 
     // Model para hacer la lista observable
@@ -527,7 +531,7 @@ Rectangle {
             Layout.preferredHeight: 5 * 48
             visible: true
             clip: true
-            interactive: !root.deleteMode && !root.renameMode
+            interactive: !root.deleteMode && !root.renameMode && !root.optionsMenuOpen
 
             model: root.filteredSessions
             currentIndex: root.selectedIndex
@@ -557,7 +561,7 @@ Rectangle {
                     id: mouseArea
                     anchors.fill: parent
                     hoverEnabled: true
-                    enabled: !isInDeleteMode && !isInRenameMode
+                    enabled: !isInDeleteMode && !isInRenameMode && !root.optionsMenuOpen
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                     // Variables para gestos táctiles
@@ -567,8 +571,8 @@ Rectangle {
                     property bool longPressTriggered: false
 
                     onEntered: {
-                        // Solo cambiar la selección si no estamos en modo delete o rename
-                        if (!root.deleteMode && !root.renameMode) {
+                        // Solo cambiar la selección si no estamos en modo delete, rename o con menú abierto
+                        if (!root.deleteMode && !root.renameMode && !root.optionsMenuOpen) {
                             root.selectedIndex = index;
                             resultsList.currentIndex = index;
                         }
@@ -613,11 +617,13 @@ Rectangle {
                                 return;
                             }
 
-                            // Click derecho - mostrar menú contextual (solo para sesiones reales)
-                            if (!modelData.isCreateButton && !modelData.isCreateSpecificButton) {
-                                console.log("DEBUG: Right click detected, showing context menu");
-                                contextMenu.popup(mouse.x, mouse.y);
-                            }
+                             // Click derecho - mostrar menú contextual (solo para sesiones reales)
+                             if (!modelData.isCreateButton && !modelData.isCreateSpecificButton) {
+                                 console.log("DEBUG: Right click detected, showing context menu");
+                                 root.menuItemIndex = index;
+                                 root.optionsMenuOpen = true;
+                                 contextMenu.popup(mouse.x, mouse.y);
+                             }
                         }
                     }
 
@@ -679,6 +685,11 @@ Rectangle {
                 // Menú contextual usando el componente reutilizable
                 OptionsMenu {
                     id: contextMenu
+
+                    onClosed: {
+                        root.optionsMenuOpen = false;
+                        root.menuItemIndex = -1;
+                    }
 
                     items: [
                         {
@@ -1189,7 +1200,7 @@ Rectangle {
                     }
                 }
                 radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-                visible: root.selectedIndex >= 0
+                visible: root.selectedIndex >= 0 && (root.optionsMenuOpen ? root.selectedIndex === root.menuItemIndex : true)
 
                 Behavior on color {
                     ColorAnimation {
@@ -1216,7 +1227,7 @@ Rectangle {
         anchors.fill: resultsList
         enabled: root.deleteMode || root.renameMode
         z: -1 // Debajo de los items para que no interfiera con sus MouseAreas
-        
+
         onClicked: {
             if (root.deleteMode) {
                 console.log("DEBUG: Clicked on empty space - canceling delete mode");
@@ -1224,6 +1235,21 @@ Rectangle {
             } else if (root.renameMode) {
                 console.log("DEBUG: Clicked on empty space - canceling rename mode");
                 root.cancelRenameMode();
+            }
+        }
+    }
+
+    // MouseArea para cerrar el menú contextual al hacer click fuera
+    MouseArea {
+        anchors.fill: parent
+        enabled: root.optionsMenuOpen
+        z: 5 // Por encima de los items pero por debajo del menú
+
+        onClicked: {
+            if (root.optionsMenuOpen) {
+                console.log("DEBUG: Clicked outside menu - closing options menu");
+                root.optionsMenuOpen = false;
+                root.menuItemIndex = -1;
             }
         }
     }
