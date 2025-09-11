@@ -510,6 +510,7 @@ Rectangle {
             Layout.preferredHeight: 5 * 48
             visible: true
             clip: true
+            interactive: !root.deleteMode && !root.renameMode
 
             model: root.filteredSessions
             currentIndex: root.selectedIndex

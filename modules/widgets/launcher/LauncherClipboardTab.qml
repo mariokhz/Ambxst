@@ -361,19 +361,23 @@ Rectangle {
                         // En modo eliminar, Enter equivale a cancelar
                         console.log("DEBUG: Enter in delete mode - canceling");
                         root.cancelDeleteMode();
+                    } else if (root.imageDeleteMode) {
+                        // En modo eliminar imagen, Enter equivale a cancelar
+                        console.log("DEBUG: Enter in image delete mode - canceling");
+                        root.cancelImageDeleteMode();
                     } else {
                         console.log("DEBUG: Enter pressed! searchText:", root.searchText, "selectedIndex:", root.selectedIndex);
 
                         if (root.selectedIndex >= 0 && root.selectedIndex < root.textItems.length) {
                             let selectedItem = root.textItems[root.selectedIndex];
                             console.log("DEBUG: Selected item:", selectedItem);
-                            if (selectedItem && !root.deleteMode) {
+                            if (selectedItem && !root.deleteMode && !root.imageDeleteMode) {
                                 root.copyToClipboard(selectedItem.id);
                             }
                         } else if (root.isImageSectionFocused && root.selectedImageIndex >= 0 && root.selectedImageIndex < root.imageItems.length) {
                             let selectedImage = root.imageItems[root.selectedImageIndex];
                             console.log("DEBUG: Selected image:", selectedImage);
-                            if (selectedImage && !root.deleteMode) {
+                            if (selectedImage && !root.deleteMode && !root.imageDeleteMode) {
                                 root.copyToClipboard(selectedImage.id);
                             }
                         } else {
@@ -581,6 +585,7 @@ Rectangle {
                         orientation: ListView.Horizontal
                         spacing: 8
                         clip: true
+                        interactive: !root.deleteMode && !root.imageDeleteMode
 
                         model: root.imageItems
                         currentIndex: root.selectedImageIndex
@@ -1067,6 +1072,7 @@ Rectangle {
                     anchors.fill: parent
                     visible: ClipboardService.items.length > 0
                     clip: true
+                    interactive: !root.deleteMode && !root.imageDeleteMode
 
                     model: root.textItems
                     currentIndex: root.selectedIndex
