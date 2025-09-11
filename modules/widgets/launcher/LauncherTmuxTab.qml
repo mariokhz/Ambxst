@@ -1239,20 +1239,6 @@ Rectangle {
         }
     }
 
-    // MouseArea para cerrar el menú contextual al hacer click fuera
-    MouseArea {
-        anchors.fill: parent
-        enabled: root.optionsMenuOpen
-        z: 5 // Por encima de los items pero por debajo del menú
-
-        onClicked: {
-            if (root.optionsMenuOpen) {
-                console.log("DEBUG: Clicked outside menu - closing options menu");
-                root.optionsMenuOpen = false;
-                root.menuItemIndex = -1;
-            }
-        }
-    }
 
     Component.onCompleted: {
         // Cargar sesiones de tmux al inicializar

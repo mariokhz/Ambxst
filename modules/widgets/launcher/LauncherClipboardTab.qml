@@ -1079,20 +1079,6 @@ Rectangle {
                         }
                     }
 
-                    // MouseArea para cerrar el menú contextual de imágenes al hacer click fuera
-                    MouseArea {
-                        anchors.fill: parent
-                        enabled: root.imageOptionsMenuOpen
-                        z: 5 // Por encima de los items pero por debajo del menú
-
-                        onClicked: {
-                            if (root.imageOptionsMenuOpen) {
-                                console.log("DEBUG: Clicked outside image menu - closing options menu");
-                                root.imageOptionsMenuOpen = false;
-                                root.imageMenuItemIndex = -1;
-                            }
-                        }
-                    }
                 }
             }
 
@@ -1584,20 +1570,6 @@ Rectangle {
                     }
                 }
 
-                // MouseArea para cerrar el menú contextual de texto al hacer click fuera
-                MouseArea {
-                    anchors.fill: parent
-                    enabled: root.textOptionsMenuOpen
-                    z: 5 // Por encima de los items pero por debajo del menú
-
-                    onClicked: {
-                        if (root.textOptionsMenuOpen) {
-                            console.log("DEBUG: Clicked outside text menu - closing options menu");
-                            root.textOptionsMenuOpen = false;
-                            root.textMenuItemIndex = -1;
-                        }
-                    }
-                }
 
                 // Mensaje cuando no hay elementos
                 Column {
