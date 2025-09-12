@@ -47,7 +47,7 @@ PanelWindow {
         var fileName = filePath.split('/').pop();
         var fileType = getFileType(filePath);
         var cacheDir = "";
-        
+
         if (fileType === 'video') {
             cacheDir = "video_thumbnails";
         } else if (fileType === 'image') {
@@ -57,7 +57,7 @@ PanelWindow {
         } else {
             return ""; // Unknown type
         }
-        
+
         // Include original extension in thumbnail name to avoid collisions
         // Format: originalname.ext.jpg (e.g., fire-skull.png.jpg)
         var thumbnailName = fileName + ".jpg";
@@ -66,26 +66,26 @@ PanelWindow {
 
     function getDisplaySource(filePath) {
         var fileType = getFileType(filePath);
-        
+
         // Para el display (WallpapersTab), siempre usar thumbnails si están disponibles
         if (fileType === 'video' || fileType === 'image' || fileType === 'gif') {
             var thumbnailPath = getThumbnailPath(filePath);
             // Verificar si el thumbnail existe (esto es solo para debugging, QML manejará el fallback)
             return thumbnailPath;
         }
-        
+
         // Fallback al archivo original si no es un tipo soportado
         return filePath;
     }
 
     function getColorSource(filePath) {
         var fileType = getFileType(filePath);
-        
+
         // Para generación de colores: solo videos usan thumbnails
         if (fileType === 'video') {
             return getThumbnailPath(filePath);
         }
-        
+
         // Imágenes y GIFs usan el archivo original para colores
         return filePath;
     }
@@ -104,11 +104,11 @@ PanelWindow {
 
             var fileType = getFileType(currentWallpaper);
             var matugenSource = getColorSource(currentWallpaper);
-            
+
             console.log("Using source for matugen:", matugenSource, "(type:", fileType + ")");
 
             // Ejecutar matugen con configuración específica
-            var command = ["matugen", "image", matugenSource, "-c", Qt.resolvedUrl("../../../assets/matugen/config.toml").toString().replace("file://", "")];
+            var command = ["matugen", "image", matugenSource, "-c", Qt.resolvedUrl("../../../../assets/matugen/config.toml").toString().replace("file://", "")];
             if (Config.theme.lightMode) {
                 command.push("-m", "light");
             }
@@ -158,10 +158,10 @@ PanelWindow {
 
     Component.onCompleted: {
         GlobalStates.wallpaperManager = wallpaper;
-        
+
         // Ejecutar script de generación de thumbnails
         thumbnailGeneratorScript.running = true;
-        
+
         // Initial scan
         scanWallpapers.running = true;
         // Start directory monitoring
@@ -249,9 +249,9 @@ PanelWindow {
             console.log("Matugen with config finished, running normal matugen...");
             var fileType = getFileType(currentWallpaper);
             var matugenSource = getColorSource(currentWallpaper);
-            
+
             console.log("Using source for normal matugen:", matugenSource, "(type:", fileType + ")");
-            
+
             var command = ["matugen", "image", matugenSource];
             if (Config.theme.lightMode) {
                 command.push("-m", "light");
@@ -309,7 +309,7 @@ PanelWindow {
             }
         }
 
-        onExited: function(exitCode) {
+        onExited: function (exitCode) {
             if (exitCode === 0) {
                 console.log("✅ Video thumbnails generated successfully");
             } else {
@@ -534,7 +534,7 @@ PanelWindow {
             VideoOutput {
                 fillMode: VideoOutput.PreserveAspectCrop
                 property string videoSource: parent.sourceFile || ""
-                
+
                 MediaPlayer {
                     id: mediaPlayer
                     source: ""
@@ -543,7 +543,7 @@ PanelWindow {
                         muted: true
                     }
                     autoPlay: false
-                    
+
                     onMediaStatusChanged: {
                         console.log("MediaPlayer status changed:", mediaStatus, "for:", source);
                         if (mediaStatus === MediaPlayer.LoadedMedia) {
@@ -553,12 +553,12 @@ PanelWindow {
                             console.warn("Invalid media:", source);
                         }
                     }
-                    
-                    onErrorOccurred: function(error, errorString) {
+
+                    onErrorOccurred: function (error, errorString) {
                         console.warn("MediaPlayer error:", error, errorString);
                     }
                 }
-                
+
                 onVideoSourceChanged: {
                     if (videoSource) {
                         var newSource = "file://" + videoSource;
@@ -567,18 +567,18 @@ PanelWindow {
                         mediaPlayer.source = newSource;
                     }
                 }
-                
+
                 Component.onCompleted: {
                     console.log("VideoOutput created for:", videoSource);
                     mediaPlayer.videoOutput = this;
-                    
+
                     if (videoSource) {
                         var initialSource = "file://" + videoSource;
                         console.log("Initial video load:", initialSource);
                         mediaPlayer.source = initialSource;
                     }
                 }
-                
+
                 Component.onDestruction: {
                     console.log("VideoOutput destroyed, stopping playback");
                     if (mediaPlayer) {

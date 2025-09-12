@@ -5,7 +5,7 @@ import Quickshell
 import qs.modules.bar
 import qs.modules.bar.workspaces
 import qs.modules.notifications
-import qs.modules.widgets.wallpapers
+import qs.modules.widgets.dashboard.wallpapers
 import qs.modules.notch
 import qs.modules.services
 import qs.modules.corners

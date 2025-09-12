@@ -6,9 +6,8 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.globals
 import qs.modules.services
-import qs.modules.widgets.overview
 import qs.modules.notch
-import qs.modules.widgets.wallpapers
+import qs.modules.widgets.dashboard.wallpapers
 import qs.config
 
 NotchAnimationBehavior {
