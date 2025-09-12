@@ -7,7 +7,11 @@ import qs.modules.components
 import qs.modules.globals
 import qs.modules.services
 import qs.modules.notch
+import qs.modules.widgets.dashboard.widgets
+import qs.modules.widgets.dashboard.pins
+import qs.modules.widgets.dashboard.kanban
 import qs.modules.widgets.dashboard.wallpapers
+import qs.modules.widgets.dashboard.assistant
 import qs.config
 
 NotchAnimationBehavior {
