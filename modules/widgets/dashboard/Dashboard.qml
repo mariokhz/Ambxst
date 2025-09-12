@@ -39,6 +39,17 @@ NotchAnimationBehavior {
         root.state.currentTab = GlobalStates.dashboardCurrentTab;
     }
 
+    // Focus search input when dashboard opens to wallpapers tab
+    onIsVisibleChanged: {
+        if (isVisible && GlobalStates.dashboardCurrentTab === 3) {
+            Qt.callLater(() => {
+                if (stack.currentItem && stack.currentItem.focusSearch) {
+                    stack.currentItem.focusSearch();
+                }
+            });
+        }
+    }
+
     // Escuchar cambios en dashboardCurrentTab para navegar automáticamente
     Connections {
         target: GlobalStates
