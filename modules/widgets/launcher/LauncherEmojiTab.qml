@@ -543,12 +543,12 @@ Rectangle {
                     model: recentEmojis
                     currentIndex: root.selectedRecentIndex
 
-                     onCurrentIndexChanged: {
-                         if (currentIndex !== root.selectedRecentIndex && root.isRecentFocused) {
-                             root.selectedRecentIndex = currentIndex;
-                             root.lastSelectedRecentIndex = currentIndex; // Remember position
-                         }
-                     }
+                    onCurrentIndexChanged: {
+                        if (currentIndex !== root.selectedRecentIndex && root.isRecentFocused) {
+                            root.selectedRecentIndex = currentIndex;
+                            root.lastSelectedRecentIndex = currentIndex; // Remember position
+                        }
+                    }
 
                     delegate: Rectangle {
                         required property var modelData
@@ -570,16 +570,16 @@ Rectangle {
                             anchors.fill: parent
                             hoverEnabled: true
 
-                             onEntered: {
-                                 if (!root.isRecentFocused) {
-                                     root.isRecentFocused = true;
-                                     root.selectedIndex = -1;
-                                     emojiList.currentIndex = -1;
-                                 }
-                                 root.selectedRecentIndex = index;
-                                 root.lastSelectedRecentIndex = index; // Remember position
-                                 recentList.currentIndex = index;
-                             }
+                            onEntered: {
+                                if (!root.isRecentFocused) {
+                                    root.isRecentFocused = true;
+                                    root.selectedIndex = -1;
+                                    emojiList.currentIndex = -1;
+                                }
+                                root.selectedRecentIndex = index;
+                                root.lastSelectedRecentIndex = index; // Remember position
+                                recentList.currentIndex = index;
+                            }
 
                             onClicked: {
                                 root.copyEmoji(modelData);
