@@ -118,7 +118,7 @@ Item {
 
     Rectangle {
         id: background
-        width: parent.width - (onlyNotification ? dedicatedButtonsColumn.width + 8 : 0)
+        width: parent.width
         anchors.left: parent.left
         radius: 8
         anchors.leftMargin: root.xOffset
@@ -133,7 +133,7 @@ Item {
 
         color: (expanded && !onlyNotification) ? (notificationObject.urgency == NotificationUrgency.Critical) ? Colors.adapter.error : Colors.surfaceContainerLow : "transparent"
 
-        implicitHeight: expanded ? (contentColumn.implicitHeight + padding * 2) : (summaryRow.implicitHeight + padding * 2)
+        implicitHeight: expanded ? (contentColumn.implicitHeight + padding * 2) : Math.max(summaryRow.implicitHeight + padding * 2, 32)
 
         Behavior on implicitHeight {
             NumberAnimation {
@@ -162,7 +162,7 @@ Item {
                 Layout.rightMargin: expanded ? 0 : root.padding
                 Layout.topMargin: expanded ? 0 : root.padding
                 Layout.bottomMargin: expanded ? 0 : root.padding
-                implicitHeight: summaryText.implicitHeight + (expanded ? 0 : root.padding * 2)
+                implicitHeight: expanded ? summaryText.implicitHeight : Math.max(summaryText.implicitHeight, 24)
 
                 Text {
                     id: summaryText
@@ -187,9 +187,12 @@ Item {
                     color: Colors.adapter.overBackground
                     elide: Text.ElideRight
                     maximumLineCount: 1
-                    textFormat: Text.StyledText
+                    wrapMode: Text.NoWrap
+                    textFormat: Text.PlainText
                     text: {
-                        return processNotificationBody(notificationObject.body, notificationObject.appName || notificationObject.summary).replace(/\n/g, "<br/>");
+                        // Para vista compacta, remover saltos de línea y mostrar solo texto plano
+                        let cleanText = processNotificationBody(notificationObject.body, notificationObject.appName || notificationObject.summary);
+                        return cleanText.replace(/\n/g, " ").replace(/<[^>]*>/g, "");
                     }
                 }
             }
@@ -210,7 +213,6 @@ Item {
                     font.pixelSize: 14
                     color: Colors.adapter.overBackground
                     wrapMode: Text.Wrap
-                    elide: Text.ElideRight
                     textFormat: Text.RichText
                     text: {
                         return `<style>img{max-width:${notificationBodyText.width}px;}</style>` + `${processNotificationBody(notificationObject.body, notificationObject.appName || notificationObject.summary).replace(/\n/g, "<br/>")}`;
@@ -249,30 +251,7 @@ Item {
                         id: actionRowLayout
                         Layout.alignment: Qt.AlignBottom
 
-                        // Solo mostrar botones de Close y Copy si NO es notificación individual
-                        NotificationActionButton {
-                            visible: !onlyNotification
-                            Layout.fillWidth: true
-                            buttonText: qsTr("Close")
-                            urgency: notificationObject.urgency
-                            implicitWidth: (notificationObject.actions.length == 0) ? ((actionsFlickable.width - actionRowLayout.spacing) / 2) : (contentItem.implicitWidth + leftPadding + rightPadding)
-
-                            onClicked: {
-                                if (root.onlyNotification) {
-                                    root.destroyRequested();
-                                } else {
-                                    root.destroyWithAnimation();
-                                }
-                            }
-
-                            contentItem: Text {
-                                font.family: Config.theme.font
-                                font.pixelSize: 14
-                                horizontalAlignment: Text.AlignHCenter
-                                color: (notificationObject.urgency == NotificationUrgency.Critical) ? "#d32f2f" : "#424242"
-                                text: "✕"
-                            }
-                        }
+                        // Botones de Close removidos de la vista expandida
 
                         // Mostrar acciones de la notificación (para individuales y agrupadas)
                         Repeater {
@@ -288,100 +267,12 @@ Item {
                             }
                         }
 
-                        NotificationActionButton {
-                            visible: !onlyNotification
-                            Layout.fillWidth: true
-                            urgency: notificationObject.urgency
-                            implicitWidth: (notificationObject.actions.length == 0) ? ((actionsFlickable.width - actionRowLayout.spacing) / 2) : (contentItem.implicitWidth + leftPadding + rightPadding)
-
-                            onClicked: {
-                                console.log("Copy:", notificationObject.body);
-                            }
-
-                            contentItem: Text {
-                                id: copyIcon
-                                font.family: Config.theme.font
-                                font.pixelSize: 14
-                                horizontalAlignment: Text.AlignHCenter
-                                color: (notificationObject.urgency == NotificationUrgency.Critical) ? "#d32f2f" : "#424242"
-                                text: "📋"
-                            }
-                        }
+                        // Botón de Copy removido de la vista expandida
                     }
                 }
             }
         }
     }
 
-    // Botones dedicados para notificaciones individuales
-    Column {
-        id: dedicatedButtonsColumn
-        visible: onlyNotification
-        anchors.right: parent.right
-        anchors.verticalCenter: background.verticalCenter
-        spacing: 4
-        width: visible ? 28 : 0
-
-        // Botón de descartar
-        Button {
-            id: dismissButton
-            width: 24
-            height: 24
-
-            background: Rectangle {
-                color: dismissButton.pressed ? Colors.adapter.primary : (dismissButton.hovered ? Colors.surfaceBright : Colors.surfaceContainerHigh)
-                radius: Config.roundness
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Config.animDuration / 2
-                    }
-                }
-            }
-
-            contentItem: Text {
-                text: "✕"
-                font.family: Config.theme.font
-                font.pixelSize: 12
-                color: dismissButton.pressed ? Colors.adapter.overPrimary : (dismissButton.hovered ? Colors.adapter.overBackground : Colors.adapter.primary)
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-
-            onClicked: {
-                root.destroyRequested();
-            }
-        }
-
-        // Botón de copiar
-        Button {
-            id: copyButton
-            width: 24
-            height: 24
-
-            background: Rectangle {
-                color: copyButton.pressed ? Colors.adapter.primary : (copyButton.hovered ? Colors.surfaceBright : Colors.surfaceContainerHigh)
-                radius: Config.roundness
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Config.animDuration / 2
-                    }
-                }
-            }
-
-            contentItem: Text {
-                text: "📋"
-                font.family: Config.theme.font
-                font.pixelSize: 12
-                color: copyButton.pressed ? Colors.adapter.overPrimary : (copyButton.hovered ? Colors.adapter.overBackground : Colors.adapter.primary)
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-
-            onClicked: {
-                console.log("Copy:", notificationObject.body);
-            }
-        }
-    }
+    // Botones dedicados removidos
 }

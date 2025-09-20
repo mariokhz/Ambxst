@@ -76,6 +76,22 @@ Item {
         bottomRightRadius: defaultRadius
         clip: true
 
+        // MouseArea para hover en todo el notch cuando hay notificaciones
+        MouseArea {
+            id: notchHoverArea
+            anchors.fill: parent
+            hoverEnabled: hasActiveNotifications
+            acceptedButtons: Qt.NoButton
+            z: -1  // Detrás de elementos interactivos
+            
+            // Comunicar el hover al NotchNotificationView
+            onContainsMouseChanged: {
+                if (hasActiveNotifications && stackViewInternal.currentItem) {
+                    stackViewInternal.currentItem.notchHovered = containsMouse
+                }
+            }
+        }
+
         Behavior on radius {
             NumberAnimation {
                 duration: Config.animDuration

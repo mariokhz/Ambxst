@@ -134,7 +134,7 @@ Item {
         }
 
         clip: true
-        implicitHeight: expanded ? row.implicitHeight + padding * 2 : Math.min(80 + padding * 2, row.implicitHeight + padding * 2)
+        implicitHeight: expanded ? row.implicitHeight + padding * 2 : Math.max(56 + padding * 2, row.implicitHeight + padding * 2)
 
         Behavior on implicitHeight {
             NumberAnimation {
