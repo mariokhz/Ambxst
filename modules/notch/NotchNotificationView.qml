@@ -23,8 +23,10 @@ Item {
     property bool notchHovered: false
     property bool hovered: notchHovered || mouseArea.containsMouse
 
-    // Índice actual para navegación
+    // Índice actual para navegación  
     property int currentIndex: 0
+    // Contador para detectar cuando se añaden nuevas notificaciones
+    property int lastNotificationCount: 0
 
     // Timer para actualizar el timestamp cada minuto
     Timer {
@@ -271,18 +273,33 @@ Item {
                             if (Notifications.popupList.length === 0) {
                                 notificationStack.clear();
                                 root.currentIndex = 0;
+                                root.lastNotificationCount = 0;
                                 return;
                             }
 
-                            // Si no hay items en el stack, añadir el primero
+                            // Si no hay items en el stack, añadir la primera notificación
                             if (notificationStack.depth === 0) {
                                 notificationStack.push(notificationComponent, {
                                     "notification": Notifications.popupList[0]
                                 });
                                 root.currentIndex = 0;
+                                root.lastNotificationCount = Notifications.popupList.length;
                                 return;
                             }
 
+                            // Detectar nueva notificación: si la lista creció, ir a la más reciente (última)
+                            if (Notifications.popupList.length > root.lastNotificationCount) {
+                                const newIndex = Notifications.popupList.length - 1;
+                                root.currentIndex = newIndex;
+                                notificationStack.navigateToNotification(newIndex, StackView.PushTransition);
+                                root.lastNotificationCount = Notifications.popupList.length;
+                                return;
+                            }
+
+                            // Actualizar el contador
+                            root.lastNotificationCount = Notifications.popupList.length;
+
+                            // Manejar eliminación de notificaciones
                             // Obtener la notificación actual antes del ajuste
                             const currentNotificationId = notificationStack.currentItem?.notification?.id;
                             const oldIndex = root.currentIndex;
