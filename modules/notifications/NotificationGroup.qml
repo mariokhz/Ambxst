@@ -18,26 +18,9 @@ Item {
     property bool multipleNotifications: notificationCount > 1
     property var validNotifications: notifications.filter(n => n != null && n.summary != null)
 
-    onNotificationGroupChanged: {
-        console.log("[GROUP-DEBUG] Grupo de notificaciones cambió:", {
-            appName: notificationGroup?.appName,
-            totalNotifications: notifications.length,
-            validNotifications: validNotifications.length,
-            notifications: notifications.map(n => ({
-                        id: n?.id,
-                        summary: n?.summary,
-                        body: n?.body
-                    }))
-        });
-    }
+    onNotificationGroupChanged: {}
 
-    onValidNotificationsChanged: {
-        console.log("[GROUP-DEBUG] Notificaciones válidas cambiaron:", {
-            appName: notificationGroup?.appName,
-            count: validNotifications.length,
-            validIds: validNotifications.map(n => n?.id)
-        });
-    }
+    onValidNotificationsChanged: {}
     property bool expanded: false
     property bool popup: false
     property real padding: 16
@@ -251,15 +234,7 @@ Item {
                         anchors.left: parent?.left
                         anchors.right: parent?.right
 
-                        Component.onCompleted: {
-                            console.log("[GROUP-DEBUG] NotificationItem creado:", {
-                                index: index,
-                                id: modelData?.id,
-                                summary: modelData?.summary,
-                                body: modelData?.body,
-                                isValid: modelData != null && (modelData.summary != null || modelData.body != null)
-                            });
-                        }
+                        Component.onCompleted: {}
 
                         onDestroyRequested: {
                             if (root.notificationCount === 1) {

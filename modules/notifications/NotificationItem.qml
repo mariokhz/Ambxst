@@ -94,7 +94,7 @@ Item {
             width: parent.width
             anchors.fill: parent
             anchors.margins: 0
-             spacing: onlyNotification ? 8 : (expanded ? 8 : 0)
+            spacing: onlyNotification ? 8 : (expanded ? 8 : 0)
 
             // Individual notification layout (like expanded popup)
             RowLayout {

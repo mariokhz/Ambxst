@@ -83,11 +83,11 @@ Item {
             hoverEnabled: hasActiveNotifications
             acceptedButtons: Qt.NoButton
             z: -1  // Detrás de elementos interactivos
-            
+
             // Comunicar el hover al NotchNotificationView
             onContainsMouseChanged: {
                 if (hasActiveNotifications && stackViewInternal.currentItem) {
-                    stackViewInternal.currentItem.notchHovered = containsMouse
+                    stackViewInternal.currentItem.notchHovered = containsMouse;
                 }
             }
         }
@@ -139,11 +139,11 @@ Item {
                 Component.onCompleted: {
                     // Establecer el estado inicial correcto
                     if (hasActiveNotifications) {
-                        isShowingNotifications = true
-                        isShowingDefault = false
+                        isShowingNotifications = true;
+                        isShowingDefault = false;
                     } else {
-                        isShowingDefault = true
-                        isShowingNotifications = false
+                        isShowingDefault = true;
+                        isShowingNotifications = false;
                     }
                 }
 
@@ -265,9 +265,9 @@ Item {
                         easing.type: Easing.OutQuart
                     }
                 }
-                }
             }
         }
+    }
 
     // Propiedades para mejorar el control del estado de las vistas
     property bool isShowingNotifications: false
@@ -282,16 +282,16 @@ Item {
                 if (hasActiveNotifications) {
                     // Solo cambiar a notificationView si no estamos ya mostrando notificaciones
                     if (!isShowingNotifications) {
-                        stackViewInternal.replace(notificationViewComponent)
-                        isShowingNotifications = true
-                        isShowingDefault = false
+                        stackViewInternal.replace(notificationViewComponent);
+                        isShowingNotifications = true;
+                        isShowingDefault = false;
                     }
                 } else {
                     // Solo cambiar a defaultView si no estamos ya mostrando la vista por defecto
                     if (!isShowingDefault) {
-                        stackViewInternal.replace(defaultViewComponent)
-                        isShowingDefault = true
-                        isShowingNotifications = false
+                        stackViewInternal.replace(defaultViewComponent);
+                        isShowingDefault = true;
+                        isShowingNotifications = false;
                     }
                 }
             }

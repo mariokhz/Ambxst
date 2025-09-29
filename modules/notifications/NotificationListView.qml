@@ -22,8 +22,8 @@ ListView {
         expanded: true // Siempre expandidas para mostrar toda la información
         onlyNotification: true // Mostrar como notificación individual con header
 
-        onDestroyRequested: {
-            // No necesitamos lógica especial aquí
-        }
+        onDestroyRequested:
+        // No necesitamos lógica especial aquí
+        {}
     }
 }
