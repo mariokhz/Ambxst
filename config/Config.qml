@@ -28,6 +28,7 @@ Singleton {
                 property string font: "Roboto Condensed"
                 property int fontSize: 14
                 property bool fillIcons: false
+                property bool tintIcons: false
                 property string currentTheme: "default"
                 property bool enableCorners: true
                 property int animDuration: 300
@@ -95,6 +96,7 @@ Singleton {
     property string defaultFont: theme.font
     property string currentTheme: theme.currentTheme
     property int animDuration: theme.animDuration
+    property bool tintIcons: theme.tintIcons
 
     // Detectar cambios en lightMode y ejecutar Matugen
     onLightModeChanged: {

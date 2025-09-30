@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.globals
@@ -204,10 +205,12 @@ Rectangle {
                     spacing: 12
 
                     Image {
+                        id: appIcon
                         Layout.preferredWidth: 32
                         Layout.preferredHeight: 32
                         source: "image://icon/" + modelData.icon
                         fillMode: Image.PreserveAspectFit
+                        visible: !Config.tintIcons
 
                         Rectangle {
                             anchors.fill: parent
@@ -222,6 +225,26 @@ Rectangle {
                                 visible: parent.parent.status === Image.Error
                                 color: Colors.overBackground
                                 font.family: Config.theme.font
+                            }
+                        }
+                    }
+
+                    Loader {
+                        active: Config.tintIcons
+                        Layout.preferredWidth: 32
+                        Layout.preferredHeight: 32
+                        sourceComponent: Item {
+                            Desaturate {
+                                id: desaturate
+                                visible: false
+                                anchors.fill: parent
+                                source: appIcon
+                                desaturation: 0.3
+                            }
+                            ColorOverlay {
+                                anchors.fill: parent
+                                source: desaturate
+                                color: Qt.rgba(Colors.primary.r, Colors.primary.g, Colors.primary.b, 0.2)
                             }
                         }
                     }

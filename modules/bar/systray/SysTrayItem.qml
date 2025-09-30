@@ -3,8 +3,10 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
+import Qt5Compat.GraphicalEffects
 import qs.modules.theme
 import qs.modules.components
+import qs.config
 
 MouseArea {
     id: root
@@ -48,5 +50,25 @@ MouseArea {
         width: parent.width
         height: parent.height
         smooth: true
+        visible: !Config.tintIcons
+    }
+
+    Loader {
+        active: Config.tintIcons
+        anchors.fill: trayIcon
+        sourceComponent: Item {
+            Desaturate {
+                id: desaturate
+                visible: false
+                anchors.fill: parent
+                source: trayIcon
+                desaturation: 0.3
+            }
+            ColorOverlay {
+                anchors.fill: parent
+                source: desaturate
+                color: Qt.rgba(Colors.primary.r, Colors.primary.g, Colors.primary.b, 0.2)
+            }
+        }
     }
 }

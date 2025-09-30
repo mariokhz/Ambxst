@@ -268,6 +268,7 @@ Item {
 
                             source: workspaceButtonBackground.mainAppIconSource
                             implicitSize: (!Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? workspaceIconSize : workspaceIconSizeShrinked
+                            visible: !Config.tintIcons
 
                             Behavior on opacity {
                                 NumberAnimation {
@@ -291,6 +292,25 @@ Item {
                                 NumberAnimation {
                                     duration: 150
                                     easing.type: Easing.OutQuad
+                                }
+                            }
+                        }
+
+                        Loader {
+                            active: Config.tintIcons
+                            anchors.fill: mainAppIcon
+                            sourceComponent: Item {
+                                Desaturate {
+                                    id: desaturate
+                                    visible: false
+                                    anchors.fill: parent
+                                    source: mainAppIcon
+                                    desaturation: 0.3
+                                }
+                                ColorOverlay {
+                                    anchors.fill: parent
+                                    source: desaturate
+                                    color: Qt.rgba(Colors.primary.r, Colors.primary.g, Colors.primary.b, 0.2)
                                 }
                             }
                         }
