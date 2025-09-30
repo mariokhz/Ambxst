@@ -22,7 +22,7 @@ PanelWindow {
 
     color: "transparent"
 
-    property string wallpaperDir: wallpaperConfig.adapter.wallPath || Quickshell.env("PWD") + "/assets/wallpapers_example"
+    property string wallpaperDir: wallpaperConfig.adapter.wallPath || Quickshell.env("HOME") + "/Wallpapers"
     property string fallbackDir: Quickshell.env("PWD") + "/assets/wallpapers_example"
     property list<string> wallpaperPaths: []
     property int currentIndex: 0
