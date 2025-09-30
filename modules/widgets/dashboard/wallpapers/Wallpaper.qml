@@ -22,7 +22,7 @@ PanelWindow {
 
     color: "transparent"
 
-    property string wallpaperDir: wallpaperConfig.adapter.wallPath
+    property string wallpaperDir: wallpaperConfig.adapter.wallPath || fallbackDir
     property string fallbackDir: Qt.resolvedUrl("../../../../assets/wallpapers_example").toString().replace("file://", "")
     property list<string> wallpaperPaths: []
     property int currentIndex: 0
