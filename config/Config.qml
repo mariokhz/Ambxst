@@ -88,6 +88,22 @@ Singleton {
                  property real shadowOpacity: 0.5
                  property string shadowOffset: "0 0"
                  property real shadowScale: 1.0
+                 property bool blurEnabled: true
+                 property int blurSize: 8
+                 property int blurPasses: 1
+                 property bool blurIgnoreOpacity: true
+                 property bool blurNewOptimizations: true
+                 property bool blurXray: false
+                 property real blurNoise: 0.0117
+                 property real blurContrast: 0.8916
+                 property real blurBrightness: 0.8172
+                 property real blurVibrancy: 0.1696
+                 property real blurVibrancyDarkness: 0.0
+                 property bool blurSpecial: false
+                 property bool blurPopups: false
+                 property real blurPopupsIgnorealpha: 0.2
+                 property bool blurInputMethods: false
+                 property real blurInputMethodsIgnorealpha: 0.2
              }
 
             property JsonObject performance: JsonObject {
