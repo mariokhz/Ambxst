@@ -27,10 +27,10 @@ Item {
     readonly property bool screenNotchOpen: visibilities ? (visibilities.launcher || visibilities.dashboard || visibilities.overview || visibilities.powermenu) : false
     readonly property bool hasActiveNotifications: Notifications.popupList.length > 0
 
-    property int defaultHeight: Config.bar.showBackground ? (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 44) : 44) : (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 40) : 40)
-    property int islandHeight: Config.bar.showBackground ? (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 36) : 36) : (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 36) : 36)
+    property int defaultHeight: Config.bar.showBackground ? Math.max(stackContainer.height, screenNotchOpen ? 44 : 44) : Math.max(stackContainer.height, screenNotchOpen ? 40 : 40)
+    property int islandHeight: Config.bar.showBackground ? Math.max(stackContainer.height, screenNotchOpen ? 36 : 36) : Math.max(stackContainer.height, screenNotchOpen ? 36 : 36)
 
-    implicitWidth: screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.width + 40, 290) : stackContainer.width + 24
+    implicitWidth: screenNotchOpen ? Math.max(stackContainer.width + 40, 290) : stackContainer.width + 24
     implicitHeight: Config.notchTheme === "default" ? defaultHeight : (Config.notchTheme === "island" ? islandHeight : defaultHeight)
 
     Behavior on implicitWidth {
@@ -99,8 +99,8 @@ Item {
         Item {
             id: stackContainer
             anchors.centerIn: parent
-            width: stackViewInternal.currentItem ? stackViewInternal.currentItem.implicitWidth + 32 : 32
-            height: stackViewInternal.currentItem ? stackViewInternal.currentItem.implicitHeight + 32 : 32
+            width: stackViewInternal.currentItem ? stackViewInternal.currentItem.implicitWidth + (screenNotchOpen ? 32 : 0) : 32
+            height: stackViewInternal.currentItem ? stackViewInternal.currentItem.implicitHeight + (screenNotchOpen ? 32 : 0) : 32
             clip: true
 
             // Propiedad para controlar el blur durante las transiciones
@@ -128,24 +128,33 @@ Item {
             StackView {
                 id: stackViewInternal
                 anchors.fill: parent
-                anchors.margins: 16
-                anchors.topMargin: (hasActiveNotifications && stackViewInternal.currentItem && stackViewInternal.currentItem.hovered) ? Config.theme.borderSize : 16
-                initialItem: hasActiveNotifications ? notificationViewComponent : defaultViewComponent
+                anchors.margins: screenNotchOpen ? 16 : 0
+                anchors.topMargin: screenNotchOpen ? 16 : 0
+                anchors.bottomMargin: screenNotchOpen ? 16 : 0
+                initialItem: defaultViewComponent
 
                 Component.onCompleted: {
-                    // Establecer el estado inicial correcto
-                    if (hasActiveNotifications) {
-                        isShowingNotifications = true;
-                        isShowingDefault = false;
-                    } else {
-                        isShowingDefault = true;
-                        isShowingNotifications = false;
+                    isShowingDefault = true;
+                    isShowingNotifications = false;
+                }
+
+                Behavior on anchors.margins {
+                    NumberAnimation {
+                        duration: Config.animDuration
+                        easing.type: Easing.OutQuart
                     }
                 }
 
                 Behavior on anchors.topMargin {
                     NumberAnimation {
-                        duration: Config.animDuration / 2
+                        duration: Config.animDuration
+                        easing.type: Easing.OutQuart
+                    }
+                }
+
+                Behavior on anchors.bottomMargin {
+                    NumberAnimation {
+                        duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
@@ -268,31 +277,6 @@ Item {
     // Propiedades para mejorar el control del estado de las vistas
     property bool isShowingNotifications: false
     property bool isShowingDefault: false
-
-    // Conexión para cambiar automáticamente entre vistas según las notificaciones
-    Connections {
-        target: Notifications
-        function onPopupListChanged() {
-            // Solo cambiar vista si no hay vista activa (launcher, dashboard, etc.)
-            if (!screenNotchOpen) {
-                if (hasActiveNotifications) {
-                    // Solo cambiar a notificationView si no estamos ya mostrando notificaciones
-                    if (!isShowingNotifications) {
-                        stackViewInternal.replace(notificationViewComponent);
-                        isShowingNotifications = true;
-                        isShowingDefault = false;
-                    }
-                } else {
-                    // Solo cambiar a defaultView si no estamos ya mostrando la vista por defecto
-                    if (!isShowingDefault) {
-                        stackViewInternal.replace(defaultViewComponent);
-                        isShowingDefault = true;
-                        isShowingNotifications = false;
-                    }
-                }
-            }
-        }
-    }
 
     RoundCorner {
         id: rightCorner

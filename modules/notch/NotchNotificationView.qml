@@ -124,61 +124,12 @@ Item {
         }
     }
 
-    // Nueva estructura de 3 filas
     Column {
         id: mainColumn
         anchors.fill: parent
         spacing: hovered ? 8 : 0
 
-        // FILA 1: Controles superiores (solo visible con hover)
-        Item {
-            id: topControlsRow
-            width: parent.width
-            height: hovered ? 24 : 0
-            clip: true
-
-            RowLayout {
-                anchors.fill: parent
-                spacing: 8
-
-                // Botón del dashboard (solo)
-                Rectangle {
-                    id: dashboardAccess
-                    Layout.preferredWidth: 250
-                    Layout.fillHeight: true
-                    Layout.alignment: Qt.AlignHCenter
-                    color: dashboardAccessMouse.containsMouse ? Colors.surfaceBright : Colors.surface
-                    topLeftRadius: 0
-                    topRightRadius: 0
-                    bottomLeftRadius: Config.roundness
-                    bottomRightRadius: Config.roundness
-                    z: 200
-
-                    MouseArea {
-                        id: dashboardAccessMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        z: 200
-
-                        onClicked: {
-                            GlobalStates.dashboardCurrentTab = 0;
-                            Visibilities.setActiveModule("dashboard");
-                        }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: Icons.caretDoubleDown
-                        font.family: Icons.font
-                        font.pixelSize: 16
-                        color: dashboardAccessMouse.containsMouse ? Colors.overBackground : Colors.surfaceBright
-                    }
-                }
-            }
-        }
-
-        // ÁREA DE CONTENIDO CON SCROLL: Combina fila 2 (contenido) y fila 3 (botones de acción)
+        // ÁREA DE CONTENIDO CON SCROLL: Combina contenido y botones de acción
         RowLayout {
             id: contentWithScrollArea
             width: parent.width
