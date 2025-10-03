@@ -7,7 +7,7 @@ import qs.config
 Item {
     id: root
 
-    implicitWidth: hasActiveNotifications ? Math.max(mainRow.width + 32, notificationHoverHandler.hovered ? 420 + 48 : 320 + 48) : mainRow.width + 32
+    implicitWidth: hasActiveNotifications ? (notificationHoverHandler.hovered ? 420 + 48 : 320 + 48) : 200 + userInfo.width + separator1.width + separator2.width + notifIndicator.width + (mainRow.spacing * 4) + 32
     implicitHeight: mainRow.height + (hasActiveNotifications ? (notificationHoverHandler.hovered ? notificationView.implicitHeight + 32 : notificationView.implicitHeight + 16) : 0)
 
     readonly property bool hasActiveNotifications: Notifications.popupList.length > 0
@@ -24,6 +24,7 @@ Item {
         Row {
             id: mainRow
             anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width - 32
             spacing: 8
 
             UserInfo {
@@ -44,7 +45,7 @@ Item {
             Rectangle {
                 id: placeholder
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.max(200, root.width - userInfo.width - separator1.width - separator2.width - notifIndicator.width - (mainRow.spacing * 4) - 32)
+                width: parent.width - userInfo.width - separator1.width - separator2.width - notifIndicator.width - (parent.spacing * 4)
                 height: 32
                 radius: Math.max(0, Config.roundness - 4)
                 color: Colors.surfaceBright
