@@ -31,6 +31,7 @@ Singleton {
         atomicWrites: true
         watchChanges: true
         onFileChanged: reload()
+        onPathChanged: reload()
         onAdapterUpdated: {
             if (root.initialLoadComplete) {
                 loader.writeAdapter();
@@ -44,7 +45,7 @@ Singleton {
                 property real opacity: 1.0
                 property int roundness: 16
                 property int borderSize: 0
-                property string borderColor: "background"
+                property string borderColor: "surfaceBright"
                 property string font: "Roboto Condensed"
                 property int fontSize: 14
                 property bool tintIcons: false

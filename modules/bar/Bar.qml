@@ -18,9 +18,7 @@ import qs.config
 PanelWindow {
     id: panel
 
-    // Determina la posición. Actualmente soporta "top" y "bottom".
-    // Si se provee un valor no reconocido, se usa "top" por defecto para evitar estados inconsistentes.
-    property string position: Config.bar.position === ["top", "bottom", "left", "right"].includes(Config.bar.position) ? Config.bar.position : "top"
+    property string position: ["top", "bottom", "left", "right"].includes(Config.bar.position) ? Config.bar.position : "top"
     property string orientation: position === "left" || position === "right" ? "vertical" : "horizontal"
 
     anchors {
@@ -56,15 +54,75 @@ PanelWindow {
         Visibilities.unregisterPanel(screen.name);
     }
 
-    Rectangle {
+    Item {
         id: bar
-        anchors.left: parent.left
-        anchors.right: parent.right
-        // Control vertical manual para evitar efectos colaterales de anchors dinámicos.
-        property int barHeight: 44
-        height: Visibilities.contextMenuOpen ? Screen.height : barHeight
-        y: panel.position === "top" ? 0 : parent.height - height
-        color: "transparent"
+        
+        states: [
+            State {
+                name: "top"
+                when: panel.position === "top"
+                AnchorChanges {
+                    target: bar
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: undefined
+                }
+                PropertyChanges {
+                    target: bar
+                    width: undefined
+                    height: Visibilities.contextMenuOpen ? Screen.height : 44
+                }
+            },
+            State {
+                name: "bottom"
+                when: panel.position === "bottom"
+                AnchorChanges {
+                    target: bar
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: undefined
+                    anchors.bottom: parent.bottom
+                }
+                PropertyChanges {
+                    target: bar
+                    width: undefined
+                    height: Visibilities.contextMenuOpen ? Screen.height : 44
+                }
+            },
+            State {
+                name: "left"
+                when: panel.position === "left"
+                AnchorChanges {
+                    target: bar
+                    anchors.left: parent.left
+                    anchors.right: undefined
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                }
+                PropertyChanges {
+                    target: bar
+                    width: Visibilities.contextMenuOpen ? Screen.width : 44
+                    height: undefined
+                }
+            },
+            State {
+                name: "right"
+                when: panel.position === "right"
+                AnchorChanges {
+                    target: bar
+                    anchors.left: undefined
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                }
+                PropertyChanges {
+                    target: bar
+                    width: Visibilities.contextMenuOpen ? Screen.width : 44
+                    height: undefined
+                }
+            }
+        ]
 
         Rectangle {
             id: barBg
@@ -72,7 +130,6 @@ PanelWindow {
             property color bgColor: Qt.rgba(Colors.surface.r, Colors.surface.g, Colors.surface.b, Config.bar.bgOpacity)
             color: Config.bar.showBackground ? bgColor : "transparent"
 
-            // Esquinas visibles hacia fuera de la barra. Para bottom se invierten a BottomLeft/BottomRight y se posicionan arriba de la barra.
             RoundCorner {
                 id: cornerLeft
                 visible: Config.theme.enableCorners
@@ -136,51 +193,63 @@ PanelWindow {
             }
         }
 
-        // Lado izquierdo de la barra
         RowLayout {
-            id: barStart
-            anchors.top: parent.top
-            anchors.bottom: panel.orientation === "horizontal" ? parent.bottom : undefined
-            anchors.left: parent.left
-            anchors.right: panel.orientation == "vertical" ? parent.right : undefined
+            id: horizontalLayout
+            visible: panel.orientation === "horizontal"
+            anchors.fill: parent
             anchors.margins: 4
             spacing: 4
 
-            LauncherButton {
-                id: launcherButton
-            }
-
-            Workspaces {
-                bar: QtObject {
-                    property var screen: panel.screen
+            RowLayout {
+                spacing: 4
+                LauncherButton { id: launcherButton }
+                Workspaces {
+                    bar: QtObject {
+                        property var screen: panel.screen
+                    }
                 }
+                OverviewButton { id: overviewButton }
             }
 
-            OverviewButton {
-                id: overviewButton
+            Item { Layout.fillWidth: true }
+
+            RowLayout {
+                spacing: 4
+                SysTray { bar: panel }
+                Clock { id: clockComponent }
+                PowerButton { id: powerButton }
             }
         }
 
-        // Lado derecho de la barra
-        RowLayout {
-            id: barEnd
-            anchors.top: panel.orientation === "horizontal" ? parent.top : undefined
-            anchors.bottom: parent.bottom
-            anchors.left: panel.orientation == "vertical" ? parent.left : undefined
-            anchors.right: parent.right
+        ColumnLayout {
+            id: verticalLayout
+            visible: panel.orientation === "vertical"
+            anchors.fill: parent
             anchors.margins: 4
             spacing: 4
 
-            SysTray {
-                bar: panel
+            RowLayout {
+                Layout.preferredHeight: 36
+                Layout.fillWidth: true
+                spacing: 4
+                LauncherButton { id: launcherButtonVert }
+                Workspaces {
+                    bar: QtObject {
+                        property var screen: panel.screen
+                    }
+                }
+                OverviewButton { id: overviewButtonVert }
             }
 
-            Clock {
-                id: clockComponent
-            }
+            Item { Layout.fillHeight: true }
 
-            PowerButton {
-                id: powerButton
+            RowLayout {
+                Layout.preferredHeight: 36
+                Layout.fillWidth: true
+                spacing: 4
+                SysTray { bar: panel }
+                Clock { id: clockComponentVert }
+                PowerButton { id: powerButtonVert }
             }
         }
     }
