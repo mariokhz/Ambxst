@@ -3,11 +3,26 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 import qs.modules.theme
+import qs.modules.bar
 
 QtObject {
     id: root
 
     property Process hyprctlProcess: Process {}
+    
+    property var barInstances: []
+    
+    function registerBar(barInstance) {
+        barInstances.push(barInstance);
+    }
+    
+    function getBarOrientation() {
+        if (barInstances.length > 0) {
+            return barInstances[0].orientation || "horizontal";
+        }
+        const position = Config.bar.position || "top";
+        return (position === "left" || position === "right") ? "vertical" : "horizontal";
+    }
 
     property Timer applyTimer: Timer {
         interval: 100
@@ -94,8 +109,10 @@ QtObject {
         const shadowColorFormatted = formatColorForHyprland(shadowColorWithOpacity);
         const shadowColorInactiveFormatted = formatColorForHyprland(shadowColorInactiveWithOpacity);
 
-        // Usar batch para aplicar todos los comandos de una vez
-        const batchCommand = `keyword general:col.active_border ${activeColorFormatted} ; keyword general:col.inactive_border ${inactiveColorFormatted} ; keyword general:border_size ${Config.hyprlandBorderSize} ; keyword decoration:rounding ${Config.hyprlandRounding} ; keyword general:gaps_in ${Config.hyprland.gapsIn} ; keyword general:gaps_out ${Config.hyprland.gapsOut} ; keyword decoration:shadow:enabled ${Config.hyprland.shadowEnabled ? 1 : 0} ; keyword decoration:shadow:range ${Config.hyprland.shadowRange} ; keyword decoration:shadow:render_power ${Config.hyprland.shadowRenderPower} ; keyword decoration:shadow:sharp ${Config.hyprland.shadowSharp ? 1 : 0} ; keyword decoration:shadow:ignore_window ${Config.hyprland.shadowIgnoreWindow ? 1 : 0} ; keyword decoration:shadow:color ${shadowColorFormatted} ; keyword decoration:shadow:color_inactive ${shadowColorInactiveFormatted} ; keyword decoration:shadow:offset ${Config.hyprland.shadowOffset} ; keyword decoration:shadow:scale ${Config.hyprland.shadowScale} ; keyword decoration:blur:enabled ${Config.hyprland.blurEnabled ? 1 : 0} ; keyword decoration:blur:size ${Config.hyprland.blurSize} ; keyword decoration:blur:passes ${Config.hyprland.blurPasses} ; keyword decoration:blur:ignore_opacity ${Config.hyprland.blurIgnoreOpacity ? 1 : 0} ; keyword decoration:blur:new_optimizations ${Config.hyprland.blurNewOptimizations ? 1 : 0} ; keyword decoration:blur:xray ${Config.hyprland.blurXray ? 1 : 0} ; keyword decoration:blur:noise ${Config.hyprland.blurNoise} ; keyword decoration:blur:contrast ${Config.hyprland.blurContrast} ; keyword decoration:blur:brightness ${Config.hyprland.blurBrightness} ; keyword decoration:blur:vibrancy ${Config.hyprland.blurVibrancy} ; keyword decoration:blur:vibrancy_darkness ${Config.hyprland.blurVibrancyDarkness} ; keyword decoration:blur:special ${Config.hyprland.blurSpecial ? 1 : 0} ; keyword decoration:blur:popups ${Config.hyprland.blurPopups ? 1 : 0} ; keyword decoration:blur:popups_ignorealpha ${Config.hyprland.blurPopupsIgnorealpha} ; keyword decoration:blur:input_methods ${Config.hyprland.blurInputMethods ? 1 : 0} ; keyword decoration:blur:input_methods_ignorealpha ${Config.hyprland.blurInputMethodsIgnorealpha}`;
+        const barOrientation = getBarOrientation();
+        const workspacesAnimation = barOrientation === "vertical" ? "slidefadevert 20%" : "slidefade 20%";
+
+        const batchCommand = `keyword general:col.active_border ${activeColorFormatted} ; keyword general:col.inactive_border ${inactiveColorFormatted} ; keyword general:border_size ${Config.hyprlandBorderSize} ; keyword decoration:rounding ${Config.hyprlandRounding} ; keyword general:gaps_in ${Config.hyprland.gapsIn} ; keyword general:gaps_out ${Config.hyprland.gapsOut} ; keyword decoration:shadow:enabled ${Config.hyprland.shadowEnabled ? 1 : 0} ; keyword decoration:shadow:range ${Config.hyprland.shadowRange} ; keyword decoration:shadow:render_power ${Config.hyprland.shadowRenderPower} ; keyword decoration:shadow:sharp ${Config.hyprland.shadowSharp ? 1 : 0} ; keyword decoration:shadow:ignore_window ${Config.hyprland.shadowIgnoreWindow ? 1 : 0} ; keyword decoration:shadow:color ${shadowColorFormatted} ; keyword decoration:shadow:color_inactive ${shadowColorInactiveFormatted} ; keyword decoration:shadow:offset ${Config.hyprland.shadowOffset} ; keyword decoration:shadow:scale ${Config.hyprland.shadowScale} ; keyword decoration:blur:enabled ${Config.hyprland.blurEnabled ? 1 : 0} ; keyword decoration:blur:size ${Config.hyprland.blurSize} ; keyword decoration:blur:passes ${Config.hyprland.blurPasses} ; keyword decoration:blur:ignore_opacity ${Config.hyprland.blurIgnoreOpacity ? 1 : 0} ; keyword decoration:blur:new_optimizations ${Config.hyprland.blurNewOptimizations ? 1 : 0} ; keyword decoration:blur:xray ${Config.hyprland.blurXray ? 1 : 0} ; keyword decoration:blur:noise ${Config.hyprland.blurNoise} ; keyword decoration:blur:contrast ${Config.hyprland.blurContrast} ; keyword decoration:blur:brightness ${Config.hyprland.blurBrightness} ; keyword decoration:blur:vibrancy ${Config.hyprland.blurVibrancy} ; keyword decoration:blur:vibrancy_darkness ${Config.hyprland.blurVibrancyDarkness} ; keyword decoration:blur:special ${Config.hyprland.blurSpecial ? 1 : 0} ; keyword decoration:blur:popups ${Config.hyprland.blurPopups ? 1 : 0} ; keyword decoration:blur:popups_ignorealpha ${Config.hyprland.blurPopupsIgnorealpha} ; keyword decoration:blur:input_methods ${Config.hyprland.blurInputMethods ? 1 : 0} ; keyword decoration:blur:input_methods_ignorealpha ${Config.hyprland.blurInputMethodsIgnorealpha} ; keyword animation windows,1,2.5,myBezier,popin 80% ; keyword animation border,1,2.5,myBezier ; keyword animation fade,1,2.5,myBezier ; keyword animation workspaces,1,2.5,myBezier,${workspacesAnimation} ; keyword bezier myBezier,0.4,0.0,0.2,1.0`;
 
         console.log("HyprlandConfig: Applying hyprctl batch command.");
         hyprctlProcess.command = ["hyprctl", "--batch", batchCommand];
