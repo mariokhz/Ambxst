@@ -296,12 +296,13 @@ Item {
 
             property bool isDragging: false
             property real dragPosition: 0.0
+            property int dragSeparation: 4
 
-            property real progressRatio: isDragging ? dragPosition : (compactPlayer.length > 0 ? compactPlayer.position / compactPlayer.length : 0)
+            property real progressRatio: isDragging ? dragPosition : (compactPlayer.length > 0 ? Math.min(1.0, compactPlayer.position / compactPlayer.length) : 0)
 
             Rectangle {
                 anchors.right: parent.right
-                width: (1 - positionControl.progressRatio) * parent.width - 4
+                width: (1 - positionControl.progressRatio) * parent.width - positionControl.dragSeparation
                 height: parent.height
                 radius: height / 2
                 color: Colors.shadow
@@ -317,7 +318,7 @@ Item {
                     color: Colors.primaryFixed
                     amplitudeMultiplier: 0.8
                     height: positionControl.height * 8
-                    width: Math.max(0, positionControl.width * positionControl.progressRatio - 4)
+                    width: Math.max(0, positionControl.width * positionControl.progressRatio - positionControl.dragSeparation)
                     lineWidth: positionControl.height
                     fullLength: positionControl.width
 
@@ -332,7 +333,7 @@ Item {
                 active: !compactPlayer.isPlaying
                 sourceComponent: Rectangle {
                     anchors.left: parent.left
-                    width: Math.max(0, positionControl.width * positionControl.progressRatio - 4)
+                    width: Math.max(0, positionControl.width * positionControl.progressRatio - positionControl.dragSeparation)
                     height: positionControl.height
                     radius: height / 2
                     color: Colors.primaryFixed
