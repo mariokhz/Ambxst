@@ -15,7 +15,7 @@ BgRect {
     required property var bar
     property bool vertical: bar.orientation === "vertical"
 
-    Layout.preferredWidth: vertical ? 36 : rowLayout.implicitWidth + 20
+    Layout.preferredWidth: vertical ? 36 : rowLayout.implicitWidth + 24
     implicitHeight: vertical ? columnLayout.implicitHeight + 24 : 36
     Layout.preferredHeight: implicitHeight
 
@@ -23,7 +23,7 @@ BgRect {
         id: rowLayout
         visible: !vertical
         anchors.centerIn: parent
-        spacing: 4
+        spacing: 8
 
         Text {
             id: dayDisplay
