@@ -41,6 +41,21 @@ Item {
 
     readonly property bool expandedState: contentHoverHandler.hovered || notchHovered || isNavigating
 
+    Keys.onPressed: event => {
+        if (expandedState && activePlayer) {
+            if (event.key === Qt.Key_Space) {
+                activePlayer.togglePlaying();
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Left && activePlayer.canSeek) {
+                activePlayer.position = Math.max(0, activePlayer.position - 10);
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Right && activePlayer.canSeek) {
+                activePlayer.position = Math.min(activePlayer.length, activePlayer.position + 10);
+                event.accepted = true;
+            }
+        }
+    }
+
     Column {
         anchors.fill: parent
         // anchors.topMargin: hasActiveNotifications ? 0 : ((parent.height - mainRow.height) / 2)

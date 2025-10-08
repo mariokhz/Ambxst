@@ -29,7 +29,24 @@ NotchAnimationBehavior {
     readonly property real nonAnimWidth: (state.currentTab === 0 ? 600 : 400) + tabWidth + 16 // widgets tab is wider
 
     implicitWidth: nonAnimWidth
-    implicitHeight: 430 // Altura fija para el dashboard vertical
+    implicitHeight: 430
+
+    focus: true
+
+    Keys.onPressed: event => {
+        if (state.currentTab === 0 && MprisController.activePlayer) {
+            if (event.key === Qt.Key_Space) {
+                MprisController.togglePlaying();
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Left && MprisController.activePlayer.canSeek) {
+                MprisController.activePlayer.position = Math.max(0, MprisController.activePlayer.position - 10);
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Right && MprisController.activePlayer.canSeek) {
+                MprisController.activePlayer.position = Math.min(MprisController.activePlayer.length, MprisController.activePlayer.position + 10);
+                event.accepted = true;
+            }
+        }
+    }
 
     // Usar el comportamiento estándar de animaciones del notch
     isVisible: GlobalStates.dashboardOpen
