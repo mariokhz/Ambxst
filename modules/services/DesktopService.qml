@@ -348,12 +348,6 @@ Singleton {
                 }
 
                 if (!parsingInProgress) {
-                    console.log("=== SCAN COMPLETE ===");
-                    console.log("Found", pendingDesktopFiles.length, ".desktop files:");
-                    for (var i = 0; i < pendingDesktopFiles.length; i++) {
-                        console.log("  [" + i + "]:", pendingDesktopFiles[i].name);
-                    }
-                    
                     tempDesktopFiles = pendingDesktopFiles;
                     tempItems = newItems;
                     
@@ -472,7 +466,6 @@ Singleton {
         }
         
         root.initialLoadComplete = true;
-        console.log("Desktop scan complete. Found", allItems.length, "items");
     }
 
     Process {
@@ -481,20 +474,17 @@ Singleton {
         command: []
 
         onRunningChanged: {
-            console.log("Process running changed to:", running, "index:", currentDesktopFileIndex);
             if (!running && currentDesktopFileIndex >= 0 && currentDesktopFileIndex < tempDesktopFiles.length) {
                 currentDesktopFileIndex++;
                 if (currentDesktopFileIndex < tempDesktopFiles.length) {
                     Qt.callLater(parseNextDesktopFile);
                 } else {
-                    console.log("  All files parsed!");
                     parsingInProgress = false;
                     currentDesktopFileIndex = -1;
                     if (gridReady && positionsLoaded) {
                         finalizeItems();
                     }
                     if (needsRescan) {
-                        console.log("  Triggering rescan...");
                         needsRescan = false;
                         scanDesktop();
                     }
@@ -504,14 +494,11 @@ Singleton {
 
         stdout: StdioCollector {
             onStreamFinished: {
-                console.log("parseDesktopFileProcess stdout: index", currentDesktopFileIndex, "tempDesktopFiles.length", tempDesktopFiles.length);
                 if (currentDesktopFileIndex >= tempDesktopFiles.length) {
-                    console.warn("Desktop file index out of bounds:", currentDesktopFileIndex, "length:", tempDesktopFiles.length);
                     return;
                 }
                 
                 var item = tempDesktopFiles[currentDesktopFileIndex];
-                console.log("  Modifying item at index", currentDesktopFileIndex, "name before:", item.name);
                 var lines = text.split("\n");
                 var name = "";
                 var icon = "application-x-executable";
@@ -529,7 +516,6 @@ Singleton {
                     item.name = name;
                 }
                 item.icon = icon;
-                console.log("  Modified to:", item.name, "icon:", icon);
             }
         }
 
