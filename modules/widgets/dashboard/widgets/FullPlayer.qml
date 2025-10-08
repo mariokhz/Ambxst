@@ -188,55 +188,53 @@ PaneRect {
                         visible: MprisController.activePlayer !== null
                     }
 
-                    Loader {
+                    WavyLine {
+                        id: wavyFill
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        active: true
-                        asynchronous: false
+                        frequency: 8
+                        color: MprisController.activePlayer ? Colors.primaryFixed : Colors.outline
+                        amplitudeMultiplier: 0.8
+                        height: MprisController.activePlayer ? positionControl.height * 8 : positionControl.height * 4
+                        width: MprisController.activePlayer ? Math.max(0, positionControl.width * positionControl.progressRatio - positionControl.dragSeparation) : positionControl.width
+                        lineWidth: positionControl.height
+                        fullLength: positionControl.width
                         visible: player.isPlaying || !MprisController.activePlayer
                         opacity: visible ? 1.0 : 0.0
-                        
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+                        }
+
+                        Behavior on height {
+                            NumberAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+                        }
+
                         Behavior on opacity {
                             NumberAnimation {
                                 duration: Config.animDuration
                                 easing.type: Easing.OutQuart
                             }
                         }
-                        
-                        sourceComponent: WavyLine {
-                            id: wavyFill
-                            frequency: 8
-                            color: MprisController.activePlayer ? Colors.primaryFixed : Colors.outline
-                            amplitudeMultiplier: 0.8
-                            height: MprisController.activePlayer ? positionControl.height * 8 : positionControl.height * 4
-                            width: MprisController.activePlayer ? Math.max(0, positionControl.width * positionControl.progressRatio - positionControl.dragSeparation) : positionControl.width
-                            lineWidth: positionControl.height
-                            fullLength: positionControl.width
 
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Config.animDuration
-                                    easing.type: Easing.OutQuart
-                                }
-                            }
-
-                            Behavior on height {
-                                NumberAnimation {
-                                    duration: Config.animDuration
-                                    easing.type: Easing.OutQuart
-                                }
-                            }
-
-                            FrameAnimation {
-                                running: player.isPlaying || !MprisController.activePlayer
-                                onTriggered: wavyFill.requestPaint()
-                            }
+                        FrameAnimation {
+                            running: player.isPlaying || !MprisController.activePlayer
+                            onTriggered: wavyFill.requestPaint()
                         }
                     }
 
-                    Loader {
-                        active: true
-                        asynchronous: false
+                    Rectangle {
+                        anchors.left: parent.left
+                        width: Math.max(0, positionControl.width * positionControl.progressRatio - positionControl.dragSeparation)
+                        height: positionControl.height
+                        radius: height / 2
+                        color: Colors.primaryFixed
                         visible: !player.isPlaying && MprisController.activePlayer
                         opacity: visible ? 1.0 : 0.0
                         
@@ -245,14 +243,6 @@ PaneRect {
                                 duration: Config.animDuration
                                 easing.type: Easing.OutQuart
                             }
-                        }
-                        
-                        sourceComponent: Rectangle {
-                            anchors.left: parent.left
-                            width: Math.max(0, positionControl.width * positionControl.progressRatio - positionControl.dragSeparation)
-                            height: positionControl.height
-                            radius: height / 2
-                            color: Colors.primaryFixed
                         }
                     }
 

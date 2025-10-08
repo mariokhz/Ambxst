@@ -328,55 +328,53 @@ Item {
                 visible: compactPlayer.player !== null
             }
 
-            Loader {
+            WavyLine {
+                id: wavyFill
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                active: true
-                asynchronous: false
+                frequency: 8
+                color: compactPlayer.player ? Colors.primaryFixed : Colors.outline
+                amplitudeMultiplier: 0.8
+                height: compactPlayer.player ? positionControl.height * 8 : positionControl.height * 4
+                width: compactPlayer.player ? Math.max(0, positionControl.width * positionControl.progressRatio - positionControl.dragSeparation) : positionControl.width
+                lineWidth: positionControl.height
+                fullLength: positionControl.width
                 visible: compactPlayer.isPlaying || !compactPlayer.player
                 opacity: visible ? 1.0 : 0.0
-                
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Config.animDuration
+                        easing.type: Easing.OutQuart
+                    }
+                }
+
+                Behavior on height {
+                    NumberAnimation {
+                        duration: Config.animDuration
+                        easing.type: Easing.OutQuart
+                    }
+                }
+
                 Behavior on opacity {
                     NumberAnimation {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
-                
-                sourceComponent: WavyLine {
-                    id: wavyFill
-                    frequency: 8
-                    color: compactPlayer.player ? Colors.primaryFixed : Colors.outline
-                    amplitudeMultiplier: 0.8
-                    height: compactPlayer.player ? positionControl.height * 8 : positionControl.height * 4
-                    width: compactPlayer.player ? Math.max(0, positionControl.width * positionControl.progressRatio - positionControl.dragSeparation) : positionControl.width
-                    lineWidth: positionControl.height
-                    fullLength: positionControl.width
 
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Config.animDuration
-                            easing.type: Easing.OutQuart
-                        }
-                    }
-
-                    Behavior on height {
-                        NumberAnimation {
-                            duration: Config.animDuration
-                            easing.type: Easing.OutQuart
-                        }
-                    }
-
-                    FrameAnimation {
-                        running: compactPlayer.isPlaying || !compactPlayer.player
-                        onTriggered: wavyFill.requestPaint()
-                    }
+                FrameAnimation {
+                    running: compactPlayer.isPlaying || !compactPlayer.player
+                    onTriggered: wavyFill.requestPaint()
                 }
             }
 
-            Loader {
-                active: true
-                asynchronous: false
+            Rectangle {
+                anchors.left: parent.left
+                width: Math.max(0, positionControl.width * positionControl.progressRatio - positionControl.dragSeparation)
+                height: positionControl.height
+                radius: height / 2
+                color: Colors.primaryFixed
                 visible: !compactPlayer.isPlaying && compactPlayer.player
                 opacity: visible ? 1.0 : 0.0
                 
@@ -385,14 +383,6 @@ Item {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
-                }
-                
-                sourceComponent: Rectangle {
-                    anchors.left: parent.left
-                    width: Math.max(0, positionControl.width * positionControl.progressRatio - positionControl.dragSeparation)
-                    height: positionControl.height
-                    radius: height / 2
-                    color: Colors.primaryFixed
                 }
             }
 
