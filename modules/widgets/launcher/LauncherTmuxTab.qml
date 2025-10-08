@@ -460,6 +460,8 @@ Rectangle {
             visible: true
             clip: true
             interactive: !root.deleteMode && !root.renameMode && !root.optionsMenuOpen
+            cacheBuffer: 96
+            reuseItems: true
 
             model: root.filteredSessions
             currentIndex: root.selectedIndex

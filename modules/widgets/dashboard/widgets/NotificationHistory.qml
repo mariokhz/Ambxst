@@ -26,6 +26,8 @@ PaneRect {
             spacing: 4
             model: Notifications.appNameList
             interactive: false
+            cacheBuffer: 200
+            reuseItems: true
 
             delegate: NotificationGroup {
                 required property int index

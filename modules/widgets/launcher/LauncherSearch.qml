@@ -161,6 +161,8 @@ Rectangle {
             Layout.preferredHeight: 5 * 48
             visible: true
             clip: true
+            cacheBuffer: 96
+            reuseItems: true
 
             model: root.searchText.length > 0 ? AppSearch.fuzzyQuery(root.searchText) : AppSearch.getAllApps()
             currentIndex: root.selectedIndex

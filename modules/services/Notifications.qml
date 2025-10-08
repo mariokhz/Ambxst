@@ -65,6 +65,14 @@ Singleton {
                 });
             }
         }
+
+        Component.onDestruction: {
+            if (timer) {
+                timer.stop();
+                timer.destroy();
+                timer = null;
+            }
+        }
     }
 
     function notifToJSON(notif) {
@@ -177,22 +185,20 @@ Singleton {
     }
 
     function limitNotificationsPerSummary(notifications) {
-        const groups = new Map();
-        // Agrupar por appName y summary
+        var groups = {};
+        
         notifications.forEach(notif => {
             const key = notif.appName + '|' + (notif.summary || '');
-            if (!groups.has(key)) {
-                groups.set(key, []);
+            if (!groups[key]) {
+                groups[key] = [];
             }
-            groups.get(key).push(notif);
+            groups[key].push(notif);
         });
 
-        // Limitar cada grupo a 5 notificaciones, manteniendo las más recientes
         const limitedNotifications = [];
-        for (const group of groups.values()) {
-            // Ordenar por tiempo descendente (más recientes primero)
+        for (const key in groups) {
+            const group = groups[key];
             group.sort((a, b) => b.time - a.time);
-            // Tomar solo las primeras 5
             limitedNotifications.push(...group.slice(0, 5));
         }
 
@@ -340,9 +346,12 @@ Singleton {
         if (!ids || ids.length === 0)
             return;
 
-        // Remover todas las notificaciones de la lista de una vez
-        const idsSet = new Set(ids);
-        const newList = root.list.filter(notif => !idsSet.has(notif.id));
+        var idsMap = {};
+        ids.forEach(id => {
+            idsMap[id] = true;
+        });
+        
+        const newList = root.list.filter(notif => !idsMap[notif.id]);
         const removedCount = root.list.length - newList.length;
 
         if (removedCount > 0) {
@@ -351,7 +360,6 @@ Singleton {
             saveNotifications();
         }
 
-        // Dismiss en el servidor de notificaciones
         ids.forEach(id => {
             const notifServerIndex = notifServer.trackedNotifications.values.findIndex(notif => notif.id + root.idOffset === id);
             if (notifServerIndex !== -1) {
@@ -373,26 +381,24 @@ Singleton {
 
     signal timeoutWithAnimation(id: var)
 
-    function timeoutNotification(id) {
-        // Primero emitir la señal para que la UI haga animación
-        root.timeoutWithAnimation(id);
+    Timer {
+        id: timeoutAnimationTimer
+        interval: 350
+        running: false
+        repeat: false
+        property int notificationId: -1
+        onTriggered: {
+            const index = root.list.findIndex((notif) => notif.id === notificationId);
+            if (index !== -1 && root.list[index] != null)
+                root.list[index].popup = false;
+            root.timeout(notificationId);
+        }
+    }
 
-        // Luego, después de un delay para la animación, quitar del popup
-        const timeoutTimer = Qt.createQmlObject(`
-            import QtQuick
-            Timer {
-                interval: 350
-                running: true
-                repeat: false
-                onTriggered: {
-                    const index = root.list.findIndex((notif) => notif.id === ${id});
-                    if (root.list[index] != null)
-                        root.list[index].popup = false;
-                    root.timeout(${id});
-                    destroy();
-                }
-            }
-        `, root);
+    function timeoutNotification(id) {
+        root.timeoutWithAnimation(id);
+        timeoutAnimationTimer.notificationId = id;
+        timeoutAnimationTimer.restart();
     }
 
     function timeoutAll() {
@@ -463,29 +469,40 @@ Singleton {
         root.list = root.list.slice(0);
     }
 
-    // Función para cachear imágenes como base64
+    property int activeXhrCount: 0
+    property int maxConcurrentXhr: 3
+
     function cacheImageAsBase64(imageUrl, callback) {
         if (!imageUrl || imageUrl.startsWith("data:")) {
             callback(imageUrl);
             return;
         }
 
-        // Solo cachear URLs HTTP/HTTPS válidas
         if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
             callback(imageUrl);
             return;
         }
 
-        // Evitar URLs demasiado largas o inválidas
         if (imageUrl.length > 2048) {
             callback(imageUrl);
             return;
         }
 
+        if (activeXhrCount >= maxConcurrentXhr) {
+            callback(imageUrl);
+            return;
+        }
+
+        activeXhrCount++;
         var xhr = new XMLHttpRequest();
         xhr.open("GET", imageUrl, true);
         xhr.responseType = "arraybuffer";
-        xhr.timeout = 5000; // 5 segundos timeout
+        xhr.timeout = 5000;
+
+        var cleanupXhr = function() {
+            activeXhrCount--;
+            xhr = null;
+        };
 
         xhr.onload = function () {
             if (xhr.status === 200 && xhr.response) {
@@ -493,7 +510,7 @@ Singleton {
                     var arrayBuffer = xhr.response;
                     var bytes = new Uint8Array(arrayBuffer);
                     var binary = '';
-                    var len = Math.min(bytes.byteLength, 1024 * 1024); // Limitar a 1MB
+                    var len = Math.min(bytes.byteLength, 1024 * 1024);
                     for (var i = 0; i < len; i++) {
                         binary += String.fromCharCode(bytes[i]);
                     }
@@ -516,14 +533,17 @@ Singleton {
             } else {
                 callback(imageUrl);
             }
+            cleanupXhr();
         };
 
         xhr.onerror = function () {
             callback(imageUrl);
+            cleanupXhr();
         };
 
         xhr.ontimeout = function () {
             callback(imageUrl);
+            cleanupXhr();
         };
 
         xhr.send();

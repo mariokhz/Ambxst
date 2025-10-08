@@ -257,6 +257,8 @@ Item {
                     Layout.fillWidth: true
                     spacing: root.expanded ? 16 : 0
                     interactive: false
+                    cacheBuffer: 100
+                    reuseItems: true
 
                     Behavior on spacing {
                         NumberAnimation {

@@ -11,7 +11,7 @@ import qs.config
 PaneRect {
     id: player
 
-    height: layout.implicitHeight + layout.anchors.margins * 2
+    height: MprisController.activePlayer ? layout.implicitHeight + layout.anchors.margins * 2 : 40
 
     property bool isPlaying: MprisController.activePlayer?.playbackState === MprisPlaybackState.Playing
     property real position: MprisController.activePlayer?.position ?? 0.0
@@ -41,6 +41,40 @@ PaneRect {
         anchors.fill: parent
         radius: Config.roundness > 0 ? Config.roundness + 4 : 0
         color: Colors.surface
+
+        Item {
+            id: noPlayerContainer
+            anchors.fill: parent
+            anchors.margins: 4
+            visible: !MprisController.activePlayer
+            
+            WavyLine {
+                id: noPlayerWavyLine
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                frequency: 8
+                color: Colors.outline
+                amplitudeMultiplier: 0.8
+                height: 16
+                lineWidth: 4
+                fullLength: width
+                visible: true
+                opacity: 1.0
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Config.animDuration
+                        easing.type: Easing.OutQuart
+                    }
+                }
+
+                FrameAnimation {
+                    running: noPlayerWavyLine.visible
+                    onTriggered: noPlayerWavyLine.requestPaint()
+                }
+            }
+        }
 
         Image {
             id: backgroundArt
@@ -75,6 +109,7 @@ PaneRect {
             anchors.fill: parent
             anchors.margins: 16
             spacing: 8
+            visible: MprisController.activePlayer
 
             RowLayout {
                 Layout.fillWidth: true

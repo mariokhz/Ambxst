@@ -569,6 +569,8 @@ Rectangle {
                     orientation: ListView.Horizontal
                     spacing: 8
                     clip: true
+                    cacheBuffer: 96
+                    reuseItems: true
 
                     model: recentEmojis
                     currentIndex: root.selectedRecentIndex
@@ -644,6 +646,8 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: (recentEmojis.length > 0 && searchText.length === 0 ? 4 : 5) * 48
                 clip: true
+                cacheBuffer: 96
+                reuseItems: true
 
                 model: root.filteredEmojis
                 currentIndex: root.selectedIndex

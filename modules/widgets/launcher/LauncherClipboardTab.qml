@@ -612,6 +612,8 @@ Rectangle {
                         spacing: 8
                         clip: true
                         interactive: !root.deleteMode && !root.imageDeleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen
+                        cacheBuffer: root.imgSize * 2
+                        reuseItems: true
 
                         model: root.imageItems
                         currentIndex: root.selectedImageIndex
@@ -1149,6 +1151,8 @@ Rectangle {
                     visible: ClipboardService.items.length > 0
                     clip: true
                     interactive: !root.deleteMode && !root.imageDeleteMode
+                    cacheBuffer: 96
+                    reuseItems: true
 
                     model: root.textItems
                     currentIndex: root.selectedIndex

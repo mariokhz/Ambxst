@@ -56,11 +56,11 @@ Singleton {
     }
 
     function calculateAutoPosition(index) {
-        var usedPositions = new Set();
+        var usedPositions = {};
         
         for (var key in iconPositions) {
             var pos = iconPositions[key];
-            usedPositions.add(pos.x + "," + pos.y);
+            usedPositions[pos.x + "," + pos.y] = true;
         }
         
         var gridX = 0;
@@ -69,7 +69,7 @@ Singleton {
         
         while (checked <= index) {
             var posKey = gridX + "," + gridY;
-            if (!usedPositions.has(posKey)) {
+            if (!usedPositions[posKey]) {
                 if (checked === index) {
                     return { x: gridX, y: gridY };
                 }
@@ -409,7 +409,7 @@ Singleton {
             });
         }
         
-        var usedIndices = new Set();
+        var usedIndices = {};
         
         for (var i = 0; i < allItems.length; i++) {
             var item = allItems[i];
@@ -419,14 +419,14 @@ Singleton {
             if (savedPos && savedPos.x < maxColumnsHint && savedPos.y < maxRowsHint) {
                 gridIndex = savedPos.x * maxRowsHint + savedPos.y;
                 
-                if (usedIndices.has(gridIndex)) {
+                if (usedIndices[gridIndex]) {
                     gridIndex = -1;
                 }
             }
             
             if (gridIndex === -1) {
                 for (var j = 0; j < gridSize; j++) {
-                    if (!usedIndices.has(j)) {
+                    if (!usedIndices[j]) {
                         gridIndex = j;
                         break;
                     }
@@ -434,7 +434,7 @@ Singleton {
             }
             
             if (gridIndex !== -1 && gridIndex < items.count) {
-                usedIndices.add(gridIndex);
+                usedIndices[gridIndex] = true;
                 var col = Math.floor(gridIndex / maxRowsHint);
                 var row = gridIndex % maxRowsHint;
                 
