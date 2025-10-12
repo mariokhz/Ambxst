@@ -68,6 +68,12 @@ QtObject {
     readonly property string clock: ""
     readonly property string alarm: ""
     readonly property string timer: ""
+    // Volume
+    readonly property string speakerSlash: ""
+    readonly property string speakerX: ""
+    readonly property string speakerNone: ""
+    readonly property string speakerLow: ""
+    readonly property string speakerHigh: ""
     // Misc
     readonly property string accept: ""
     readonly property string cancel: ""
