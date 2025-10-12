@@ -110,6 +110,13 @@ Item {
                 root.value = root.dragPosition;
             }
         }
+        onWheel: wheel => {
+            if (wheel.angleDelta.y > 0) {
+                root.value = Math.min(1, root.value + 0.05);
+            } else {
+                root.value = Math.max(0, root.value - 0.05);
+            }
+        }
     }
 
     ToolTip {

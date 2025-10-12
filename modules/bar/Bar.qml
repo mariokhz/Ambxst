@@ -57,7 +57,7 @@ PanelWindow {
 
     Item {
         id: bar
-        
+
         states: [
             State {
                 name: "top"
@@ -146,33 +146,43 @@ PanelWindow {
 
             RowLayout {
                 spacing: 4
-                LauncherButton { id: launcherButton }
+                LauncherButton {
+                    id: launcherButton
+                }
                 Workspaces {
                     orientation: panel.orientation
                     bar: QtObject {
                         property var screen: panel.screen
                     }
                 }
-                OverviewButton { id: overviewButton }
+                OverviewButton {
+                    id: overviewButton
+                }
             }
 
-            Item { Layout.fillWidth: true }
+            Item {
+                Layout.fillWidth: true
+            }
 
             RowLayout {
                 spacing: 4
-                BgRect {
-                    Layout.preferredWidth: 100
-                    Layout.fillHeight: true
-                    VolumeSlider {
-                        anchors.centerIn: parent
-                        width: parent.width - 8
-                        height: 4
-                    }
+                VolumeSlider {
+                    id: volume
                 }
-                SysTray { bar: panel }
-                Weather { id: weatherComponent; bar: panel }
-                Clock { id: clockComponent; bar: panel }
-                PowerButton { id: powerButton }
+                SysTray {
+                    bar: panel
+                }
+                Weather {
+                    id: weatherComponent
+                    bar: panel
+                }
+                Clock {
+                    id: clockComponent
+                    bar: panel
+                }
+                PowerButton {
+                    id: powerButton
+                }
             }
         }
 
@@ -186,7 +196,7 @@ PanelWindow {
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 4
-                LauncherButton { 
+                LauncherButton {
                     id: launcherButtonVert
                     Layout.preferredHeight: 36
                 }
@@ -196,7 +206,7 @@ PanelWindow {
                         property var screen: panel.screen
                     }
                 }
-                OverviewButton { 
+                OverviewButton {
                     id: overviewButtonVert
                     Layout.preferredHeight: 36
                 }
@@ -209,15 +219,7 @@ PanelWindow {
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 4
-                BgRect {
-                    Layout.preferredWidth: 100
-                    Layout.fillHeight: true
-                    VolumeSlider {
-                        anchors.centerIn: parent
-                        width: parent.width - 8
-                        height: 4
-                    }
-                }
+                VolumeSlider {}
                 SysTray {
                     bar: panel
                 }
