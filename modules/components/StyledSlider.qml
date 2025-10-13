@@ -27,13 +27,13 @@ RowLayout {
     property string tooltipText: `${Math.round(value * 100)}%`
     property color progressColor: Colors.primary
     property color backgroundColor: Colors.surfaceBright
-     property bool wavy: false
-     property real wavyAmplitude: 0.8
-     property real wavyFrequency: 8
-     property real heightMultiplier: 8
-     property bool resizeAnim: true
-     property bool scroll: true
-     property bool tooltip: true
+    property bool wavy: false
+    property real wavyAmplitude: 0.8
+    property real wavyFrequency: 8
+    property real heightMultiplier: 8
+    property bool resizeAnim: true
+    property bool scroll: true
+    property bool tooltip: true
 
     Behavior on wavyAmplitude {
         NumberAnimation {
@@ -42,19 +42,19 @@ RowLayout {
         }
     }
 
-     Behavior on wavyFrequency {
-         NumberAnimation {
-             duration: Config.animDuration
-             easing.type: Easing.OutQuart
-         }
-     }
+    Behavior on wavyFrequency {
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutQuart
+        }
+    }
 
-     Behavior on heightMultiplier {
-         NumberAnimation {
-             duration: Config.animDuration
-             easing.type: Easing.OutQuart
-         }
-     }
+    Behavior on heightMultiplier {
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutQuart
+        }
+    }
 
     Text {
         id: iconText
@@ -105,7 +105,7 @@ RowLayout {
             frequency: root.wavyFrequency
             color: root.progressColor
             amplitudeMultiplier: root.wavyAmplitude
-             height: parent.height * heightMultiplier
+            height: parent.height * heightMultiplier
             width: Math.max(0, parent.width * root.progressRatio - root.dragSeparation)
             lineWidth: parent.height
             fullLength: parent.width
@@ -214,25 +214,12 @@ RowLayout {
             }
         }
 
-         ToolTip {
-             background: Rectangle {
-               color: Colors.background
-               border.width: 2
-               border.color: Colors.surfaceBright
-               radius: Math.max(0, Config.roundness - 8)
-             }
-             contentItem: Text {
-               anchors.centerIn: parent
-               text: root.tooltipText
-               color: Colors.overBackground
-               font.pixelSize: Config.theme.fontSize
-               font.weight: Font.Bold
-               font.family: Config.theme.font
-             }
-             visible: root.isDragging && root.tooltip
-             x: dragHandle.x + dragHandle.width / 2 - width / 2
-             y: dragHandle.y - height - 5
-         }
+        StyledToolTip {
+            tooltipText: root.tooltipText
+            visible: root.isDragging && root.tooltip
+            x: dragHandle.x + dragHandle.width / 2 - width / 2
+            y: dragHandle.y - height - 5
+        }
     }
 
     onValueChanged:
