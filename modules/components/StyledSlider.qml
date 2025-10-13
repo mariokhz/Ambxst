@@ -31,6 +31,7 @@ RowLayout {
     property real wavyAmplitude: 0.8
     property real wavyFrequency: 8
     property bool resizeAnim: true
+    property bool scroll: true
 
     Behavior on wavyAmplitude {
         NumberAnimation {
@@ -194,10 +195,12 @@ RowLayout {
                 }
             }
             onWheel: wheel => {
-                if (wheel.angleDelta.y > 0) {
-                    root.value = Math.min(1, root.value + 0.1);
-                } else {
-                    root.value = Math.max(0, root.value - 0.1);
+                if (root.scroll) {
+                    if (wheel.angleDelta.y > 0) {
+                        root.value = Math.min(1, root.value + 0.1);
+                    } else {
+                        root.value = Math.max(0, root.value - 0.1);
+                    }
                 }
             }
         }
