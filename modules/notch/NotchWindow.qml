@@ -34,6 +34,19 @@ PanelWindow {
     readonly property var screenVisibilities: Visibilities.getForScreen(screen.name)
     readonly property bool isScreenFocused: Hyprland.focusedMonitor && Hyprland.focusedMonitor.name === screen.name
 
+    // Check if the bar for this screen is vertical
+    readonly property bool isBarVertical: {
+        const barPanel = Visibilities.panels[screen.name];
+        if (barPanel && barPanel.position) {
+            return barPanel.position === "left" || barPanel.position === "right";
+        }
+        return false;
+    }
+
+    // Notch state properties
+    readonly property bool screenNotchOpen: screenVisibilities ? (screenVisibilities.launcher || screenVisibilities.dashboard || screenVisibilities.overview || screenVisibilities.powermenu) : false
+    readonly property bool hasActiveNotifications: Notifications.popupList.length > 0
+
     HyprlandFocusGrab {
         id: focusGrab
         windows: {
@@ -45,7 +58,7 @@ PanelWindow {
             }
             return windowList;
         }
-        active: screenVisibilities.launcher || screenVisibilities.dashboard || screenVisibilities.overview || screenVisibilities.powermenu
+        active: notchPanel.screenNotchOpen
 
         onCleared: {
             if (screenVisibilities.launcher) {
@@ -120,7 +133,32 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
 
-            anchors.topMargin: Config.notchTheme === "default" ? 0 : (Config.notchTheme === "island" ? 4 : 0)
+            property int verticalShift: isBarVertical && !notchPanel.screenNotchOpen && !notchPanel.hasActiveNotifications && !notchContainer.isHovered ? (Config.bar.showBackground ? 44 : 40) - 2 : 0
+
+            Behavior on verticalShift {
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
+            }
+
+            function updateVerticalShift() {
+                verticalShift = isBarVertical && !notchPanel.screenNotchOpen && !notchPanel.hasActiveNotifications && !notchContainer.isHovered ? (Config.bar.showBackground ? 44 : 40) - 2 : 0
+            }
+
+            Connections {
+                target: notchPanel
+                function onIsBarVerticalChanged() { updateVerticalShift() }
+                function onScreenNotchOpenChanged() { updateVerticalShift() }
+                function onHasActiveNotificationsChanged() { updateVerticalShift() }
+            }
+
+            Connections {
+                target: notchContainer
+                function onIsHoveredChanged() { updateVerticalShift() }
+            }
+
+            anchors.topMargin: (Config.notchTheme === "default" ? 0 : (Config.notchTheme === "island" ? 4 : 0)) - verticalShift
 
             layer.enabled: true
             layer.effect: Shadow {}
@@ -135,7 +173,7 @@ PanelWindow {
 
             // Handle global keyboard events
             Keys.onPressed: event => {
-                if (event.key === Qt.Key_Escape && (screenVisibilities.launcher || screenVisibilities.dashboard || screenVisibilities.overview || screenVisibilities.powermenu)) {
+                if (event.key === Qt.Key_Escape && notchPanel.screenNotchOpen) {
                     if (screenVisibilities.launcher) {
                         GlobalStates.clearLauncherState();
                     }
@@ -165,13 +203,13 @@ PanelWindow {
 
             readonly property bool shouldShowNotificationPopup: {
                 // Mostrar solo si hay notificaciones y el notch está expandido
-                if (!Notifications.popupList.length || !(screenVisibilities.launcher || screenVisibilities.dashboard || screenVisibilities.overview || screenVisibilities.powermenu)) return false;
-                
+                if (!notchPanel.hasActiveNotifications || !notchPanel.screenNotchOpen) return false;
+
                 // NO mostrar si estamos en la pestaña de widgets del dashboard (tab 0)
                 if (screenVisibilities.dashboard) {
                     return GlobalStates.dashboardCurrentTab !== 0;
                 }
-                
+
                 return true;
             }
 

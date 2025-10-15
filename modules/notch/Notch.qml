@@ -21,6 +21,7 @@ Item {
     property Component notificationViewComponent
     property var stackView: stackViewInternal
     property bool isExpanded: stackViewInternal.depth > 1
+    property bool isHovered: false
 
     // Screen-specific visibility properties passed from parent
     property var visibilities
@@ -86,6 +87,7 @@ Item {
             enabled: true
 
             onHoveredChanged: {
+                isHovered = hovered;
                 if (stackViewInternal.currentItem && stackViewInternal.currentItem.hasOwnProperty("notchHovered")) {
                     stackViewInternal.currentItem.notchHovered = hovered;
                 }
