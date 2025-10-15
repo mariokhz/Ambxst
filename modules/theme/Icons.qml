@@ -94,4 +94,7 @@ QtObject {
     readonly property string seal: ""
     readonly property string info: ""
     readonly property string help: ""
+    readonly property string sun: ""
+    readonly property string sunDim: ""
+    readonly property string moon: ""
 }
