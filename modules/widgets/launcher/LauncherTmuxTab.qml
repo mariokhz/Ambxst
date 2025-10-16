@@ -1129,24 +1129,24 @@ Rectangle {
                 }
             }
 
-            highlightMoveDuration: Config.animDuration / 2
-            highlightMoveVelocity: -1
-        }
-    }
+             highlightMoveDuration: Config.animDuration / 2
+             highlightMoveVelocity: -1
 
-    MouseArea {
-        anchors.fill: resultsList
-        enabled: root.deleteMode || root.renameMode
-        z: 1000
+             MouseArea {
+                 anchors.fill: parent
+                 enabled: root.deleteMode || root.renameMode
+                 z: 1000
 
-        onClicked: {
-            if (root.deleteMode) {
-                root.cancelDeleteMode();
-            } else if (root.renameMode) {
-                root.cancelRenameMode();
-            }
-        }
-    }
+                 onClicked: {
+                     if (root.deleteMode) {
+                         root.cancelDeleteMode();
+                     } else if (root.renameMode) {
+                         root.cancelRenameMode();
+                     }
+                 }
+             }
+         }
+     }
 
     Component.onCompleted: {
         refreshTmuxSessions();
