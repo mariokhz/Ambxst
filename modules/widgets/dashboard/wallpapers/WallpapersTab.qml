@@ -69,13 +69,25 @@ Rectangle {
             });
         }
 
-        // Filtrar por tipos activos si hay filtros seleccionados
-        if (activeFilters.length > 0) {
-            wallpapers = wallpapers.filter(function (path) {
-                const fileType = GlobalStates.wallpaperManager.getFileType(path);
-                return activeFilters.includes(fileType);
-            });
-        }
+         // Filtrar por tipos activos si hay filtros seleccionados
+         if (activeFilters.length > 0) {
+             wallpapers = wallpapers.filter(function (path) {
+                 const fileType = GlobalStates.wallpaperManager.getFileType(path);
+                 const subfolder = GlobalStates.wallpaperManager.getSubfolderFromPath(path);
+
+                 // Verificar si coincide con algún filtro activo
+                 for (var i = 0; i < activeFilters.length; i++) {
+                     var filter = activeFilters[i];
+                     if (filter === fileType) {
+                         return true;
+                     }
+                     if (filter.startsWith("subfolder_") && subfolder === filter.replace("subfolder_", "")) {
+                         return true;
+                     }
+                 }
+                 return false;
+             });
+         }
 
         return wallpapers;
     }

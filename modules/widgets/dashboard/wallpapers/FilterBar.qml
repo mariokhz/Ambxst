@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.globals
 import qs.config
 
 // Componente para la barra de filtros de tipo de archivo
@@ -37,6 +38,45 @@ Flickable {
         ListElement {
             label: "Videos"
             type: "video"
+        }
+    }
+
+    // Función para actualizar filtros dinámicamente
+    function updateFilters() {
+        // Limpiar filtros de subcarpetas existentes
+        for (var i = filterModel.count - 1; i >= 3; i--) {
+            filterModel.remove(i);
+        }
+
+        // Agregar filtros de subcarpetas
+        if (GlobalStates.wallpaperManager && GlobalStates.wallpaperManager.subfolderFilters) {
+            var subfolders = GlobalStates.wallpaperManager.subfolderFilters;
+            for (var j = 0; j < subfolders.length; j++) {
+                filterModel.append({
+                    label: subfolders[j],
+                    type: "subfolder_" + subfolders[j]
+                });
+            }
+        }
+    }
+
+    // Actualizar filtros cuando cambien las subcarpetas
+    Connections {
+        target: GlobalStates.wallpaperManager
+        function onSubfolderFiltersChanged() {
+            updateFilters();
+        }
+    }
+
+    Component.onCompleted: {
+        updateFilters();
+    }
+
+    // Actualizar filtros cuando cambie el directorio de wallpapers
+    Connections {
+        target: GlobalStates.wallpaperManager
+        function onWallpaperDirChanged() {
+            updateFilters();
         }
     }
 

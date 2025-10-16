@@ -24,6 +24,7 @@ PanelWindow {
     property string wallpaperDir: wallpaperConfig.adapter.wallPath || fallbackDir
     property string fallbackDir: Qt.resolvedUrl("../../../../assets/wallpapers_example").toString().replace("file://", "")
     property list<string> wallpaperPaths: []
+    property list<string> subfolderFilters: []
     property int currentIndex: 0
     property string currentWallpaper: initialLoadCompleted && wallpaperPaths.length > 0 ? wallpaperPaths[currentIndex] : ""
     property bool initialLoadCompleted: false
@@ -89,12 +90,27 @@ PanelWindow {
         return filePath;
     }
 
+    function getSubfolderFromPath(filePath) {
+        var relativePath = filePath.replace(wallpaperDir + "/", "");
+        var parts = relativePath.split("/");
+        if (parts.length > 1) {
+            return parts[0];
+        }
+        return "";
+    }
+
+    function scanSubfolders() {
+        var command = ["find", wallpaperDir, "-type", "d", "-mindepth", "1", "-maxdepth", "1"];
+        scanSubfoldersProcess.running = true;
+    }
+
     // Update directory watcher when wallpaperDir changes
     onWallpaperDirChanged: {
         console.log("Wallpaper directory changed to:", wallpaperDir);
         usingFallback = false;
         directoryWatcher.path = wallpaperDir;
         scanWallpapers.running = true;
+        scanSubfolders();
     }
 
     onCurrentWallpaperChanged:
@@ -181,8 +197,9 @@ PanelWindow {
         // Ejecutar script de generación de thumbnails
         thumbnailGeneratorScript.running = true;
 
-        // Initial scan
+        // Initial scans
         scanWallpapers.running = true;
+        scanSubfolders();
         // Start directory monitoring
         directoryWatcher.reload();
         // Load initial wallpaper config
@@ -340,6 +357,35 @@ PanelWindow {
                 console.log("✅ Video thumbnails generated successfully");
             } else {
                 console.warn("⚠️ Thumbnail generation failed with code:", exitCode);
+            }
+        }
+    }
+
+    Process {
+        id: scanSubfoldersProcess
+        running: false
+        command: ["find", wallpaperDir, "-type", "d", "-mindepth", "1", "-maxdepth", "1"]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var folders = text.trim().split("\n").filter(function (f) {
+                    return f.length > 0;
+                }).map(function (folder) {
+                    return folder.split('/').pop();
+                }).filter(function (folderName) {
+                    return !folderName.startsWith('.');
+                });
+                folders.sort();
+                subfolderFilters = folders;
+                console.log("Found subfolders:", subfolderFilters);
+            }
+        }
+
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.length > 0) {
+                    console.warn("Error scanning subfolders:", text);
+                }
             }
         }
     }
