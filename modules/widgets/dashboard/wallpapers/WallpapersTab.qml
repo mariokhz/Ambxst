@@ -37,23 +37,6 @@ Rectangle {
         return filteredWallpapers.indexOf(currentWallpaper);
     }
 
-    // Modelo para los filtros de tipo de archivo
-    ListModel {
-        id: filterModel
-        ListElement {
-            label: "Images"
-            type: "image"
-        }
-        ListElement {
-            label: "GIF"
-            type: "gif"
-        }
-        ListElement {
-            label: "Videos"
-            type: "video"
-        }
-    }
-
     // Llama a focusSearch una vez que el componente se ha completado.
     Component.onCompleted: {
         Qt.callLater(() => {
@@ -205,115 +188,20 @@ Rectangle {
                 }
             }
 
-            // Filtros horizontales para tipos de archivo
-            Flickable {
-                id: filterFlickable
+            // Barra de filtros usando el nuevo componente
+            FilterBar {
+                id: filterBar
                 Layout.fillWidth: true
-                height: 32
-                contentWidth: filterRow.width
-                flickableDirection: Flickable.HorizontalFlick
-                clip: true
 
-                Row {
-                    id: filterRow
-                    spacing: 8
+                Component.onCompleted: {
+                    // Inicializar con los filtros del padre
+                    activeFilters = parent.parent.parent.activeFilters;
+                }
 
-                    Repeater {
-                        model: filterModel
-                        delegate: Rectangle {
-                            property bool isActive: activeFilters.includes(model.type)
-                            property alias filterText: filterText
-
-                            // Ancho dinámico: incluye icono solo cuando está activo
-                            width: filterText.width + 24 + (isActive ? filterIcon.width + 4 : 0)
-                            height: 32
-                            color: isActive ? Colors.surfaceBright : Colors.surface
-                            radius: Math.max(0, Config.roundness - 8)
-
-                            Item {
-                                anchors.fill: parent
-                                anchors.margins: 8
-
-                                Row {
-                                    anchors.centerIn: parent
-                                    spacing: isActive ? 4 : 0
-
-                                    // Icono con animación de revelación
-                                    Item {
-                                        width: filterIcon.visible ? filterIcon.width : 0
-                                        height: filterIcon.height
-                                        clip: true
-
-                                        Text {
-                                            id: filterIcon
-                                            text: Icons.accept
-                                            font.family: Icons.font
-                                            font.pixelSize: 16
-                                            color: Colors.primary
-                                            visible: isActive
-                                            opacity: isActive ? 1 : 0
-
-                                            Behavior on opacity {
-                                                NumberAnimation {
-                                                    duration: Config.animDuration / 3
-                                                    easing.type: Easing.OutCubic
-                                                }
-                                            }
-                                        }
-
-                                        Behavior on width {
-                                            NumberAnimation {
-                                                duration: Config.animDuration / 3
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-                                    }
-
-                                    Text {
-                                        id: filterText
-                                        text: model.label
-                                        font.family: Config.theme.font
-                                        font.pixelSize: Config.theme.fontSize
-                                        color: isActive ? Colors.primary : Colors.overBackground
-
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: Config.animDuration / 3
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    const index = activeFilters.indexOf(model.type);
-                                    if (index > -1) {
-                                        activeFilters.splice(index, 1);
-                                    } else {
-                                        activeFilters.push(model.type);
-                                    }
-                                    activeFilters = activeFilters.slice();  // Trigger update
-                                }
-                            }
-
-                            Behavior on width {
-                                NumberAnimation {
-                                    duration: Config.animDuration / 3
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-                        }
+                onActiveFiltersChanged: {
+                    // Sincronizar cambios del componente al padre
+                    if (parent && parent.parent && parent.parent.parent) {
+                        parent.parent.parent.activeFilters = activeFilters;
                     }
                 }
             }
