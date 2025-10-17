@@ -9,10 +9,13 @@ import qs.modules.components
 Item {
     id: root
 
-    Layout.fillHeight: vertical
-    Layout.fillWidth: !vertical
-    implicitHeight: vertical ? size : 4
-    implicitWidth: !vertical ? size : 4
+    Layout.fillHeight: !resizeParent || vertical
+    Layout.fillWidth: !resizeParent || !vertical
+    implicitHeight: resizeParent ? (vertical ? size : 4) : 0
+    implicitWidth: resizeParent ? (!vertical ? size : 4) : 0
+
+    onWidthChanged: if (!resizeParent && !vertical) size = width
+    onHeightChanged: if (!resizeParent && vertical) size = height
 
     signal iconClicked
     signal iconHovered(bool hovered)
@@ -39,6 +42,7 @@ Item {
     property real thickness: 4
     property color iconColor: Colors.overBackground
     property real handleSpacing: 4
+    property bool resizeParent: true
 
     property real animatedProgress: progressRatio
     Behavior on animatedProgress {

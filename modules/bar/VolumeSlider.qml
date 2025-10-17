@@ -24,11 +24,33 @@ Item {
         }
     }
 
-    // Tamaño derivado de StyledSlider
-    implicitWidth: root.vertical ? 4 : (volumeSlider.implicitWidth + 16)
-    implicitHeight: root.vertical ? (volumeSlider.implicitHeight + 16) : 4
-    Layout.preferredWidth: root.vertical ? 4 : (volumeSlider.implicitWidth + 16)
-    Layout.preferredHeight: root.vertical ? (volumeSlider.implicitHeight + 16) : 4
+    // Tamaño basado en hover para BgRect con animación
+    implicitWidth: root.vertical ? 4 : 80
+    implicitHeight: root.vertical ? 80 : 4
+    Layout.preferredWidth: root.vertical ? 4 : 80
+    Layout.preferredHeight: root.vertical ? 80 : 4
+
+    states: [
+        State {
+            name: "hovered"
+            when: root.isHovered || volumeSlider.isDragging
+            PropertyChanges {
+                target: root
+                implicitWidth: root.vertical ? 4 : 128
+                implicitHeight: root.vertical ? 128 : 4
+                Layout.preferredWidth: root.vertical ? 4 : 128
+                Layout.preferredHeight: root.vertical ? 128 : 4
+            }
+        }
+    ]
+
+    transitions: Transition {
+        NumberAnimation {
+            properties: "implicitWidth,implicitHeight,Layout.preferredWidth,Layout.preferredHeight"
+            duration: 200
+            easing.type: Easing.OutCubic
+        }
+    }
     Layout.fillWidth: root.vertical
     Layout.fillHeight: !root.vertical
 
@@ -64,9 +86,10 @@ Item {
             anchors.rightMargin: root.vertical ? 8 : 16
             anchors.topMargin: root.vertical ? 16 : 8
             vertical: root.vertical
-            size: (root.isHovered || volumeSlider.isDragging) ? 128 : 80
+            // size: (root.isHovered || volumeSlider.isDragging) ? 128 : 80ered || volumeSlider.isDragging) ? 128 : 80
             smoothDrag: true
             value: 0
+            resizeParent: false
             wavy: true
             wavyAmplitude: (root.isHovered || volumeSlider.isDragging) ? (Audio.sink?.audio?.muted ? 0.5 : 1.5 * value) : 0
             wavyFrequency: (root.isHovered || volumeSlider.isDragging) ? (Audio.sink?.audio?.muted ? 1.0 : 8.0 * value) : 0
