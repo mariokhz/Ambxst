@@ -1,228 +1,174 @@
 pragma Singleton
+
 import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
-import qs.modules.services
 import qs.modules.globals
 import qs.config
 
+// --- CAMBIO ESTRUCTURAL: Usamos un 'Item' como raíz para contener la lógica y el FileView ---
 Item {
     id: playerColors
 
     property string assetsPath: Qt.resolvedUrl("../../assets/matugen/")
-
-    FileView {
-        id: spotifyColors
-        path: Quickshell.dataPath("players/spotify_colors.json")
-        watchChanges: true
-        onFileChanged: reload()
-
-        adapter: JsonAdapter {
-            property color background: "#1a1111"
-            property color overBackground: "#f1dedd"
-            property color overPrimary: "#571d1c"
-            property color primary: "#ffb3ae"
-            property color shadow: "#000000"
-            property color sourceColor: "#7f2424"
-        }
-    }
-
-    FileView {
-        id: firefoxColors
-        path: Quickshell.dataPath("players/firefox_colors.json")
-        watchChanges: true
-        onFileChanged: reload()
-
-        adapter: JsonAdapter {
-            property color background: "#1a1111"
-            property color overBackground: "#f1dedd"
-            property color overPrimary: "#571d1c"
-            property color primary: "#ffb3ae"
-            property color shadow: "#000000"
-            property color sourceColor: "#7f2424"
-        }
-    }
-
-    FileView {
-        id: chromiumColors
-        path: Quickshell.dataPath("players/chromium_colors.json")
-        watchChanges: true
-        onFileChanged: reload()
-
-        adapter: JsonAdapter {
-            property color background: "#1a1111"
-            property color overBackground: "#f1dedd"
-            property color overPrimary: "#571d1c"
-            property color primary: "#ffb3ae"
-            property color shadow: "#000000"
-            property color sourceColor: "#7f2424"
-        }
-    }
-
-    FileView {
-        id: telegramColors
-        path: Quickshell.dataPath("players/telegram_colors.json")
-        watchChanges: true
-        onFileChanged: reload()
-
-        adapter: JsonAdapter {
-            property color background: "#1a1111"
-            property color overBackground: "#f1dedd"
-            property color overPrimary: "#571d1c"
-            property color primary: "#ffb3ae"
-            property color shadow: "#000000"
-            property color sourceColor: "#7f2424"
-        }
-    }
-
-    FileView {
-        id: genericColors
-        path: Quickshell.dataPath("players/generic_colors.json")
-        watchChanges: true
-        onFileChanged: reload()
-
-        adapter: JsonAdapter {
-            property color background: "#1a1111"
-            property color overBackground: "#f1dedd"
-            property color overPrimary: "#571d1c"
-            property color primary: "#ffb3ae"
-            property color shadow: "#000000"
-            property color sourceColor: "#7f2424"
-        }
-    }
-
-    property color spotifyBackground: spotifyColors.adapter.background
-    property color spotifyOverBackground: spotifyColors.adapter.overBackground
-    property color spotifyOverPrimary: spotifyColors.adapter.overPrimary
-    property color spotifyPrimary: spotifyColors.adapter.primary
-    property color spotifyShadow: spotifyColors.adapter.shadow
-    property color spotifySourceColor: spotifyColors.adapter.sourceColor
-
-    property color firefoxBackground: firefoxColors.adapter.background
-    property color firefoxOverBackground: firefoxColors.adapter.overBackground
-    property color firefoxOverPrimary: firefoxColors.adapter.overPrimary
-    property color firefoxPrimary: firefoxColors.adapter.primary
-    property color firefoxShadow: firefoxColors.adapter.shadow
-    property color firefoxSourceColor: firefoxColors.adapter.sourceColor
-
-    property color chromiumBackground: chromiumColors.adapter.background
-    property color chromiumOverBackground: chromiumColors.adapter.overBackground
-    property color chromiumOverPrimary: chromiumColors.adapter.overPrimary
-    property color chromiumPrimary: chromiumColors.adapter.primary
-    property color chromiumShadow: chromiumColors.adapter.shadow
-    property color chromiumSourceColor: chromiumColors.adapter.sourceColor
-
-    property color telegramBackground: telegramColors.adapter.background
-    property color telegramOverBackground: telegramColors.adapter.overBackground
-    property color telegramOverPrimary: telegramColors.adapter.overPrimary
-    property color telegramPrimary: telegramColors.adapter.primary
-    property color telegramShadow: telegramColors.adapter.shadow
-    property color telegramSourceColor: telegramColors.adapter.sourceColor
-
-    property color genericBackground: genericColors.adapter.background
-    property color genericOverBackground: genericColors.adapter.overBackground
-    property color genericOverPrimary: genericColors.adapter.overPrimary
-    property color genericPrimary: genericColors.adapter.primary
-    property color genericShadow: genericColors.adapter.shadow
-    property color genericSourceColor: genericColors.adapter.sourceColor
-
     property string lastProcessedArtUrl: ""
-    property string lastProcessedPlayerType: ""
     property string lastProcessedScheme: ""
+    property var artworkConnections: null
 
-    function getPlayerType(player) {
-        if (!player)
-            return "generic";
+    // Este FileView ahora solo se encarga de leer el JSON. Le damos un ID interno.
+    FileView {
+        id: colorsView
+        path: Quickshell.dataPath("player_colors.json")
+        preload: true
+        watchChanges: true
+        onFileChanged: reload()
 
-        const dbusName = (player.dbusName || "").toLowerCase();
-        const desktopEntry = (player.desktopEntry || "").toLowerCase();
-        const identity = (player.identity || "").toLowerCase();
-
-        if (dbusName.includes("spotify") || desktopEntry.includes("spotify") || identity.includes("spotify"))
-            return "spotify";
-        if (dbusName.includes("chromium") || dbusName.includes("chrome") || desktopEntry.includes("chromium") || desktopEntry.includes("chrome"))
-            return "chromium";
-        if (dbusName.includes("telegram") || desktopEntry.includes("telegram") || identity.includes("telegram"))
-            return "telegram";
-        if (dbusName.includes("firefox") || desktopEntry.includes("firefox") || identity.includes("firefox"))
-            return "firefox";
-        return "generic";
-    }
-
-    function getColorsForPlayer(player) {
-        const playerType = getPlayerType(player);
-        switch (playerType) {
-        case "spotify":
-            return {
-                background: spotifyBackground,
-                overBackground: spotifyOverBackground,
-                overPrimary: spotifyOverPrimary,
-                primary: spotifyPrimary,
-                shadow: spotifyShadow,
-                sourceColor: spotifySourceColor
-            };
-        case "firefox":
-            return {
-                background: firefoxBackground,
-                overBackground: firefoxOverBackground,
-                overPrimary: firefoxOverPrimary,
-                primary: firefoxPrimary,
-                shadow: firefoxShadow,
-                sourceColor: firefoxSourceColor
-            };
-        case "chromium":
-            return {
-                background: chromiumBackground,
-                overBackground: chromiumOverBackground,
-                overPrimary: chromiumOverPrimary,
-                primary: chromiumPrimary,
-                shadow: chromiumShadow,
-                sourceColor: chromiumSourceColor
-            };
-        case "telegram":
-            return {
-                background: telegramBackground,
-                overBackground: telegramOverBackground,
-                overPrimary: telegramOverPrimary,
-                primary: telegramPrimary,
-                shadow: telegramShadow,
-                sourceColor: telegramSourceColor
-            };
-        default:
-            return {
-                background: genericBackground,
-                overBackground: genericOverBackground,
-                overPrimary: genericOverPrimary,
-                primary: genericPrimary,
-                shadow: genericShadow,
-                sourceColor: genericSourceColor
-            };
+        adapter: JsonAdapter {
+            property color background: "#1a1111"
+            property color blue: "#cebdfe"
+            property color blueContainer: "#4c3e76"
+            property color cyan: "#84d5c4"
+            property color cyanContainer: "#005045"
+            property color error: "#ffb4ab"
+            property color errorContainer: "#93000a"
+            property color green: "#b7d085"
+            property color greenContainer: "#3a4d10"
+            property color inverseOnSurface: "#382e2d"
+            property color inversePrimary: "#904a46"
+            property color inverseSurface: "#f1dedd"
+            property color magenta: "#fcb0d5"
+            property color magentaContainer: "#6c3353"
+            property color overBackground: "#f1dedd"
+            property color overBlue: "#35275e"
+            property color overBlueContainer: "#e8ddff"
+            property color overCyan: "#00382f"
+            property color overCyanContainer: "#9ff2e0"
+            property color overError: "#690005"
+            property color overErrorContainer: "#ffdad6"
+            property color overGreen: "#253600"
+            property color overGreenContainer: "#d3ec9e"
+            property color overMagenta: "#521d3c"
+            property color overMagentaContainer: "#ffd8e8"
+            property color overPrimary: "#571d1c"
+            property color overPrimaryContainer: "#ffdad7"
+            property color overRed: "#561e19"
+            property color overRedContainer: "#ffdad6"
+            property color overSecondary: "#442928"
+            property color overSecondaryContainer: "#ffdad7"
+            property color overSurface: "#f1dedd"
+            property color overSurfaceVariant: "#d8c2c0"
+            property color overTertiary: "#402d04"
+            property color overTertiaryContainer: "#ffdea7"
+            property color outline: "#a08c8b"
+            property color outlineVariant: "#534342"
+            property color primary: "#ffb3ae"
+            property color primaryContainer: "#733331"
+            property color red: "#ffb4ab"
+            property color redContainer: "#73332e"
+            property color scrim: "#000000"
+            property color secondary: "#e7bdb9"
+            property color secondaryContainer: "#5d3f3d"
+            property color shadow: "#000000"
+            property color surface: "#1a1111"
+            property color surfaceBright: "#423736"
+            property color surfaceContainer: "#271d1d"
+            property color surfaceContainerHigh: "#322827"
+            property color surfaceContainerHighest: "#3d3231"
+            property color surfaceContainerLow: "#231919"
+            property color surfaceContainerLowest: "#140c0c"
+            property color surfaceDim: "#1a1111"
+            property color surfaceTint: "#ffb3ae"
+            property color surfaceVariant: "#534342"
+            property color tertiary: "#e2c28c"
+            property color tertiaryContainer: "#594319"
+            property color sourceColor: "#7f2424"
         }
     }
 
-    function runMatugen(artworkUrl, playerType) {
-        if (!artworkUrl || artworkUrl === "" || !playerType)
-            return;
+    // --- Las propiedades de color ahora están en el 'Item' raíz y leen desde 'colorsView.adapter' ---
+    function applyOpacity(hexColor) {
+        var c = Qt.color(hexColor);
+        return Qt.rgba(c.r, c.g, c.b, Config.opacity);
+    }
 
+    property color background: Config.oledMode ? Qt.rgba(0, 0, 0, Config.opacity) : applyOpacity(colorsView.adapter.background)
+    property color surface: applyOpacity(Qt.tint(background, Qt.rgba(colorsView.adapter.overBackground.r, colorsView.adapter.overBackground.g, colorsView.adapter.overBackground.b, 0.1)))
+    property color surfaceBright: applyOpacity(Qt.tint(background, Qt.rgba(colorsView.adapter.overBackground.r, colorsView.adapter.overBackground.g, colorsView.adapter.overBackground.b, 0.2)))
+    property color surfaceContainer: applyOpacity(colorsView.adapter.surfaceContainer)
+    property color surfaceContainerHigh: applyOpacity(colorsView.adapter.surfaceContainerHigh)
+    property color surfaceContainerHighest: applyOpacity(colorsView.adapter.surfaceContainerHighest)
+    property color surfaceContainerLow: applyOpacity(colorsView.adapter.surfaceContainerLow)
+    property color surfaceContainerLowest: applyOpacity(colorsView.adapter.surfaceContainerLowest)
+    property color surfaceDim: applyOpacity(colorsView.adapter.surfaceDim)
+    property color surfaceTint: applyOpacity(colorsView.adapter.surfaceTint)
+    property color surfaceVariant: applyOpacity(colorsView.adapter.surfaceVariant)
+
+    // Propiedades directas del adapter
+    property color blue: colorsView.adapter.blue
+    property color blueContainer: colorsView.adapter.blueContainer
+    property color cyan: colorsView.adapter.cyan
+    property color cyanContainer: colorsView.adapter.cyanContainer
+    property color error: colorsView.adapter.error
+    property color errorContainer: colorsView.adapter.errorContainer
+    property color green: colorsView.adapter.green
+    property color greenContainer: colorsView.adapter.greenContainer
+    property color inverseOnSurface: colorsView.adapter.inverseOnSurface
+    property color inversePrimary: colorsView.adapter.inversePrimary
+    property color inverseSurface: colorsView.adapter.inverseSurface
+    property color magenta: colorsView.adapter.magenta
+    property color magentaContainer: colorsView.adapter.magentaContainer
+    property color overBackground: colorsView.adapter.overBackground
+    property color overBlue: colorsView.adapter.overBlue
+    property color overBlueContainer: colorsView.adapter.overBlueContainer
+    property color overCyan: colorsView.adapter.overCyan
+    property color overCyanContainer: colorsView.adapter.overCyanContainer
+    property color overError: colorsView.adapter.overError
+    property color overErrorContainer: colorsView.adapter.overErrorContainer
+    property color overGreen: colorsView.adapter.overGreen
+    property color overGreenContainer: colorsView.adapter.overGreenContainer
+    property color overMagenta: colorsView.adapter.overMagenta
+    property color overMagentaContainer: colorsView.adapter.overMagentaContainer
+    property color overPrimary: colorsView.adapter.overPrimary
+    property color overPrimaryContainer: colorsView.adapter.overPrimaryContainer
+    property color overRed: colorsView.adapter.overRed
+    property color overRedContainer: colorsView.adapter.overRedContainer
+    property color overSecondary: colorsView.adapter.overSecondary
+    property color overSecondaryContainer: colorsView.adapter.overSecondaryContainer
+    property color overSurface: colorsView.adapter.overSurface
+    property color overSurfaceVariant: colorsView.adapter.overSurfaceVariant
+    property color overTertiary: colorsView.adapter.overTertiary
+    property color overTertiaryContainer: colorsView.adapter.overTertiaryContainer
+    property color outline: colorsView.adapter.outline
+    property color outlineVariant: colorsView.adapter.outlineVariant
+    property color primary: colorsView.adapter.primary
+    property color primaryContainer: colorsView.adapter.primaryContainer
+    property color red: colorsView.adapter.red
+    property color redContainer: colorsView.adapter.redContainer
+    property color scrim: colorsView.adapter.scrim
+    property color secondary: colorsView.adapter.secondary
+    property color secondaryContainer: colorsView.adapter.secondaryContainer
+    property color shadow: colorsView.adapter.shadow
+    property color tertiary: colorsView.adapter.tertiary
+    property color tertiaryContainer: colorsView.adapter.tertiaryContainer
+    property color sourceColor: colorsView.adapter.sourceColor
+
+    // --- Toda la lógica está ahora dentro del 'Item' raíz ---
+    function runMatugen(artworkUrl) {
+        if (!artworkUrl || artworkUrl === "")
+            return;
         const currentScheme = GlobalStates.wallpaperManager ? GlobalStates.wallpaperManager.currentMatugenScheme : "scheme-tonal-spot";
-        if (artworkUrl === lastProcessedArtUrl && playerType === lastProcessedPlayerType && currentScheme === lastProcessedScheme)
+        if (artworkUrl === lastProcessedArtUrl && currentScheme === lastProcessedScheme)
             return;
-
         lastProcessedArtUrl = artworkUrl;
-        lastProcessedPlayerType = playerType;
         lastProcessedScheme = currentScheme;
-
-        const configPath = assetsPath.replace("file://", "") + playerType + ".toml";
-
+        const configPath = assetsPath.replace("file://", "") + "player.toml";
+        const cachePath = Quickshell.dataPath("player_artwork.jpg");
         if (artworkUrl.startsWith("http://") || artworkUrl.startsWith("https://")) {
-            const cachePath = Quickshell.dataPath(`${playerType}_artwork.jpg`);
             downloadProcess.command = ["curl", "-sL", "-o", cachePath, artworkUrl];
             downloadProcess.running = true;
         } else if (artworkUrl.startsWith("data:image/")) {
-            // Handle base64 encoded images (e.g., from Telegram)
             const base64Data = artworkUrl.split(",")[1];
-            const cachePath = Quickshell.dataPath(`${playerType}_artwork.jpg`);
             base64Process.command = ["bash", "-c", `echo "${base64Data}" | base64 -d > "${cachePath}"`];
             base64Process.running = true;
         } else {
@@ -235,15 +181,14 @@ Item {
     Process {
         id: downloadProcess
         running: false
-
         onExited: function (code) {
             if (code === 0) {
-                const cachePath = Quickshell.dataPath(`${lastProcessedPlayerType}_artwork.jpg`);
-                const configPath = assetsPath.replace("file://", "") + lastProcessedPlayerType + ".toml";
+                const cachePath = Quickshell.dataPath("player_artwork.jpg");
+                const configPath = assetsPath.replace("file://", "") + "player.toml";
                 matugenProcess.command = ["matugen", "image", cachePath, "-c", configPath, "-t", lastProcessedScheme];
                 matugenProcess.running = true;
             } else {
-                console.warn("Failed to download artwork for player:", lastProcessedPlayerType, "curl exit code:", code);
+                console.warn("PlayerColors: Failed to download artwork, curl exit code:", code);
             }
         }
     }
@@ -251,15 +196,14 @@ Item {
     Process {
         id: base64Process
         running: false
-
         onExited: function (code) {
             if (code === 0) {
-                const cachePath = Quickshell.dataPath(`${lastProcessedPlayerType}_artwork.jpg`);
-                const configPath = assetsPath.replace("file://", "") + lastProcessedPlayerType + ".toml";
+                const cachePath = Quickshell.dataPath("player_artwork.jpg");
+                const configPath = assetsPath.replace("file://", "") + "player.toml";
                 matugenProcess.command = ["matugen", "image", cachePath, "-c", configPath, "-t", lastProcessedScheme];
                 matugenProcess.running = true;
             } else {
-                console.warn("Failed to decode base64 artwork for player:", lastProcessedPlayerType, "base64 decode exit code:", code);
+                console.warn("PlayerColors: Failed to decode base64 artwork, exit code:", code);
             }
         }
     }
@@ -267,23 +211,19 @@ Item {
     Process {
         id: matugenProcess
         running: false
-
         onExited: function (code) {
             if (code !== 0) {
-                console.warn("matugen failed with code:", code, "for player:", lastProcessedPlayerType);
+                console.warn("PlayerColors: matugen failed with code:", code);
             }
         }
     }
-
-    property var artworkConnections: null
 
     Component {
         id: artworkConnectionsComponent
         Connections {
             function onTrackArtUrlChanged() {
                 if (target && target.trackArtUrl) {
-                    const playerType = playerColors.getPlayerType(target);
-                    playerColors.runMatugen(target.trackArtUrl, playerType);
+                    playerColors.runMatugen(target.trackArtUrl);
                 }
             }
         }
@@ -296,15 +236,12 @@ Item {
                 playerColors.artworkConnections.destroy();
                 playerColors.artworkConnections = null;
             }
-
             if (MprisController.activePlayer) {
                 playerColors.artworkConnections = artworkConnectionsComponent.createObject(playerColors, {
                     target: MprisController.activePlayer
                 });
-
                 if (MprisController.activePlayer.trackArtUrl) {
-                    const playerType = playerColors.getPlayerType(MprisController.activePlayer);
-                    playerColors.runMatugen(MprisController.activePlayer.trackArtUrl, playerType);
+                    playerColors.runMatugen(MprisController.activePlayer.trackArtUrl);
                 }
             }
         }
@@ -314,9 +251,8 @@ Item {
         target: GlobalStates.wallpaperManager
         function onCurrentMatugenSchemeChanged() {
             if (MprisController.activePlayer && MprisController.activePlayer.trackArtUrl) {
-                console.log("Regenerating player colors due to matugenScheme change");
-                const playerType = getPlayerType(MprisController.activePlayer);
-                runMatugen(MprisController.activePlayer.trackArtUrl, playerType);
+                lastProcessedArtUrl = "";
+                runMatugen(MprisController.activePlayer.trackArtUrl);
             }
         }
     }
@@ -326,10 +262,8 @@ Item {
             artworkConnections = artworkConnectionsComponent.createObject(playerColors, {
                 target: MprisController.activePlayer
             });
-
             if (MprisController.activePlayer.trackArtUrl) {
-                const playerType = getPlayerType(MprisController.activePlayer);
-                runMatugen(MprisController.activePlayer.trackArtUrl, playerType);
+                runMatugen(MprisController.activePlayer.trackArtUrl);
             }
         }
     }

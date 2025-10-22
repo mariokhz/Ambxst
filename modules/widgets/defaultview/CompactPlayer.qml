@@ -18,7 +18,11 @@ Item {
     property real position: player?.position ?? 0.0
     property real length: player?.length ?? 1.0
     property bool hasArtwork: (player?.trackArtUrl ?? "") !== ""
-    property var playerColors: hasArtwork ? PlayerColors.getColorsForPlayer(player) : null
+
+    // --- CAMBIO 1: ELIMINADO ---
+    // Se ha eliminado la siguiente línea porque PlayerColors ahora es un singleton
+    // que se actualiza automáticamente. No necesitamos una propiedad local para los colores.
+    // property var playerColors: hasArtwork ? PlayerColors.getColorsForPlayer(player) : null
 
     Timer {
         running: compactPlayer.isPlaying
@@ -44,7 +48,7 @@ Item {
     ClippingRectangle {
         anchors.fill: parent
         radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
-        color: Colors.surface
+        color: hasArtwork ? PlayerColors.surface : Colors.surface // Usamos el color dinámico si hay carátula
 
         WavyLine {
             id: noPlayerWavyLine
@@ -60,14 +64,12 @@ Item {
             fullLength: width
             visible: compactPlayer.player === null
             opacity: 1.0
-
             Behavior on color {
                 ColorAnimation {
                     duration: Config.animDuration
                     easing.type: Easing.OutQuart
                 }
             }
-
             FrameAnimation {
                 running: noPlayerWavyLine.visible
             }
@@ -91,8 +93,7 @@ Item {
             blurEnabled: true
             blurMax: 32
             blur: 0.75
-            opacity: (compactPlayer.player?.trackArtUrl ?? "") !== "" ? 1.0 : 0.0
-
+            opacity: hasArtwork ? 1.0 : 0.0 // Simplificado con hasArtwork
             Behavior on opacity {
                 NumberAnimation {
                     duration: Config.animDuration
@@ -109,7 +110,6 @@ Item {
             layer.enabled: true
             layer.effect: BgShadow {}
             visible: compactPlayer.player !== null
-
             Behavior on spacing {
                 NumberAnimation {
                     duration: Config.animDuration
@@ -122,12 +122,10 @@ Item {
                 Layout.preferredWidth: 24
                 Layout.preferredHeight: 24
                 visible: compactPlayer.player !== null
-
                 ClippingRectangle {
                     anchors.fill: parent
                     radius: compactPlayer.isPlaying ? (Config.roundness > 0 ? Math.max(Config.roundness - 8, 0) : 0) : (Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0)
                     color: "transparent"
-
                     Behavior on radius {
                         NumberAnimation {
                             duration: Config.animDuration
@@ -135,7 +133,6 @@ Item {
                             easing.overshoot: 1.5
                         }
                     }
-
                     Image {
                         id: artworkImage
                         anchors.fill: parent
@@ -144,7 +141,6 @@ Item {
                         asynchronous: true
                         visible: false
                     }
-
                     MultiEffect {
                         anchors.fill: parent
                         source: artworkImage
@@ -153,8 +149,7 @@ Item {
                         saturation: -0.25
                         blurMax: 32
                         blur: 0.75
-                        opacity: (compactPlayer.player?.trackArtUrl ?? "") !== "" ? 1.0 : 0.0
-
+                        opacity: hasArtwork ? 1.0 : 0.0 // Simplificado
                         Behavior on opacity {
                             NumberAnimation {
                                 duration: Config.animDuration
@@ -162,27 +157,26 @@ Item {
                             }
                         }
                     }
-
                     Text {
                         id: playPauseBtn
                         anchors.centerIn: parent
                         text: compactPlayer.isPlaying ? Icons.pause : Icons.play
                         textFormat: Text.RichText
-                        color: playPauseHover.hovered ? (compactPlayer.hasArtwork && compactPlayer.playerColors ? compactPlayer.playerColors.primary : Colors.primaryFixed) : (compactPlayer.hasArtwork && compactPlayer.playerColors ? compactPlayer.playerColors.overBackground : Colors.whiteSource)
+                        // --- CAMBIO 2: SIMPLIFICADO ---
+                        // Ahora usamos PlayerColors directamente, condicionado por hasArtwork.
+                        color: playPauseHover.hovered ? (hasArtwork ? PlayerColors.primary : Colors.primaryFixed) : (hasArtwork ? PlayerColors.overBackground : Colors.whiteSource)
                         font.pixelSize: 16
                         font.family: Icons.font
                         opacity: compactPlayer.player?.canPause ?? false ? 1.0 : 0.3
                         scale: 1.0
                         layer.enabled: true
                         layer.effect: BgShadow {}
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: Config.animDuration
                                 easing.type: Easing.OutQuart
                             }
                         }
-
                         Behavior on scale {
                             NumberAnimation {
                                 duration: Config.animDuration
@@ -190,12 +184,10 @@ Item {
                                 easing.overshoot: 1.5
                             }
                         }
-
                         HoverHandler {
                             id: playPauseHover
                             enabled: compactPlayer.player !== null
                         }
-
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: compactPlayer.player ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -206,7 +198,6 @@ Item {
                                 playPauseScaleTimer.restart();
                             }
                         }
-
                         Timer {
                             id: playPauseScaleTimer
                             interval: 100
@@ -220,31 +211,28 @@ Item {
                 id: previousBtn
                 text: Icons.previous
                 textFormat: Text.RichText
-                color: previousHover.hovered ? (compactPlayer.hasArtwork && compactPlayer.playerColors ? compactPlayer.playerColors.primary : Colors.primaryFixed) : (compactPlayer.hasArtwork && compactPlayer.playerColors ? compactPlayer.playerColors.overBackground : Colors.whiteSource)
+                // --- CAMBIO 2: SIMPLIFICADO ---
+                color: previousHover.hovered ? (hasArtwork ? PlayerColors.primary : Colors.primaryFixed) : (hasArtwork ? PlayerColors.overBackground : Colors.whiteSource)
                 font.pixelSize: 16
                 font.family: Icons.font
                 opacity: compactPlayer.player?.canGoPrevious ?? false ? 1.0 : 0.3
                 visible: compactPlayer.player !== null && compactPlayer.notchHovered && opacity > 0
                 clip: true
                 scale: 1.0
-
                 readonly property real naturalWidth: implicitWidth
                 Layout.preferredWidth: (compactPlayer.player !== null && compactPlayer.notchHovered) ? naturalWidth : 0
-
                 Behavior on Layout.preferredWidth {
                     NumberAnimation {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
-
                 Behavior on color {
                     ColorAnimation {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
-
                 Behavior on scale {
                     NumberAnimation {
                         duration: Config.animDuration
@@ -252,12 +240,10 @@ Item {
                         easing.overshoot: 1.5
                     }
                 }
-
                 HoverHandler {
                     id: previousHover
                     enabled: compactPlayer.player?.canGoPrevious ?? false
                 }
-
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: compactPlayer.player?.canGoPrevious ?? false ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -268,7 +254,6 @@ Item {
                         previousScaleTimer.restart();
                     }
                 }
-
                 Timer {
                     id: previousScaleTimer
                     interval: 100
@@ -283,39 +268,37 @@ Item {
                 Layout.leftMargin: compactPlayer.notchHovered ? 0 : 8
                 Layout.rightMargin: compactPlayer.notchHovered ? 0 : 8
                 visible: compactPlayer.player !== null
-
                 player: compactPlayer.player
+                // Le pasamos 'hasArtwork' para que el slider también pueda usar los colores dinámicos
+                hasArtwork: compactPlayer.hasArtwork
             }
 
             Text {
                 id: nextBtn
                 text: Icons.next
                 textFormat: Text.RichText
-                color: nextHover.hovered ? (compactPlayer.hasArtwork && compactPlayer.playerColors ? compactPlayer.playerColors.primary : Colors.primaryFixed) : (compactPlayer.hasArtwork && compactPlayer.playerColors ? compactPlayer.playerColors.overBackground : Colors.whiteSource)
+                // --- CAMBIO 2: SIMPLIFICADO ---
+                color: nextHover.hovered ? (hasArtwork ? PlayerColors.primary : Colors.primaryFixed) : (hasArtwork ? PlayerColors.overBackground : Colors.whiteSource)
                 font.pixelSize: 16
                 font.family: Icons.font
                 opacity: compactPlayer.player?.canGoNext ?? false ? 1.0 : 0.3
                 visible: compactPlayer.player !== null && opacity > 0
                 clip: true
                 scale: 1.0
-
                 readonly property real naturalWidth: implicitWidth
                 Layout.preferredWidth: (compactPlayer.player !== null && compactPlayer.notchHovered) ? naturalWidth : 0
-
                 Behavior on Layout.preferredWidth {
                     NumberAnimation {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
-
                 Behavior on color {
                     ColorAnimation {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
-
                 Behavior on scale {
                     NumberAnimation {
                         duration: Config.animDuration
@@ -323,12 +306,10 @@ Item {
                         easing.overshoot: 1.5
                     }
                 }
-
                 HoverHandler {
                     id: nextHover
                     enabled: compactPlayer.player?.canGoNext ?? false
                 }
-
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: compactPlayer.player?.canGoNext ?? false ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -339,7 +320,6 @@ Item {
                         nextScaleTimer.restart();
                     }
                 }
-
                 Timer {
                     id: nextScaleTimer
                     interval: 100
@@ -362,7 +342,8 @@ Item {
                     }
                 }
                 textFormat: Text.RichText
-                color: modeHover.hovered ? (compactPlayer.hasArtwork && compactPlayer.playerColors ? compactPlayer.playerColors.primary : Colors.primaryFixed) : (compactPlayer.hasArtwork && compactPlayer.playerColors ? compactPlayer.playerColors.overBackground : Colors.whiteSource)
+                // --- CAMBIO 2: SIMPLIFICADO ---
+                color: modeHover.hovered ? (hasArtwork ? PlayerColors.primary : Colors.primaryFixed) : (hasArtwork ? PlayerColors.overBackground : Colors.whiteSource)
                 font.pixelSize: 16
                 font.family: Icons.font
                 opacity: {
@@ -375,24 +356,20 @@ Item {
                 visible: compactPlayer.player !== null
                 clip: true
                 scale: 1.0
-
                 readonly property real naturalWidth: implicitWidth
                 Layout.preferredWidth: (compactPlayer.player !== null && compactPlayer.notchHovered) ? naturalWidth : 0
-
                 Behavior on Layout.preferredWidth {
                     NumberAnimation {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
-
                 Behavior on color {
                     ColorAnimation {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
-
                 Behavior on scale {
                     NumberAnimation {
                         duration: Config.animDuration
@@ -400,12 +377,10 @@ Item {
                         easing.overshoot: 1.5
                     }
                 }
-
                 HoverHandler {
                     id: modeHover
                     enabled: MprisController.shuffleSupported || MprisController.loopSupported
                 }
-
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
@@ -425,7 +400,6 @@ Item {
                         modeScaleTimer.restart();
                     }
                 }
-
                 Timer {
                     id: modeScaleTimer
                     interval: 100
@@ -441,7 +415,6 @@ Item {
                     const dbusName = (compactPlayer.player.dbusName || "").toLowerCase();
                     const desktopEntry = (compactPlayer.player.desktopEntry || "").toLowerCase();
                     const identity = (compactPlayer.player.identity || "").toLowerCase();
-
                     if (dbusName.includes("spotify") || desktopEntry.includes("spotify") || identity.includes("spotify"))
                         return Icons.spotify;
                     if (dbusName.includes("chromium") || dbusName.includes("chrome") || desktopEntry.includes("chromium") || desktopEntry.includes("chrome"))
@@ -453,36 +426,32 @@ Item {
                     return Icons.player;
                 }
                 textFormat: Text.RichText
-                color: playerIconHover.hovered ? (compactPlayer.hasArtwork && compactPlayer.playerColors ? compactPlayer.playerColors.primary : Colors.primaryFixed) : (compactPlayer.hasArtwork && compactPlayer.playerColors ? compactPlayer.playerColors.overBackground : Colors.whiteSource)
+                // --- CAMBIO 2: SIMPLIFICADO ---
+                color: playerIconHover.hovered ? (hasArtwork ? PlayerColors.primary : Colors.primaryFixed) : (hasArtwork ? PlayerColors.overBackground : Colors.whiteSource)
                 font.pixelSize: 20
                 font.family: Icons.font
                 verticalAlignment: Text.AlignVCenter
                 visible: compactPlayer.player !== null
-
                 Layout.preferredWidth: compactPlayer.player !== null ? implicitWidth : 0
                 Layout.rightMargin: compactPlayer.player !== null ? 4 : 0
-
                 Behavior on Layout.preferredWidth {
                     NumberAnimation {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
-
                 Behavior on Layout.rightMargin {
                     NumberAnimation {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
-
                 Behavior on color {
                     ColorAnimation {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
-
                 HoverHandler {
                     id: playerIconHover
                 }
@@ -493,7 +462,6 @@ Item {
                     const dbusName = (player.dbusName || "").toLowerCase();
                     const desktopEntry = (player.desktopEntry || "").toLowerCase();
                     const identity = (player.identity || "").toLowerCase();
-
                     if (dbusName.includes("spotify") || desktopEntry.includes("spotify") || identity.includes("spotify"))
                         return Icons.spotify;
                     if (dbusName.includes("chromium") || dbusName.includes("chrome") || desktopEntry.includes("chromium") || desktopEntry.includes("chrome"))
@@ -508,23 +476,21 @@ Item {
                 function buildMenuItems() {
                     const players = MprisController.filteredPlayers;
                     const menuItems = [];
-
                     for (let i = 0; i < players.length; i++) {
                         const player = players[i];
-                        const isActive = player === MprisController.activePlayer;
-                        const playerColors = PlayerColors.getColorsForPlayer(player);
-
+                        // --- CAMBIO 3: SIMPLIFICADO ---
+                        // Ya no se generan colores para cada player en el menú.
+                        // Se usan los colores del player activo (o los de por defecto) para todo el menú.
                         menuItems.push({
                             text: player.trackTitle || player.identity || "Unknown Player",
                             icon: getPlayerIcon(player),
-                            highlightColor: playerColors.primary,
-                            textColor: playerColors.overPrimary,
+                            highlightColor: hasArtwork ? PlayerColors.primary : Colors.primary,
+                            textColor: hasArtwork ? PlayerColors.overPrimary : Colors.overPrimary,
                             onTriggered: () => {
                                 MprisController.setActivePlayer(player);
                             }
                         });
                     }
-
                     return menuItems;
                 }
 
@@ -544,17 +510,14 @@ Item {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
-
                     onPressed: mouse => {
                         if (mouse.button === Qt.LeftButton) {
                             pressAndHoldTimer.start();
                         }
                     }
-
                     onReleased: {
                         pressAndHoldTimer.stop();
                     }
-
                     onClicked: mouse => {
                         if (mouse.button === Qt.LeftButton) {
                             MprisController.cyclePlayer(1);

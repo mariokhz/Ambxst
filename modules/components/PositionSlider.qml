@@ -16,7 +16,7 @@ Item {
     property real position: player?.position ?? 0.0
     property real length: player?.length ?? 1.0
     property bool hasArtwork: (player?.trackArtUrl ?? "") !== ""
-    property var playerColors: hasArtwork ? PlayerColors.getColorsForPlayer(player) : null
+    // property var playerColors: hasArtwork ? PlayerColors.getColorsForPlayer(player) : null
 
     property alias value: slider.value
     property alias isDragging: slider.isDragging
@@ -26,8 +26,8 @@ Item {
         anchors.fill: parent
 
         value: root.length > 0 ? Math.min(1.0, root.position / root.length) : 0
-        progressColor: root.hasArtwork && root.playerColors ? root.playerColors.primary : Colors.primaryFixed
-        backgroundColor: root.hasArtwork && root.playerColors ? root.playerColors.shadow : Colors.shadow
+        progressColor: PlayerColors.primary
+        backgroundColor: PlayerColors.shadow
         wavy: true
         wavyAmplitude: root.isPlaying ? 1 : 0.0
         wavyFrequency: root.isPlaying ? 4 : 0
