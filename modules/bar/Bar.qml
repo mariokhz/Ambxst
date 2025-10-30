@@ -59,6 +59,9 @@ PanelWindow {
     Item {
         id: bar
 
+        layer.enabled: true
+        layer.effect: Shadow {}
+
         states: [
             State {
                 name: "top"
@@ -132,12 +135,6 @@ PanelWindow {
             position: panel.position
         }
 
-        BarBgShadow {
-            id: barBgShadow
-            anchors.fill: barBg
-            position: panel.position
-        }
-
         RowLayout {
             id: horizontalLayout
             visible: panel.orientation === "horizontal"
@@ -179,13 +176,19 @@ PanelWindow {
             }
 
             ClippingRectangle {
+                id: rightRect
                 Layout.fillWidth: true
                 Layout.preferredHeight: 36
+                Layout.alignment: Qt.AlignRight
                 color: "transparent"
                 radius: Config.roundness
+                layer.enabled: Config.bar.showBackground
+                layer.effect: Shadow {}
 
                 Flickable {
-                    anchors.fill: parent
+                    width: parent.width
+                    height: parent.height
+                    anchors.right: parent.right
                     contentWidth: rightContent.width
                     contentHeight: 36
                     contentX: rightContent.width
@@ -196,31 +199,45 @@ PanelWindow {
                         spacing: 4
 
                         Item {
-                            Layout.preferredWidth: 800
+                            Layout.preferredWidth: rightRect.width - rightWidgets.width - 4
                         }
 
-                        MicSlider {
-                            bar: panel
-                        }
+                        RowLayout {
+                            id: rightWidgets
+                            spacing: 4
 
-                        VolumeSlider {
-                            id: volume
-                            bar: panel
-                        }
+                            MicSlider {
+                                bar: panel
+                                layerEnabled: Config.bar.showBackground
+                            }
 
-                        BrightnessSlider {
-                            bar: panel
-                        }
-                        SysTray {
-                            bar: panel
-                        }
-                        Weather {
-                            id: weatherComponent
-                            bar: panel
-                        }
-                        Clock {
-                            id: clockComponent
-                            bar: panel
+                            VolumeSlider {
+                                id: volume
+                                bar: panel
+                                layerEnabled: Config.bar.showBackground
+                            }
+
+                            BrightnessSlider {
+                                bar: panel
+                                layerEnabled: Config.bar.showBackground
+                            }
+
+                            SysTray {
+                                bar: panel
+                                layer.enabled: false
+                            }
+
+                            Weather {
+                                id: weatherComponent
+                                bar: panel
+                                layer.enabled: false
+                            }
+
+                            Clock {
+                                id: clockComponent
+                                bar: panel
+                                layer.enabled: false
+                            }
                         }
                     }
                 }

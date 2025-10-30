@@ -18,6 +18,8 @@ Item {
     property real iconRotation: (brightnessSlider.value / 1.0) * 180
     property real iconScale: 0.8 + (brightnessSlider.value / 1.0) * 0.2
 
+    property bool layerEnabled: true
+
     function updateSliderFromMonitor(forceAnimation: bool): void {
         if (!currentMonitor || !currentMonitor.ready || brightnessSlider.isDragging)
             return;
@@ -86,6 +88,7 @@ Item {
 
     BgRect {
         anchors.fill: parent
+        layer.enabled: root.layerEnabled
 
         MouseArea {
             anchors.fill: parent

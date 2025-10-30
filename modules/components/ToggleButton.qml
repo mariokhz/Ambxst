@@ -17,6 +17,7 @@ Button {
     implicitHeight: 36
 
     background: BgRect {
+        layer.enabled: Config.bar.showBackground
         Rectangle {
             anchors.fill: parent
             color: Colors.primary

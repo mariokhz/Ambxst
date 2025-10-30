@@ -12,11 +12,13 @@ Item {
     // Orientación derivada de la barra
     property bool vertical: bar.orientation === "vertical"
 
-     // Estado de hover para activar wavy
-     property bool isHovered: false
-     property bool mainHovered: false
-     property bool iconHovered: false
-     property bool externalVolumeChange: false
+    // Estado de hover para activar wavy
+    property bool isHovered: false
+    property bool mainHovered: false
+    property bool iconHovered: false
+    property bool externalVolumeChange: false
+
+    property bool layerEnabled: true
 
     HoverHandler {
         onHoveredChanged: {
@@ -32,9 +34,9 @@ Item {
     Layout.preferredHeight: root.vertical ? 80 : 4
 
     states: [
-         State {
-             name: "hovered"
-             when: root.isHovered || micSlider.isDragging
+        State {
+            name: "hovered"
+            when: root.isHovered || micSlider.isDragging
             PropertyChanges {
                 target: root
                 implicitWidth: root.vertical ? 4 : 128
@@ -59,6 +61,7 @@ Item {
 
     BgRect {
         anchors.fill: parent
+        layer.enabled: root.layerEnabled
 
         MouseArea {
             anchors.fill: parent
@@ -92,8 +95,8 @@ Item {
             value: 0
             resizeParent: false
             wavy: true
-             wavyAmplitude: (root.isHovered || micSlider.isDragging || root.externalVolumeChange) ? (Audio.source?.audio?.muted ? 0.5 : 1.5 * value) : 0
-             wavyFrequency: (root.isHovered || micSlider.isDragging || root.externalVolumeChange) ? (Audio.source?.audio?.muted ? 1.0 : 8.0 * value) : 0
+            wavyAmplitude: (root.isHovered || micSlider.isDragging || root.externalVolumeChange) ? (Audio.source?.audio?.muted ? 0.5 : 1.5 * value) : 0
+            wavyFrequency: (root.isHovered || micSlider.isDragging || root.externalVolumeChange) ? (Audio.source?.audio?.muted ? 1.0 : 8.0 * value) : 0
             iconPos: root.vertical ? "end" : "start"
             icon: Audio.source?.audio?.muted ? Icons.micSlash : Icons.mic
             progressColor: Audio.source?.audio?.muted ? Colors.outline : Colors.primary
@@ -110,14 +113,14 @@ Item {
                 }
             }
 
-             Connections {
-                 target: Audio.source?.audio
-                 function onVolumeChanged() {
-                     micSlider.value = Audio.source.audio.volume;
-                     root.externalVolumeChange = true;
-                     externalChangeTimer.restart();
-                 }
-             }
+            Connections {
+                target: Audio.source?.audio
+                function onVolumeChanged() {
+                    micSlider.value = Audio.source.audio.volume;
+                    root.externalVolumeChange = true;
+                    externalChangeTimer.restart();
+                }
+            }
 
             Connections {
                 target: micSlider
@@ -126,12 +129,12 @@ Item {
                     root.isHovered = root.mainHovered || root.iconHovered;
                 }
             }
-         }
+        }
 
-         Timer {
-             id: externalChangeTimer
-             interval: 1000
-             onTriggered: root.externalVolumeChange = false
-         }
-     }
- }
+        Timer {
+            id: externalChangeTimer
+            interval: 1000
+            onTriggered: root.externalVolumeChange = false
+        }
+    }
+}
