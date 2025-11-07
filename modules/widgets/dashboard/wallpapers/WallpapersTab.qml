@@ -259,6 +259,84 @@ Rectangle {
                                 focusSearch();
                             }
                         }
+
+                        // OLED Mode Toggle Button
+                        Button {
+                            id: oledButton
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 48
+                            enabled: !Config.theme.lightMode
+
+                            property bool isActive: Config.theme.oledMode
+
+                            onClicked: {
+                                if (enabled) {
+                                    Config.theme.oledMode = !Config.theme.oledMode;
+                                }
+                            }
+
+                            background: Rectangle {
+                                color: oledButton.isActive ? Colors.primary : Colors.surface
+                                radius: oledButton.isActive ? (Config.roundness > 0 ? (Config.roundness + 4) / 2 : 0) : (Config.roundness > 0 ? Config.roundness + 4 : 0)
+                                opacity: oledButton.enabled ? 1.0 : 0.5
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Config.animDuration / 2
+                                        easing.type: Easing.OutQuart
+                                    }
+                                }
+
+                                Behavior on radius {
+                                    NumberAnimation {
+                                        duration: Config.animDuration / 2
+                                        easing.type: Easing.OutQuart
+                                    }
+                                }
+
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: Config.animDuration / 2
+                                        easing.type: Easing.OutQuart
+                                    }
+                                }
+                            }
+
+                            contentItem: Text {
+                                text: "OLED"
+                                color: oledButton.isActive ? Colors.overPrimary : Colors.overSurface
+                                font.family: Config.theme.font
+                                font.pixelSize: Config.theme.fontSize
+                                font.weight: Font.Bold
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Config.animDuration / 2
+                                        easing.type: Easing.OutQuart
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: oledButton.enabled ? Qt.PointingHandCursor : Qt.ForbiddenCursor
+                                onClicked: {
+                                    if (oledButton.enabled) {
+                                        Config.theme.oledMode = !Config.theme.oledMode;
+                                    }
+                                }
+                            }
+
+                            // Update active state when config changes
+                            Connections {
+                                target: Config.theme
+                                function onOledModeChanged() {
+                                    oledButton.isActive = Config.theme.oledMode;
+                                }
+                            }
+                        }
                     }
                 }
             }

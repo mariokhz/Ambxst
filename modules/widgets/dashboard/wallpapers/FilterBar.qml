@@ -104,7 +104,14 @@ Item {
                     width: filterText.width + 24 + (isActive ? filterIcon.width + 4 : 0)
                     height: 32
                     color: isActive ? Colors.surfaceBright : Colors.surface
-                    radius: Math.max(0, Config.roundness - 8)
+                    radius: isActive ? (Config.roundness > 0 ? Config.roundness / 2 : 0) : Config.roundness
+
+                    Behavior on radius {
+                        NumberAnimation {
+                            duration: Config.animDuration / 2
+                            easing.type: Easing.OutQuart
+                        }
+                    }
 
                     Item {
                         anchors.fill: parent
