@@ -11,6 +11,7 @@ PaneRect {
     property alias placeholderText: textField.placeholderText
     property string iconText: ""
     property bool clearOnEscape: true
+    property bool handleTabNavigation: false  // Si true, captura Tab y emite señales. Si false, usa navegación normal.
 
     signal searchTextChanged(string text)
     signal accepted
@@ -70,7 +71,7 @@ PaneRect {
             }
 
             Keys.onPressed: event => {
-                if (event.key === Qt.Key_Tab) {
+                if (event.key === Qt.Key_Tab && root.handleTabNavigation) {
                     if (event.modifiers & Qt.ShiftModifier) {
                         root.shiftTabPressed();
                     } else {

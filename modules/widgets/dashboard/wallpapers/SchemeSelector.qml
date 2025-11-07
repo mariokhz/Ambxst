@@ -126,16 +126,18 @@ Item {
 
                     Keys.onPressed: event => {
                         if (event.key === Qt.Key_Tab) {
-                            keyboardNavigationActive = false;
-                            if (schemeListExpanded) {
-                                schemeListExpanded = false;
+                            if (keyboardNavigationActive) {
+                                keyboardNavigationActive = false;
+                                if (schemeListExpanded) {
+                                    schemeListExpanded = false;
+                                }
+                                if (event.modifiers & Qt.ShiftModifier) {
+                                    shiftTabPressed();
+                                } else {
+                                    tabPressed();
+                                }
+                                event.accepted = true;
                             }
-                            if (event.modifiers & Qt.ShiftModifier) {
-                                shiftTabPressed();
-                            } else {
-                                tabPressed();
-                            }
-                            event.accepted = true;
                         } else if (event.key === Qt.Key_Space) {
                             schemeListExpanded = !schemeListExpanded;
                             if (schemeListExpanded) {

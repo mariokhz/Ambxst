@@ -166,6 +166,7 @@ FocusScope {
                 placeholderText: "Search wallpapers..."
                 iconText: ""
                 clearOnEscape: false
+                handleTabNavigation: true
                 radius: Config.roundness > 0 ? Config.roundness + 4 : 0
 
                 // Manejo de eventos de búsqueda y teclado.
