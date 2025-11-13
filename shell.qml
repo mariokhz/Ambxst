@@ -110,7 +110,7 @@ ShellRoot {
         id: sessionLock
         locked: GlobalStates.lockscreenVisible
 
-        LockScreenSurface {
+        LockScreen {
             // WlSessionLockSurface creates automatically for each screen
         }
     }
