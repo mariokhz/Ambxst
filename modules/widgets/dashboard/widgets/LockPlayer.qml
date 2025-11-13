@@ -77,7 +77,7 @@ BgRect {
         id: contentLayout
         anchors.fill: parent
         anchors.margins: 16
-        anchors.rightMargin: 24
+        anchors.rightMargin: 28
         spacing: 16
         visible: MprisController.activePlayer
 
