@@ -622,7 +622,7 @@ PaneRect {
                 Layout.preferredHeight: player.playersListExpanded ? (40 * Math.min(3, MprisController.filteredPlayers.length)) - 32 : 0
                 Layout.alignment: Qt.AlignVCenter
                 orientation: Qt.Vertical
-                visible: playersListView.contentHeight > playersListView.height
+                visible: MprisController.filteredPlayers.length > 3
 
                 position: playersListView.contentY / playersListView.contentHeight
                 size: playersListView.height / playersListView.contentHeight
@@ -653,22 +653,6 @@ PaneRect {
         }
     }
 
-    Behavior on implicitHeight {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutQuart
-        }
-    }
-
-    Behavior on Layout.preferredHeight {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutQuart
-        }
-    }
-
     function getPlayerIcon(player) {
         if (!player)
             return Icons.player;
@@ -687,14 +671,6 @@ PaneRect {
         return Icons.player;
     }
     
-    Behavior on implicitHeight {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutQuart
-        }
-    }
-
     Behavior on Layout.preferredHeight {
         enabled: Config.animDuration > 0
         NumberAnimation {
