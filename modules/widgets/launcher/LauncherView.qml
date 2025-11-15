@@ -28,7 +28,7 @@ Item {
         });
     }
 
-    implicitWidth: 480
+    implicitWidth: 720
     implicitHeight: Math.min(stack.currentItem ? stack.currentItem.implicitHeight : 368, 368)
 
     Behavior on implicitHeight {

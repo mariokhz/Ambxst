@@ -10,7 +10,7 @@ import qs.modules.globals
 import qs.modules.services
 import qs.config
 
-Rectangle {
+Item {
     id: root
     focus: true
 
@@ -18,11 +18,7 @@ Rectangle {
         if (root.deleteMode) {
             console.log("DEBUG: Escape pressed in delete mode - canceling");
             root.cancelDeleteMode();
-        } else if (root.imageDeleteMode) {
-            console.log("DEBUG: Escape pressed in image delete mode - canceling");
-            root.cancelImageDeleteMode();
         } else {
-            // Solo cerrar el notch si NO estamos en modo delete
             root.itemSelected();
         }
     }
@@ -30,10 +26,7 @@ Rectangle {
     property string searchText: ""
     property bool showResults: searchText.length > 0
     property int selectedIndex: -1
-    property int selectedImageIndex: -1
-    property var imageItems: []
-    property var textItems: []
-    property bool isImageSectionFocused: false
+    property var allItems: []
     property bool hasNavigatedFromSearch: false
     property bool clearButtonFocused: false
     property bool clearButtonConfirmState: false
@@ -42,29 +35,23 @@ Rectangle {
     property bool deleteMode: false
     property string itemToDelete: ""
     property int originalSelectedIndex: -1
-    property int deleteButtonIndex: 0 // 0 = cancel, 1 = confirm
-
-    // Image delete mode state
-    property bool imageDeleteMode: false
-    property string imageToDelete: ""
-    property int originalSelectedImageIndex: -1
-    property int imageDeleteButtonIndex: 0 // 0 = cancel, 1 = trash
+    property int deleteButtonIndex: 0
 
     // Options menu state
-    property bool textOptionsMenuOpen: false
-    property bool imageOptionsMenuOpen: false
-    property int textMenuItemIndex: -1
-    property int imageMenuItemIndex: -1
-    property bool textMenuJustClosed: false
-    property bool imageMenuJustClosed: false
+    property bool optionsMenuOpen: false
+    property int menuItemIndex: -1
+    property bool menuJustClosed: false
 
-    property int imgSize: 78
+    property int previewImageSize: 200
 
     signal itemSelected
 
+    implicitWidth: 400
+    implicitHeight: 350
+
     onSelectedIndexChanged: {
-        if (selectedIndex === -1 && textResultsList.count > 0) {
-            textResultsList.positionViewAtIndex(0, ListView.Beginning);
+        if (selectedIndex === -1 && resultsList.count > 0) {
+            resultsList.positionViewAtIndex(0, ListView.Beginning);
         }
     }
 
@@ -75,8 +62,6 @@ Rectangle {
     function clearSearch() {
         searchText = "";
         selectedIndex = -1;
-        selectedImageIndex = -1;
-        isImageSectionFocused = false;
         hasNavigatedFromSearch = false;
         clearButtonFocused = false;
         clearButtonConfirmState = false;
@@ -93,29 +78,14 @@ Rectangle {
             console.log("DEBUG: Canceling delete mode from external source (tab change)");
             cancelDeleteMode();
         }
-        if (imageDeleteMode) {
-            console.log("DEBUG: Canceling image delete mode from external source (tab change)");
-            cancelImageDeleteMode();
-        }
     }
 
     function enterDeleteMode(itemId) {
         console.log("DEBUG: Entering delete mode for item:", itemId);
-        originalSelectedIndex = selectedIndex; // Store the current index
+        originalSelectedIndex = selectedIndex;
         deleteMode = true;
         itemToDelete = itemId;
-        deleteButtonIndex = 0; // Start with cancel button selected
-        // Quitar focus del SearchInput para que el componente root pueda capturar teclas
-        root.forceActiveFocus();
-    }
-
-    function enterImageDeleteMode(imageId) {
-        console.log("DEBUG: Entering image delete mode for image:", imageId);
-        originalSelectedImageIndex = selectedImageIndex; // Store the current index
-        imageDeleteMode = true;
-        imageToDelete = imageId;
-        imageDeleteButtonIndex = 0; // Start with cancel button selected
-        // Quitar focus del SearchInput para que el componente root pueda capturar teclas
+        deleteButtonIndex = 0;
         root.forceActiveFocus();
     }
 
@@ -124,59 +94,22 @@ Rectangle {
         deleteMode = false;
         itemToDelete = "";
         deleteButtonIndex = 0;
-        // Devolver focus al SearchInput
         searchInput.focusInput();
         updateFilteredItems();
-        // Restore the original selectedIndex
         selectedIndex = originalSelectedIndex;
-        textResultsList.currentIndex = originalSelectedIndex;
+        resultsList.currentIndex = originalSelectedIndex;
         originalSelectedIndex = -1;
-    }
-
-    function cancelImageDeleteMode() {
-        console.log("DEBUG: Canceling image delete mode");
-        imageDeleteMode = false;
-        imageToDelete = "";
-        imageDeleteButtonIndex = 0;
-        // Devolver focus al SearchInput
-        searchInput.focusInput();
-        updateFilteredItems();
-        // Restore the original selectedImageIndex
-        selectedImageIndex = originalSelectedImageIndex;
-        imageResultsList.currentIndex = originalSelectedImageIndex;
-        originalSelectedImageIndex = -1;
     }
 
     function confirmDeleteItem() {
         console.log("DEBUG: Confirming delete for item:", itemToDelete);
         ClipboardService.deleteItem(itemToDelete);
 
-        // Resetear estados y enviar foco al search
         deleteMode = false;
         itemToDelete = "";
         deleteButtonIndex = 0;
         originalSelectedIndex = -1;
         selectedIndex = -1;
-        selectedImageIndex = -1;
-        isImageSectionFocused = false;
-        hasNavigatedFromSearch = false;
-
-        refreshClipboardHistory();
-        searchInput.focusInput();
-    }
-
-    function confirmDeleteImage() {
-        console.log("DEBUG: Confirming delete for image:", imageToDelete);
-        ClipboardService.deleteItem(imageToDelete);
-
-        // Resetear estados y enviar foco al search
-        imageDeleteMode = false;
-        imageToDelete = "";
-        imageDeleteButtonIndex = 0;
-        originalSelectedImageIndex = -1;
-        selectedIndex = -1;
-        selectedImageIndex = -1;
-        isImageSectionFocused = false;
         hasNavigatedFromSearch = false;
 
         refreshClipboardHistory();
@@ -184,7 +117,6 @@ Rectangle {
     }
 
     function clearClipboardHistory() {
-        // Aquí irá la llamada al servicio para limpiar el historial
         ClipboardService.clear();
         clearButtonConfirmState = false;
         clearButtonFocused = false;
@@ -196,111 +128,55 @@ Rectangle {
     }
 
     function updateFilteredItems() {
-        var newImageItems = [];
-        var newTextItems = [];
+        var newItems = [];
 
         for (var i = 0; i < ClipboardService.items.length; i++) {
             var item = ClipboardService.items[i];
             var content = item.preview || "";
 
             if (searchText.length === 0 || content.toLowerCase().includes(searchText.toLowerCase())) {
-                if (item.isImage) {
-                    newImageItems.push(item);
-                } else {
-                    newTextItems.push(item);
-                }
+                newItems.push(item);
             }
         }
 
-        imageItems = newImageItems;
-        textItems = newTextItems;
+        allItems = newItems;
 
-        if (searchText.length > 0 && textItems.length > 0 && !isImageSectionFocused) {
+        if (searchText.length > 0 && allItems.length > 0) {
             selectedIndex = 0;
-            textResultsList.currentIndex = 0;
+            resultsList.currentIndex = 0;
         } else if (searchText.length === 0) {
             selectedIndex = -1;
-            selectedImageIndex = -1;
-            textResultsList.currentIndex = -1;
+            resultsList.currentIndex = -1;
         }
     }
 
     function onDownPressed() {
         if (!root.hasNavigatedFromSearch) {
-            // Primera vez presionando down desde search
             root.hasNavigatedFromSearch = true;
-            if (root.imageItems.length > 0 && root.searchText.length === 0) {
-                // Ir primero a la sección de imágenes si hay imágenes y no hay búsqueda
-                root.isImageSectionFocused = true;
-                root.selectedIndex = -1;
-                textResultsList.currentIndex = -1;
-                if (root.selectedImageIndex === -1) {
-                    root.selectedImageIndex = 0;
-                }
-                imageResultsList.currentIndex = root.selectedImageIndex;
-            } else if (textResultsList.count > 0) {
-                // Si no hay imágenes o hay búsqueda, ir directo a textos
-                root.isImageSectionFocused = false;
+            if (resultsList.count > 0) {
                 if (root.selectedIndex === -1) {
                     root.selectedIndex = 0;
-                    textResultsList.currentIndex = 0;
+                    resultsList.currentIndex = 0;
                 }
             }
         } else {
-            // Ya navegamos desde search, ahora navegamos dentro de secciones
-            if (root.isImageSectionFocused) {
-                // Cambiar de sección de imágenes a textos
-                root.isImageSectionFocused = false;
-                if (root.textItems.length > 0) {
-                    root.selectedIndex = 0;
-                    textResultsList.currentIndex = 0;
-                }
-            } else if (textResultsList.count > 0 && root.selectedIndex >= 0) {
-                if (root.selectedIndex < textResultsList.count - 1) {
+            if (resultsList.count > 0 && root.selectedIndex >= 0) {
+                if (root.selectedIndex < resultsList.count - 1) {
                     root.selectedIndex++;
-                    textResultsList.currentIndex = root.selectedIndex;
+                    resultsList.currentIndex = root.selectedIndex;
                 }
             }
         }
     }
 
     function onUpPressed() {
-        if (root.isImageSectionFocused) {
-            // Al estar en imágenes y presionar up, regresar al search
-            root.isImageSectionFocused = false;
-            root.selectedImageIndex = -1;
-            root.hasNavigatedFromSearch = false;
-            imageResultsList.currentIndex = -1;
-        } else if (root.selectedIndex > 0) {
+        if (root.selectedIndex > 0) {
             root.selectedIndex--;
-            textResultsList.currentIndex = root.selectedIndex;
-        } else if (root.selectedIndex === 0 && root.imageItems.length > 0 && root.searchText.length === 0) {
-            // Cambiar de textos a imágenes solo si no hay búsqueda
-            root.isImageSectionFocused = true;
-            root.selectedIndex = -1;
-            textResultsList.currentIndex = -1;
-            if (root.selectedImageIndex === -1) {
-                root.selectedImageIndex = 0;
-            }
+            resultsList.currentIndex = root.selectedIndex;
         } else if (root.selectedIndex === 0) {
-            // Regresar al search
             root.selectedIndex = -1;
             root.hasNavigatedFromSearch = false;
-            textResultsList.currentIndex = -1;
-        }
-    }
-
-    function onLeftPressed() {
-        if (root.isImageSectionFocused && root.selectedImageIndex > 0 && !root.deleteMode && !root.imageDeleteMode) {
-            root.selectedImageIndex--;
-            imageResultsList.currentIndex = root.selectedImageIndex;
-        }
-    }
-
-    function onRightPressed() {
-        if (root.isImageSectionFocused && root.selectedImageIndex < root.imageItems.length - 1 && !root.deleteMode && !root.imageDeleteMode) {
-            root.selectedImageIndex++;
-            imageResultsList.currentIndex = root.selectedImageIndex;
+            resultsList.currentIndex = -1;
         }
     }
 
@@ -313,32 +189,17 @@ Rectangle {
         copyProcess.running = true;
     }
 
-    implicitWidth: 400
-    implicitHeight: mainLayout.implicitHeight
-    color: "transparent"
-
     // MouseArea global para detectar clicks en cualquier espacio vacío
     MouseArea {
         anchors.fill: parent
-        enabled: root.deleteMode || root.imageDeleteMode
-        z: -10 // Muy por debajo para que no interfiera con otros componentes
+        enabled: root.deleteMode
+        z: -10
 
         onClicked: {
             if (root.deleteMode) {
                 console.log("DEBUG: Clicked on empty space globally - canceling delete mode");
                 root.cancelDeleteMode();
-            } else if (root.imageDeleteMode) {
-                console.log("DEBUG: Clicked on empty space globally - canceling image delete mode");
-                root.cancelImageDeleteMode();
             }
-        }
-    }
-
-    Behavior on height {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutQuart
         }
     }
 
@@ -347,6 +208,19 @@ Rectangle {
         target: ClipboardService
         function onListCompleted() {
             updateFilteredItems();
+        }
+    }
+
+    // Conexión para cargar imágenes cuando cambia la selección
+    Connections {
+        target: root
+        function onSelectedIndexChanged() {
+            if (root.selectedIndex >= 0 && root.selectedIndex < root.allItems.length) {
+                let item = root.allItems[root.selectedIndex];
+                if (item.isImage && !ClipboardService.getImageData(item.id)) {
+                    ClipboardService.decodeToDataUrl(item.id, item.mime);
+                }
+            }
         }
     }
 
@@ -362,19 +236,21 @@ Rectangle {
         }
     }
 
-    ColumnLayout {
+    Column {
         id: mainLayout
         anchors.fill: parent
         spacing: 8
 
         // Barra de búsqueda con botón de limpiar
-        RowLayout {
-            Layout.fillWidth: true
+        Row {
+            width: parent.width
+            height: 48
             spacing: 8
 
             SearchInput {
                 id: searchInput
-                Layout.fillWidth: true
+                width: parent.width - clearButton.width - parent.spacing
+                height: parent.height
                 text: root.searchText
                 placeholderText: "Search clipboard history..."
 
@@ -384,46 +260,27 @@ Rectangle {
 
                 onAccepted: {
                     if (root.deleteMode) {
-                        // En modo eliminar, Enter equivale a cancelar
                         console.log("DEBUG: Enter in delete mode - canceling");
                         root.cancelDeleteMode();
-                    } else if (root.imageDeleteMode) {
-                        // En modo eliminar imagen, Enter equivale a cancelar
-                        console.log("DEBUG: Enter in image delete mode - canceling");
-                        root.cancelImageDeleteMode();
                     } else {
-                        if (root.selectedIndex >= 0 && root.selectedIndex < root.textItems.length) {
-                            let selectedItem = root.textItems[root.selectedIndex];
+                        if (root.selectedIndex >= 0 && root.selectedIndex < root.allItems.length) {
+                            let selectedItem = root.allItems[root.selectedIndex];
                             console.log("DEBUG: Selected item:", selectedItem);
-                            if (selectedItem && !root.deleteMode && !root.imageDeleteMode) {
+                            if (selectedItem && !root.deleteMode) {
                                 root.copyToClipboard(selectedItem.id);
                             }
-                        } else if (root.isImageSectionFocused && root.selectedImageIndex >= 0 && root.selectedImageIndex < root.imageItems.length) {
-                            let selectedImage = root.imageItems[root.selectedImageIndex];
-                            console.log("DEBUG: Selected image:", selectedImage);
-                            if (selectedImage && !root.deleteMode && !root.imageDeleteMode) {
-                                root.copyToClipboard(selectedImage.id);
-                            }
                         } else {
-                            console.log("DEBUG: No action taken - selectedIndex:", root.selectedIndex, "count:", root.textItems.length);
+                            console.log("DEBUG: No action taken - selectedIndex:", root.selectedIndex, "count:", root.allItems.length);
                         }
                     }
                 }
 
                 onShiftAccepted: {
-                    if (!root.deleteMode && !root.imageDeleteMode) {
-                        if (root.isImageSectionFocused && root.selectedImageIndex >= 0 && root.selectedImageIndex < root.imageItems.length) {
-                            let selectedImage = root.imageItems[root.selectedImageIndex];
-                            console.log("DEBUG: Selected image for deletion:", selectedImage);
-                            if (selectedImage) {
-                                // Activar modo delete para la imagen seleccionada
-                                root.enterImageDeleteMode(selectedImage.id);
-                            }
-                        } else if (!root.isImageSectionFocused && root.selectedIndex >= 0 && root.selectedIndex < root.textItems.length) {
-                            let selectedItem = root.textItems[root.selectedIndex];
+                    if (!root.deleteMode) {
+                        if (root.selectedIndex >= 0 && root.selectedIndex < root.allItems.length) {
+                            let selectedItem = root.allItems[root.selectedIndex];
                             console.log("DEBUG: Selected item for deletion:", selectedItem);
                             if (selectedItem) {
-                                // Activar modo delete para el item seleccionado
                                 root.enterDeleteMode(selectedItem.id);
                             }
                         }
@@ -431,12 +288,9 @@ Rectangle {
                 }
 
                 onEscapePressed: {
-                    if (!root.deleteMode && !root.imageDeleteMode) {
-                        // Solo cerrar el notch si NO estamos en modo eliminar
+                    if (!root.deleteMode) {
                         root.itemSelected();
                     }
-                    // Si estamos en modo eliminar, no hacer nada aquí
-                    // El handler global del root se encargará
                 }
 
                 onDownPressed: {
@@ -446,21 +300,13 @@ Rectangle {
                 onUpPressed: {
                     root.onUpPressed();
                 }
-
-                onLeftPressed: {
-                    root.onLeftPressed();
-                }
-
-                onRightPressed: {
-                    root.onRightPressed();
-                }
             }
 
             // Botón de limpiar historial
             Rectangle {
                 id: clearButton
-                Layout.preferredWidth: root.clearButtonConfirmState ? clearButtonContent.implicitWidth + 32 : 48
-                Layout.preferredHeight: 48
+                width: root.clearButtonConfirmState ? clearButtonContent.implicitWidth + 32 : 48
+                height: 48
                 radius: searchInput.radius
                 color: {
                     if (root.clearButtonConfirmState) {
@@ -482,7 +328,7 @@ Rectangle {
                     }
                 }
 
-                Behavior on Layout.preferredWidth {
+                Behavior on width {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
@@ -513,20 +359,22 @@ Rectangle {
                     }
                 }
 
-                RowLayout {
+                Row {
                     id: clearButtonContent
                     anchors.fill: parent
                     anchors.margins: 8
                     spacing: 8
 
                     Text {
-                        Layout.preferredWidth: 32
+                        width: 32
+                        height: parent.height
                         text: root.clearButtonConfirmState ? Icons.alert : Icons.trash
                         textFormat: Text.RichText
                         font.family: Icons.font
                         font.pixelSize: 20
                         color: root.clearButtonConfirmState ? Colors.overError : Colors.primary
                         horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
 
                         Behavior on color {
                             enabled: Config.animDuration > 0
@@ -538,7 +386,8 @@ Rectangle {
                     }
 
                     Text {
-                        Layout.fillWidth: true
+                        width: parent.width - 32 - parent.spacing
+                        height: parent.height
                         text: "Clear all?"
                         font.family: Config.theme.font
                         font.weight: Font.Bold
@@ -546,6 +395,7 @@ Rectangle {
                         color: Colors.overError
                         opacity: root.clearButtonConfirmState ? 1.0 : 0.0
                         visible: opacity > 0
+                        verticalAlignment: Text.AlignVCenter
 
                         Behavior on opacity {
                             enabled: Config.animDuration > 0
@@ -580,600 +430,32 @@ Rectangle {
             }
         }
 
-        // Contenedor de resultados del clipboard
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 5
+        // Contenedor de resultados del clipboard con lista y preview
+        Row {
+            width: parent.width
+            height: parent.height - 56
+            spacing: 8
 
-            // Sección de imágenes horizontal
+            // Lista vertical (35% del ancho)
             Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: root.imgSize
-                visible: root.imageItems.length > 0 && root.searchText.length === 0
+                width: parent.width * 0.35
+                height: parent.height
 
-                ClippingRectangle {
-                    anchors.fill: parent
-                    color: "transparent"
-                    border.color: root.isImageSectionFocused ? Colors.primary : Colors.outline
-                    border.width: 0
-                    radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-
-                    Behavior on border.color {
-                        enabled: Config.animDuration > 0
-                        ColorAnimation {
-                            duration: Config.animDuration / 2
-                            easing.type: Easing.OutQuart
-                        }
-                    }
-
-                    ListView {
-                        id: imageResultsList
-                        anchors.fill: parent
-                        anchors.margins: 0
-                        orientation: ListView.Horizontal
-                        spacing: 8
-                        clip: true
-                        interactive: !root.deleteMode && !root.imageDeleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen
-                        cacheBuffer: root.imgSize * 2
-                        reuseItems: true
-
-                        model: root.imageItems
-                        currentIndex: root.selectedImageIndex
-
-                        onCurrentIndexChanged: {
-                            if (currentIndex !== root.selectedImageIndex && root.isImageSectionFocused) {
-                                root.selectedImageIndex = currentIndex;
-                            }
-                        }
-
-                        delegate: ClippingRectangle {
-                            required property var modelData
-                            required property int index
-
-                            width: root.imgSize
-                            height: width
-                            color: {
-                                if (root.imageDeleteMode && modelData.id === root.imageToDelete) {
-                                    return Colors.overError;
-                                } else if (root.isImageSectionFocused && root.selectedImageIndex === index) {
-                                    return Colors.primary;
-                                } else {
-                                    return Colors.surface;
-                                }
-                            }
-                            radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                    easing.type: Easing.OutQuart
-                                }
-                            }
-
-                            MouseArea {
-                                id: imageMouseArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                enabled: !root.deleteMode && !root.imageDeleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-
-                                // Variables para gestos táctiles y long press
-                                property real startX: 0
-                                property real startY: 0
-                                property bool isDragging: false
-                                property bool longPressTriggered: false
-
-                                property bool isInImageDeleteMode: root.imageDeleteMode && modelData.id === root.imageToDelete
-
-                                onEntered: {
-                                    // Solo cambiar la selección si no estamos en ningún modo activo
-                                    if (!root.imageDeleteMode && !root.deleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen) {
-                                        if (!root.isImageSectionFocused) {
-                                            root.isImageSectionFocused = true;
-                                            root.selectedIndex = -1;
-                                            textResultsList.currentIndex = -1;
-                                        }
-                                        root.selectedImageIndex = index;
-                                        imageResultsList.currentIndex = index;
-                                    }
-                                }
-
-                                onClicked: mouse => {
-                                    if (imageMenuJustClosed) {
-                                        return;
-                                    }
-
-                                    if (mouse.button === Qt.LeftButton && !imageMouseArea.isInImageDeleteMode) {
-                                        // Verificar si hay algún modo activo y este no es el item en modo activo
-                                        if (root.deleteMode && modelData.id !== root.itemToDelete) {
-                                            // Cancelar modo delete de texto y no ejecutar acción
-                                            console.log("DEBUG: Clicking image outside text delete mode - canceling");
-                                            root.cancelDeleteMode();
-                                            return;
-                                        } else if (root.imageDeleteMode && modelData.id !== root.imageToDelete) {
-                                            // Cancelar modo delete de imagen y no ejecutar acción
-                                            console.log("DEBUG: Clicking outside image delete mode - canceling");
-                                            root.cancelImageDeleteMode();
-                                            return;
-                                        }
-
-                                        // Si no hay modos activos o este es el item activo, ejecutar acción normal
-                                        if (!root.deleteMode && !root.imageDeleteMode) {
-                                            root.copyToClipboard(modelData.id);
-                                        }
-                                    } else if (mouse.button === Qt.RightButton) {
-                                        // Click derecho - primero verificar si hay modos activos
-                                        if (root.deleteMode || root.imageDeleteMode) {
-                                            // Si hay un modo activo, cancelarlo y no mostrar menú
-                                            if (root.deleteMode) {
-                                                console.log("DEBUG: Right click image while in delete mode - canceling");
-                                                root.cancelDeleteMode();
-                                            } else if (root.imageDeleteMode) {
-                                                console.log("DEBUG: Right click while in image delete mode - canceling");
-                                                root.cancelImageDeleteMode();
-                                            }
-                                            return;
-                                        }
-
-                                        // Click derecho - mostrar menú contextual
-                                        console.log("DEBUG: Right click detected on image, showing context menu");
-                                        root.imageMenuItemIndex = index;
-                                        root.imageOptionsMenuOpen = true;
-                                        imageContextMenu.popup(mouse.x, mouse.y);
-                                    }
-                                }
-
-                                onPressed: mouse => {
-                                    startX = mouse.x;
-                                    startY = mouse.y;
-                                    isDragging = false;
-                                    longPressTriggered = false;
-
-                                    // Solo iniciar el timer para long press si no es click derecho
-                                    if (mouse.button !== Qt.RightButton) {
-                                        imageLongPressTimer.start();
-                                    }
-                                }
-
-                                onPositionChanged: mouse => {
-                                    if (pressed && mouse.button !== Qt.RightButton) {
-                                        let deltaX = mouse.x - startX;
-                                        let deltaY = mouse.y - startY;
-                                        let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-                                        // Si se mueve más de 10 píxeles, considerar como arrastre
-                                        if (distance > 10) {
-                                            isDragging = true;
-                                            imageLongPressTimer.stop();
-                                        }
-                                    }
-                                }
-
-                                onReleased: mouse => {
-                                    imageLongPressTimer.stop();
-                                    isDragging = false;
-                                    longPressTriggered = false;
-                                }
-
-                                // Timer para long press
-                                Timer {
-                                    id: imageLongPressTimer
-                                    interval: 800 // 800ms para activar long press
-                                    repeat: false
-                                    onTriggered: {
-                                        // Long press activado - entrar en modo delete
-                                        if (!imageMouseArea.isDragging) {
-                                            root.enterImageDeleteMode(modelData.id);
-                                            imageMouseArea.longPressTriggered = true;
-                                        }
-                                    }
-                                }
-
-                                // Menú contextual para imágenes
-                                OptionsMenu {
-                                    id: imageContextMenu
-
-                                    onAboutToHide: {
-                                        imageMouseArea.enabled = false;
-                                    }
-
-                                    onClosed: {
-                                        root.imageOptionsMenuOpen = false;
-                                        root.imageMenuItemIndex = -1;
-                                        Qt.callLater(() => {
-                                            imageMouseArea.enabled = !root.deleteMode && !root.imageDeleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen;
-                                        });
-                                        root.imageMenuJustClosed = true;
-                                        imageMenuClosedTimer.start();
-                                    }
-
-                                    Timer {
-                                        id: imageMenuClosedTimer
-                                        interval: 100
-                                        repeat: false
-                                        onTriggered: {
-                                            root.imageMenuJustClosed = false;
-                                        }
-                                    }
-
-                                    items: [
-                                        {
-                                            text: "Copy",
-                                            icon: Icons.copy,
-                                            highlightColor: Colors.primary,
-                                            textColor: Colors.overPrimary,
-                                            onTriggered: function () {
-                                                console.log("DEBUG: Copy clicked from Image ContextMenu");
-                                                root.copyToClipboard(modelData.id);
-                                            }
-                                        },
-                                        {
-                                            text: "Delete",
-                                            icon: Icons.trash,
-                                            highlightColor: Colors.overError,
-                                            textColor: Colors.error,
-                                            onTriggered: function () {
-                                                console.log("DEBUG: Delete clicked from Image ContextMenu");
-                                                root.enterImageDeleteMode(modelData.id);
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-
-                            // Preview de imagen real o placeholder
-                            Item {
-                                anchors.centerIn: parent
-                                width: root.imgSize // Reducir para dar espacio al menu
-                                height: width
-
-                                // Imagen real si está disponible
-                                Image {
-                                    id: imagePreview
-                                    anchors.fill: parent
-                                    fillMode: Image.PreserveAspectCrop
-                                    visible: status === Image.Ready
-                                    source: {
-                                        // Forzar re-evaluación cuando el cache cambia
-                                        ClipboardService.revision;
-                                        return ClipboardService.getImageData(modelData.id);
-                                    }
-                                    clip: true
-
-                                    Component.onCompleted: {
-                                        // Cargar imagen on-demand si no está en cache
-                                        if (!ClipboardService.getImageData(modelData.id)) {
-                                            ClipboardService.decodeToDataUrl(modelData.id, modelData.mime);
-                                        }
-                                    }
-
-                                    onStatusChanged: {
-                                        if (status === Image.Error) {
-                                            console.log("Error loading image for ID:", modelData.id);
-                                        }
-                                    }
-                                }
-
-                                // Placeholder cuando la imagen no está disponible
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: Colors.primary
-                                    radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
-                                    visible: imagePreview.status !== Image.Ready
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: Icons.image
-                                        textFormat: Text.RichText
-                                        font.family: Icons.font
-                                        font.pixelSize: 24
-                                        color: Colors.overPrimary
-                                    }
-                                }
-
-                                // Indicador de carga
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: Colors.surface
-                                    radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
-                                    visible: imagePreview.status === Image.Loading
-                                    opacity: 0.8
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "..."
-                                        font.family: Config.theme.font
-                                        font.pixelSize: 16
-                                        color: Colors.overSurface
-                                    }
-                                }
-                            }
-
-                            // Highlight cuando está seleccionado
-                            Rectangle {
-                                anchors.fill: parent
-                                color: "transparent"
-                                border.color: Colors.primary
-                                border.width: 0
-                                radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-
-                                Behavior on border.width {
-                                    enabled: Config.animDuration > 0
-                                    NumberAnimation {
-                                        duration: Config.animDuration / 2
-                                        easing.type: Easing.OutQuart
-                                    }
-                                }
-                            }
-                        }
-
-                        highlight: ClippingRectangle {
-                            color: "transparent"
-                            z: 5
-                            radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-                            visible: root.isImageSectionFocused && (root.imageOptionsMenuOpen ? root.selectedImageIndex === root.imageMenuItemIndex : true)
-
-                            Rectangle {
-                                anchors.fill: parent
-                                anchors.margins: -36
-                                anchors.bottomMargin: root.imageDeleteMode ? 0 : -36
-                                color: "transparent"
-                                border.color: root.imageDeleteMode ? Colors.error : Colors.primary
-                                border.width: 40
-                                radius: Config.roundness > 0 ? Config.roundness + 40 : 0
-
-                                Behavior on anchors.bottomMargin {
-                                    enabled: Config.animDuration > 0
-                                    NumberAnimation {
-                                        duration: Config.animDuration
-                                        easing.type: Easing.OutQuart
-                                    }
-                                }
-
-                                Behavior on border.color {
-                                    enabled: Config.animDuration > 0
-                                    ColorAnimation {
-                                        duration: Config.animDuration / 2
-                                        easing.type: Easing.OutQuart
-                                    }
-                                }
-
-                                // Botones de acción de delete que aparecen desde abajo
-                                Rectangle {
-                                    id: imageActionContainer
-                                    anchors.bottom: parent.bottom
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    anchors.bottomMargin: 4
-                                    width: 68 // 32 + 4 + 32
-                                    height: 32
-                                    color: "transparent"
-                                    opacity: root.imageDeleteMode ? 1.0 : 0.0
-                                    visible: opacity > 0
-
-                                    transform: Translate {
-                                        y: root.imageDeleteMode ? 0 : 40
-
-                                        Behavior on y {
-                                            enabled: Config.animDuration > 0
-                                            NumberAnimation {
-                                                duration: Config.animDuration
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                    }
-
-                                    Behavior on opacity {
-                                        enabled: Config.animDuration > 0
-                                        NumberAnimation {
-                                            duration: Config.animDuration / 2
-                                            easing.type: Easing.OutQuart
-                                        }
-                                    }
-
-                                    // Highlight elástico que se estira entre botones
-                                    Rectangle {
-                                        id: imageDeleteHighlight
-                                        color: Colors.overError
-                                        radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
-                                        visible: root.imageDeleteMode
-
-                                        property real activeButtonMargin: 2
-                                        property real idx1X: root.imageDeleteButtonIndex
-                                        property real idx2X: root.imageDeleteButtonIndex
-
-                                        // Posición y tamaño con efecto elástico
-                                        x: {
-                                            let minX = Math.min(idx1X, idx2X) * 36 + activeButtonMargin; // 32 + 4 spacing
-                                            return minX;
-                                        }
-
-                                        y: activeButtonMargin
-
-                                        width: {
-                                            let stretchX = Math.abs(idx1X - idx2X) * 36 + 32 - activeButtonMargin * 2; // 32 + 4 spacing
-                                            return stretchX;
-                                        }
-
-                                        height: 32 - activeButtonMargin * 2
-
-                                        Behavior on idx1X {
-                                            enabled: Config.animDuration > 0
-                                            NumberAnimation {
-                                                duration: Config.animDuration / 3
-                                                easing.type: Easing.OutSine
-                                            }
-                                        }
-                                        Behavior on idx2X {
-                                            enabled: Config.animDuration > 0
-                                            NumberAnimation {
-                                                duration: Config.animDuration / 2
-                                                easing.type: Easing.OutSine
-                                            }
-                                        }
-                                    }
-
-                                    Row {
-                                        id: imageActionButtons
-                                        anchors.fill: parent
-                                        spacing: 4
-
-                                        // Botón cancelar (cruz)
-                                        Rectangle {
-                                            id: imageCancelButton
-                                            width: 32
-                                            height: 32
-                                            color: "transparent"
-                                            radius: Config.roundness
-                                            border.width: 0
-                                            border.color: Colors.outline
-
-                                            property bool isHighlighted: root.imageDeleteButtonIndex === 0
-
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                onClicked: root.cancelImageDeleteMode()
-                                                onEntered: {
-                                                    root.imageDeleteButtonIndex = 0;
-                                                }
-                                                onExited: parent.color = "transparent"
-                                            }
-
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: Icons.cancel
-                                                color: imageCancelButton.isHighlighted ? Colors.error : Colors.overError
-                                                font.pixelSize: 16
-                                                font.family: Icons.font
-                                                textFormat: Text.RichText
-
-                                                Behavior on color {
-                                                    enabled: Config.animDuration > 0
-                                                    ColorAnimation {
-                                                        duration: Config.animDuration / 2
-                                                        easing.type: Easing.OutQuart
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        // Botón confirmar (trash)
-                                        Rectangle {
-                                            id: imageConfirmButton
-                                            width: 32
-                                            height: 32
-                                            color: "transparent"
-                                            radius: Config.roundness
-
-                                            property bool isHighlighted: root.imageDeleteButtonIndex === 1
-
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                onClicked: root.confirmDeleteImage()
-                                                onEntered: {
-                                                    root.imageDeleteButtonIndex = 1;
-                                                }
-                                                onExited: parent.color = "transparent"
-                                            }
-
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: Icons.trash
-                                                color: imageConfirmButton.isHighlighted ? Colors.error : Colors.overError
-                                                font.pixelSize: 16
-                                                font.family: Icons.font
-                                                textFormat: Text.RichText
-
-                                                Behavior on color {
-                                                    enabled: Config.animDuration > 0
-                                                    ColorAnimation {
-                                                        duration: Config.animDuration / 2
-                                                        easing.type: Easing.OutQuart
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        highlightMoveDuration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                        highlightMoveVelocity: -1
-                    }
-
-                    // MouseArea para detectar clicks en espacios vacíos de imágenes y cancelar modos
-                    MouseArea {
-                        anchors.fill: imageResultsList
-                        enabled: root.deleteMode || root.imageDeleteMode
-                        z: -1 // Debajo de los items para que no interfiera con sus MouseAreas
-
-                        onClicked: {
-                            if (root.deleteMode) {
-                                console.log("DEBUG: Clicked on empty space in images - canceling delete mode");
-                                root.cancelDeleteMode();
-                            } else if (root.imageDeleteMode) {
-                                console.log("DEBUG: Clicked on empty space in images - canceling image delete mode");
-                                root.cancelImageDeleteMode();
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Scrollbar separador para imágenes
-            ScrollBar {
-                id: imageScrollBar
-                Layout.fillWidth: true
-                visible: root.imageItems.length > 0 && root.searchText.length === 0
-                orientation: Qt.Horizontal
-
-                size: imageResultsList.width / imageResultsList.contentWidth
-                position: imageResultsList.contentX / imageResultsList.contentWidth
-
-                background: Rectangle {
-                    implicitWidth: 4
-                    implicitHeight: 4
-                    color: Colors.surface
-                    radius: Config.roundness
-                }
-
-                contentItem: Rectangle {
-                    implicitWidth: 4
-                    implicitHeight: 4
-                    color: Colors.primary
-                    radius: Config.roundness
-                }
-
-                onPositionChanged: {
-                    if (pressed) {
-                        imageResultsList.contentX = position * imageResultsList.contentWidth;
-                    }
-                }
-            }
-
-            // Lista de textos vertical o mensaje cuando no hay elementos
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: (root.imageItems.length > 0 && root.searchText.length === 0) ? 3 * 48 : 5 * 48
-
-                // Lista de textos
                 ListView {
-                    id: textResultsList
+                    id: resultsList
                     anchors.fill: parent
                     visible: ClipboardService.items.length > 0
                     clip: true
-                    interactive: !root.deleteMode && !root.imageDeleteMode
+                    interactive: !root.deleteMode
                     cacheBuffer: 96
-                    reuseItems: true
+                    reuseItems: false
+                    boundsBehavior: Flickable.StopAtBounds
 
-                    model: root.textItems
+                    model: root.allItems
                     currentIndex: root.selectedIndex
 
                     onCurrentIndexChanged: {
-                        if (currentIndex !== root.selectedIndex && !root.isImageSectionFocused) {
+                        if (currentIndex !== root.selectedIndex) {
                             root.selectedIndex = currentIndex;
                         }
                     }
@@ -1182,79 +464,68 @@ Rectangle {
                         required property var modelData
                         required property int index
 
-                        width: textResultsList.width
+                        width: resultsList.width
                         height: 48
                         color: "transparent"
                         radius: 16
+
+                        property bool isInDeleteMode: root.deleteMode && modelData.id === root.itemToDelete
+                        property bool isSelected: root.selectedIndex === index
+                        property string displayText: {
+                            if (isInDeleteMode) {
+                                let preview = modelData.preview || "";
+                                return "Delete \"" + preview.substring(0, 20) + (preview.length > 20 ? '...' : '') + "\"?";
+                            } else if (modelData.isImage) {
+                                return "Image";
+                            } else {
+                                return modelData.preview || "";
+                            }
+                        }
 
                         MouseArea {
                             id: mouseArea
                             anchors.fill: parent
                             hoverEnabled: true
-                            enabled: !root.deleteMode && !root.imageDeleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen
+                            enabled: !root.deleteMode && !root.optionsMenuOpen
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-                            // Variables para gestos táctiles
                             property real startX: 0
                             property real startY: 0
                             property bool isDragging: false
                             property bool longPressTriggered: false
 
-                            property bool isInDeleteMode: root.deleteMode && modelData.id === root.itemToDelete
-
                             onEntered: {
-                                // Solo cambiar la selección si no estamos en ningún modo activo
-                                if (!root.deleteMode && !root.imageDeleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen) {
-                                    if (root.isImageSectionFocused) {
-                                        root.isImageSectionFocused = false;
-                                        root.selectedImageIndex = -1;
-                                    }
+                                if (!root.deleteMode && !root.optionsMenuOpen) {
                                     root.selectedIndex = index;
-                                    textResultsList.currentIndex = index;
+                                    resultsList.currentIndex = index;
                                 }
                             }
 
                             onClicked: mouse => {
-                                if (textMenuJustClosed) {
+                                if (menuJustClosed) {
                                     return;
                                 }
 
-                                if (mouse.button === Qt.LeftButton && !mouseArea.isInDeleteMode) {
-                                    // Verificar si hay algún modo activo y este no es el item en modo activo
+                                if (mouse.button === Qt.LeftButton && !isInDeleteMode) {
                                     if (root.deleteMode && modelData.id !== root.itemToDelete) {
-                                        // Cancelar modo delete de texto y no ejecutar acción
-                                        console.log("DEBUG: Clicking text outside text delete mode - canceling");
+                                        console.log("DEBUG: Clicking item outside delete mode - canceling");
                                         root.cancelDeleteMode();
-                                        return;
-                                    } else if (root.imageDeleteMode && modelData.id !== root.imageToDelete) {
-                                        // Cancelar modo delete de imagen y no ejecutar acción
-                                        console.log("DEBUG: Clicking text outside image delete mode - canceling");
-                                        root.cancelImageDeleteMode();
                                         return;
                                     }
 
-                                    // Si no hay modos activos o este es el item activo, ejecutar acción normal
-                                    if (!root.deleteMode && !root.imageDeleteMode) {
+                                    if (!root.deleteMode) {
                                         root.copyToClipboard(modelData.id);
                                     }
                                 } else if (mouse.button === Qt.RightButton) {
-                                    // Click derecho - primero verificar si hay modos activos
-                                    if (root.deleteMode || root.imageDeleteMode) {
-                                        // Si hay un modo activo, cancelarlo y no mostrar menú
-                                        if (root.deleteMode) {
-                                            console.log("DEBUG: Right click text while in delete mode - canceling");
-                                            root.cancelDeleteMode();
-                                        } else if (root.imageDeleteMode) {
-                                            console.log("DEBUG: Right click text while in image delete mode - canceling");
-                                            root.cancelImageDeleteMode();
-                                        }
+                                    if (root.deleteMode) {
+                                        console.log("DEBUG: Right click while in delete mode - canceling");
+                                        root.cancelDeleteMode();
                                         return;
                                     }
 
-                                    // Click derecho - mostrar menú contextual
                                     console.log("DEBUG: Right click detected, showing context menu");
-                                    root.textMenuItemIndex = index;
-                                    root.textOptionsMenuOpen = true;
+                                    root.menuItemIndex = index;
+                                    root.optionsMenuOpen = true;
                                     contextMenu.popup(mouse.x, mouse.y);
                                 }
                             }
@@ -1265,7 +536,6 @@ Rectangle {
                                 isDragging = false;
                                 longPressTriggered = false;
 
-                                // Solo iniciar el timer para long press si no es click derecho
                                 if (mouse.button !== Qt.RightButton) {
                                     longPressTimer.start();
                                 }
@@ -1277,12 +547,10 @@ Rectangle {
                                     let deltaY = mouse.y - startY;
                                     let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-                                    // Si se mueve más de 10 píxeles, considerar como arrastre
                                     if (distance > 10) {
                                         isDragging = true;
                                         longPressTimer.stop();
 
-                                        // Detectar swipe hacia la izquierda para delete
                                         if (deltaX < -50 && Math.abs(deltaY) < 30) {
                                             if (!longPressTriggered) {
                                                 root.enterDeleteMode(modelData.id);
@@ -1299,16 +567,16 @@ Rectangle {
                                 anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.rightMargin: 8
-                                width: 68 // 32 + 4 + 32
+                                width: 68
                                 height: 32
                                 color: "transparent"
-                                opacity: mouseArea.isInDeleteMode ? 1.0 : 0.0
+                                opacity: isInDeleteMode ? 1.0 : 0.0
                                 visible: opacity > 0
 
                                 transform: Translate {
-                                    x: mouseArea.isInDeleteMode ? 0 : 80
+                                    y: isInDeleteMode ? 0 : 80
 
-                                    Behavior on x {
+                                    Behavior on y {
                                         enabled: Config.animDuration > 0
                                         NumberAnimation {
                                             duration: Config.animDuration
@@ -1325,28 +593,26 @@ Rectangle {
                                     }
                                 }
 
-                                // Highlight elástico que se estira entre botones
                                 Rectangle {
                                     id: deleteHighlight
                                     color: Colors.overError
                                     radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
-                                    visible: mouseArea.isInDeleteMode
+                                    visible: isInDeleteMode
                                     z: 0
 
                                     property real activeButtonMargin: 2
                                     property real idx1X: root.deleteButtonIndex
                                     property real idx2X: root.deleteButtonIndex
 
-                                    // Posición y tamaño con efecto elástico
                                     x: {
-                                        let minX = Math.min(idx1X, idx2X) * 36 + activeButtonMargin; // 32 + 4 spacing
+                                        let minX = Math.min(idx1X, idx2X) * 36 + activeButtonMargin;
                                         return minX;
                                     }
 
                                     y: activeButtonMargin
 
                                     width: {
-                                        let stretchX = Math.abs(idx1X - idx2X) * 36 + 32 - activeButtonMargin * 2; // 32 + 4 spacing
+                                        let stretchX = Math.abs(idx1X - idx2X) * 36 + 32 - activeButtonMargin * 2;
                                         return stretchX;
                                     }
 
@@ -1373,7 +639,6 @@ Rectangle {
                                     anchors.fill: parent
                                     spacing: 4
 
-                                    // Botón cancelar (cruz)
                                     Rectangle {
                                         id: cancelButton
                                         width: 32
@@ -1414,7 +679,6 @@ Rectangle {
                                         }
                                     }
 
-                                    // Botón confirmar (check)
                                     Rectangle {
                                         id: confirmButton
                                         width: 32
@@ -1461,13 +725,11 @@ Rectangle {
                                 longPressTriggered = false;
                             }
 
-                            // Timer para long press
                             Timer {
                                 id: longPressTimer
-                                interval: 800 // 800ms para activar long press
+                                interval: 800
                                 repeat: false
                                 onTriggered: {
-                                    // Long press activado - copiar item
                                     if (!mouseArea.isDragging) {
                                         root.copyToClipboard(modelData.id);
                                         mouseArea.longPressTriggered = true;
@@ -1476,7 +738,6 @@ Rectangle {
                             }
                         }
 
-                        // Menú contextual usando el componente reutilizable
                         OptionsMenu {
                             id: contextMenu
 
@@ -1485,21 +746,21 @@ Rectangle {
                             }
 
                             onClosed: {
-                                root.textOptionsMenuOpen = false;
-                                root.textMenuItemIndex = -1;
+                                root.optionsMenuOpen = false;
+                                root.menuItemIndex = -1;
                                 Qt.callLater(() => {
-                                    mouseArea.enabled = !root.deleteMode && !root.imageDeleteMode && !root.textOptionsMenuOpen && !root.imageOptionsMenuOpen;
+                                    mouseArea.enabled = !root.deleteMode && !root.optionsMenuOpen;
                                 });
-                                root.textMenuJustClosed = true;
-                                textMenuClosedTimer.start();
+                                root.menuJustClosed = true;
+                                menuClosedTimer.start();
                             }
 
                             Timer {
-                                id: textMenuClosedTimer
+                                id: menuClosedTimer
                                 interval: 100
                                 repeat: false
                                 onTriggered: {
-                                    root.textMenuJustClosed = false;
+                                    root.menuJustClosed = false;
                                 }
                             }
 
@@ -1530,7 +791,7 @@ Rectangle {
                         RowLayout {
                             anchors.fill: parent
                             anchors.margins: 8
-                            anchors.rightMargin: mouseArea.isInDeleteMode ? 84 : 8 // 68 (ancho botones) + 16 (padding extra)
+                            anchors.rightMargin: isInDeleteMode ? 84 : 8
                             spacing: 8
 
                             Behavior on anchors.rightMargin {
@@ -1545,9 +806,9 @@ Rectangle {
                                 Layout.preferredWidth: 32
                                 Layout.preferredHeight: 32
                                 color: {
-                                    if (mouseArea.isInDeleteMode) {
+                                    if (isInDeleteMode) {
                                         return Colors.overError;
-                                    } else if (root.selectedIndex === index && !root.isImageSectionFocused) {
+                                    } else if (isSelected) {
                                         return Colors.overPrimary;
                                     } else {
                                         return Colors.surface;
@@ -1565,11 +826,11 @@ Rectangle {
 
                                 Text {
                                     anchors.centerIn: parent
-                                    text: mouseArea.isInDeleteMode ? Icons.trash : Icons.clip
+                                    text: isInDeleteMode ? Icons.trash : (modelData.isImage ? Icons.image : Icons.clip)
                                     color: {
-                                        if (mouseArea.isInDeleteMode) {
+                                        if (isInDeleteMode) {
                                             return Colors.error;
-                                        } else if (root.selectedIndex === index && !root.isImageSectionFocused) {
+                                        } else if (isSelected) {
                                             return Colors.primary;
                                         } else {
                                             return Colors.overBackground;
@@ -1591,11 +852,11 @@ Rectangle {
 
                             Text {
                                 Layout.fillWidth: true
-                                text: mouseArea.isInDeleteMode ? ("Delete \"" + modelData.preview.substring(0, 20) + (modelData.preview.length > 20 ? '...' : '') + "\"?") : modelData.preview
+                                text: displayText
                                 color: {
-                                    if (mouseArea.isInDeleteMode) {
+                                    if (isInDeleteMode) {
                                         return Colors.overError;
-                                    } else if (root.selectedIndex === index && !root.isImageSectionFocused) {
+                                    } else if (isSelected) {
                                         return Colors.overPrimary;
                                     } else {
                                         return Colors.overBackground;
@@ -1603,7 +864,7 @@ Rectangle {
                                 }
                                 font.family: Config.theme.font
                                 font.pixelSize: Config.theme.fontSize
-                                font.weight: mouseArea.isInDeleteMode ? Font.Bold : Font.Bold
+                                font.weight: Font.Bold
                                 elide: Text.ElideRight
 
                                 Behavior on color {
@@ -1620,7 +881,7 @@ Rectangle {
                     highlight: Rectangle {
                         color: root.deleteMode ? Colors.error : Colors.primary
                         radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-                        visible: root.selectedIndex >= 0 && !root.isImageSectionFocused && (root.textOptionsMenuOpen ? root.selectedIndex === root.textMenuItemIndex : true)
+                        visible: root.selectedIndex >= 0 && (root.optionsMenuOpen ? root.selectedIndex === root.menuItemIndex : true)
 
                         Behavior on color {
                             enabled: Config.animDuration > 0
@@ -1635,24 +896,19 @@ Rectangle {
                     highlightMoveVelocity: -1
                 }
 
-                // MouseArea para detectar clicks en espacios vacíos de texto y cancelar modos
                 MouseArea {
-                    anchors.fill: textResultsList
-                    enabled: root.deleteMode || root.imageDeleteMode
-                    z: -1 // Debajo de los items para que no interfiera con sus MouseAreas
+                    anchors.fill: resultsList
+                    enabled: root.deleteMode
+                    z: -1
 
                     onClicked: {
                         if (root.deleteMode) {
-                            console.log("DEBUG: Clicked on empty space in text - canceling delete mode");
+                            console.log("DEBUG: Clicked on empty space in list - canceling delete mode");
                             root.cancelDeleteMode();
-                        } else if (root.imageDeleteMode) {
-                            console.log("DEBUG: Clicked on empty space in text - canceling image delete mode");
-                            root.cancelImageDeleteMode();
                         }
                     }
                 }
 
-                // Mensaje cuando no hay elementos
                 Column {
                     anchors.centerIn: parent
                     spacing: 16
@@ -1685,6 +941,80 @@ Rectangle {
                     }
                 }
             }
+
+            // Preview panel (65% del ancho)
+            Rectangle {
+                width: parent.width * 0.65
+                height: parent.height
+                color: Colors.surface
+                radius: Config.roundness > 0 ? Config.roundness + 4 : 0
+                visible: root.selectedIndex >= 0 && root.allItems.length > 0
+
+                property var currentItem: root.selectedIndex >= 0 && root.selectedIndex < root.allItems.length ? root.allItems[root.selectedIndex] : null
+
+                Item {
+                    anchors.fill: parent
+                    anchors.margins: 12
+
+                    // Preview para imagen
+                    Image {
+                        id: previewImage
+                        anchors.centerIn: parent
+                        width: Math.min(parent.width, root.previewImageSize)
+                        height: Math.min(parent.height, root.previewImageSize)
+                        fillMode: Image.PreserveAspectFit
+                        visible: parent.parent.currentItem && parent.parent.currentItem.isImage
+                        source: {
+                            if (parent.parent.currentItem && parent.parent.currentItem.isImage) {
+                                ClipboardService.revision;
+                                return ClipboardService.getImageData(parent.parent.currentItem.id);
+                            }
+                            return "";
+                        }
+                        clip: true
+                        cache: false
+                        asynchronous: true
+                    }
+
+                    // Placeholder cuando la imagen no está lista
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 120
+                        height: 120
+                        color: Colors.surfaceBright
+                        radius: Config.roundness > 0 ? Config.roundness + 4 : 0
+                        visible: parent.parent.currentItem && parent.parent.currentItem.isImage && previewImage.status !== Image.Ready
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: Icons.image
+                            textFormat: Text.RichText
+                            font.family: Icons.font
+                            font.pixelSize: 48
+                            color: Colors.primary
+                        }
+                    }
+
+                    // Preview para texto con scroll
+                    ScrollView {
+                        anchors.fill: parent
+                        visible: parent.parent.currentItem && !parent.parent.currentItem.isImage
+                        clip: true
+
+                        TextArea {
+                            id: previewText
+                            text: parent.parent.parent.parent.currentItem ? parent.parent.parent.parent.currentItem.preview : ""
+                            font.family: Config.theme.font
+                            font.pixelSize: Config.theme.fontSize
+                            color: Colors.overBackground
+                            readOnly: true
+                            wrapMode: Text.Wrap
+                            background: null
+                            selectByMouse: true
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1692,13 +1022,12 @@ Rectangle {
     Keys.onPressed: event => {
         if (root.deleteMode) {
             if (event.key === Qt.Key_Left) {
-                root.deleteButtonIndex = 0; // Cancelar (cruz)
+                root.deleteButtonIndex = 0;
                 event.accepted = true;
             } else if (event.key === Qt.Key_Right) {
-                root.deleteButtonIndex = 1; // Confirmar (check)
+                root.deleteButtonIndex = 1;
                 event.accepted = true;
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Space) {
-                // Ejecutar acción del botón seleccionado
                 if (root.deleteButtonIndex === 0) {
                     console.log("DEBUG: Enter/Space pressed - canceling delete");
                     root.cancelDeleteMode();
@@ -1712,28 +1041,6 @@ Rectangle {
                 root.cancelDeleteMode();
                 event.accepted = true;
             }
-        } else if (root.imageDeleteMode) {
-            if (event.key === Qt.Key_Left) {
-                root.imageDeleteButtonIndex = 0; // Cancelar (cruz)
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Right) {
-                root.imageDeleteButtonIndex = 1; // Confirmar (trash)
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Space) {
-                // Ejecutar acción del botón seleccionado
-                if (root.imageDeleteButtonIndex === 0) {
-                    console.log("DEBUG: Enter/Space pressed - canceling image delete");
-                    root.cancelImageDeleteMode();
-                } else {
-                    console.log("DEBUG: Enter/Space pressed - confirming image delete");
-                    root.confirmDeleteImage();
-                }
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Escape) {
-                console.log("DEBUG: Escape pressed in image delete mode - canceling without closing notch");
-                root.cancelImageDeleteMode();
-                event.accepted = true;
-            }
         }
     }
 
@@ -1741,13 +1048,6 @@ Rectangle {
     onDeleteModeChanged: {
         if (!deleteMode) {
             console.log("DEBUG: Delete mode ended");
-        }
-    }
-
-    // Monitor cambios en imageDeleteMode
-    onImageDeleteModeChanged: {
-        if (!imageDeleteMode) {
-            console.log("DEBUG: Image delete mode ended");
         }
     }
 
