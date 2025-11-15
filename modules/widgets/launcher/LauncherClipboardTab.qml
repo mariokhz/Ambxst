@@ -48,7 +48,7 @@ Item {
     signal itemSelected
 
     implicitWidth: 400
-    implicitHeight: 350
+    implicitHeight: 7 * 48 + 56
 
     onSelectedIndexChanged: {
         if (selectedIndex === -1 && resultsList.count > 0) {
@@ -452,7 +452,7 @@ Item {
         Row {
             width: parent.width
             height: parent.height - 56
-            spacing: 8
+            spacing: 4
 
             // Lista vertical (35% del ancho)
             Item {
@@ -960,27 +960,29 @@ Item {
                 }
             }
 
-            // Preview panel (65% del ancho)
-            Rectangle {
-                id: previewPanel
-                width: parent.width * 0.65
+            // Separador vertical
+            Separator {
+                vert: true
+                width: 2
                 height: parent.height
-                color: Colors.surface
-                radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-                visible: root.selectedIndex >= 0 && root.allItems.length > 0
+            }
+
+            // Preview panel (65% del ancho)
+            Item {
+                id: previewPanel
+                width: parent.width * 0.65 - 6
+                height: parent.height
 
                 property var currentItem: root.selectedIndex >= 0 && root.selectedIndex < root.allItems.length ? root.allItems[root.selectedIndex] : null
 
                 Item {
                     anchors.fill: parent
-                    anchors.margins: 12
+                    anchors.margins: 8
 
                     // Preview para imagen
                     Image {
                         id: previewImage
-                        anchors.centerIn: parent
-                        width: Math.min(parent.width, root.previewImageSize)
-                        height: Math.min(parent.height, root.previewImageSize)
+                        anchors.fill: parent
                         fillMode: Image.PreserveAspectFit
                         visible: previewPanel.currentItem && previewPanel.currentItem.isImage
                         source: {

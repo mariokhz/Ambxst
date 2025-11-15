@@ -650,7 +650,7 @@ Rectangle {
             ListView {
                 id: emojiList
                 Layout.fillWidth: true
-                Layout.preferredHeight: (recentEmojis.length > 0 && searchText.length === 0 ? 4 : 5) * 48
+                Layout.preferredHeight: (recentEmojis.length > 0 && searchText.length === 0 ? 6 : 7) * 48
                 clip: true
                 cacheBuffer: 96
                 reuseItems: true

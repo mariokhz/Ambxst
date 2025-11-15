@@ -28,8 +28,8 @@ Item {
         });
     }
 
-    implicitWidth: 720
-    implicitHeight: Math.min(stack.currentItem ? stack.currentItem.implicitHeight : 368, 368)
+    implicitWidth: 800
+    implicitHeight: Math.min(stack.currentItem ? stack.currentItem.implicitHeight : 7 * 48 + 56, 7 * 48 + 56)
 
     Behavior on implicitHeight {
         enabled: Config.animDuration > 0

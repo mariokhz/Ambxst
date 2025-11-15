@@ -164,7 +164,7 @@ Rectangle {
         ListView {
             id: resultsList
             Layout.fillWidth: true
-            Layout.preferredHeight: 5 * 48
+            Layout.preferredHeight: 7 * 48
             visible: true
             clip: true
             interactive: !root.optionsMenuOpen
