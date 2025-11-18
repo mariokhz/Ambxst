@@ -132,4 +132,7 @@ QtObject {
     readonly property string user: ""
     readonly property string spinnerGap: ""
     readonly property string file: ""
+    readonly property string link: ""
+    readonly property string globe: ""
+    readonly property string folder: ""
 }

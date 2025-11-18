@@ -9,6 +9,7 @@ import qs.modules.components
 import qs.modules.globals
 import qs.modules.services
 import qs.config
+import "clipboard_utils.js" as ClipboardUtils
 
 Item {
     id: root
@@ -57,6 +58,40 @@ Item {
         if (!filePath) return false;
         var ext = filePath.split('.').pop().toLowerCase();
         return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'].indexOf(ext) !== -1;
+    }
+    
+    // Helper function to get icon for item
+    function getIconForItem(item) {
+        if (!item) return Icons.clip;
+        
+        // Check if it's a URL (for favicon)
+        if (!item.isImage && !item.isFile) {
+            var content = item.preview || "";
+            if (ClipboardUtils.isUrl(content)) {
+                return "link"; // Special marker for URL
+            }
+        }
+        
+        // For files, try to get icon based on extension
+        if (item.isFile) {
+            var content = item.preview || "";
+            var filePath = getFilePathFromUri(content);
+            if (filePath) {
+                return ClipboardUtils.getNerdFontIconForExtension(filePath);
+            }
+        }
+        
+        // Default icons
+        if (item.isImage) return Icons.image;
+        if (item.isFile) return Icons.file;
+        return Icons.clip;
+    }
+    
+    // Helper function to get favicon URL for item
+    function getFaviconUrl(item) {
+        if (!item || item.isImage || item.isFile) return "";
+        var content = item.preview || "";
+        return ClipboardUtils.getFaviconUrl(content);
     }
 
     implicitWidth: 400
@@ -880,19 +915,52 @@ Item {
                                         easing.type: Easing.OutQuart
                                     }
                                 }
+                                
+                                property string iconType: {
+                                    if (isInDeleteMode) {
+                                        return "trash";
+                                    }
+                                    return root.getIconForItem(modelData);
+                                }
+                                
+                                property string faviconUrl: iconType === "link" ? root.getFaviconUrl(modelData) : ""
+
+                                // Favicon for URLs
+                                Image {
+                                    id: faviconImage
+                                    anchors.centerIn: parent
+                                    width: 20
+                                    height: 20
+                                    visible: parent.iconType === "link" && parent.faviconUrl !== ""
+                                    source: parent.faviconUrl
+                                    fillMode: Image.PreserveAspectFit
+                                    asynchronous: true
+                                    cache: true
+                                    
+                                    onStatusChanged: {
+                                        if (status === Image.Error) {
+                                            visible = false;
+                                        }
+                                    }
+                                }
 
                                 Text {
                                     anchors.centerIn: parent
+                                    visible: parent.iconType !== "link" || parent.faviconUrl === "" || faviconImage.status === Image.Error
                                     text: {
                                         if (isInDeleteMode) {
                                             return Icons.trash;
-                                        } else if (modelData.isImage) {
-                                            return Icons.image;
-                                        } else if (modelData.isFile) {
-                                            return Icons.file;
-                                        } else {
-                                            return Icons.clip;
                                         }
+                                        var iconStr = parent.iconType;
+                                        // Check if it's a Nerd Font icon (starts with )
+                                        if (iconStr && iconStr.charCodeAt(0) >= 0xE000 && iconStr.charCodeAt(0) <= 0xF8FF) {
+                                            return iconStr;
+                                        }
+                                        // Fallback to Icons object
+                                        if (iconStr === "image") return Icons.image;
+                                        if (iconStr === "file") return Icons.file;
+                                        if (iconStr === "link") return Icons.clip; // Fallback for failed favicon
+                                        return Icons.clip;
                                     }
                                     color: {
                                         if (isInDeleteMode) {
@@ -903,7 +971,14 @@ Item {
                                             return Colors.overBackground;
                                         }
                                     }
-                                    font.family: Icons.font
+                                    font.family: {
+                                        var iconStr = parent.iconType;
+                                        // Use Nerd Font for file icons
+                                        if (iconStr && iconStr.charCodeAt(0) >= 0xE000 && iconStr.charCodeAt(0) <= 0xF8FF) {
+                                            return "Symbols Nerd Font Mono";
+                                        }
+                                        return Icons.font;
+                                    }
                                     font.pixelSize: 16
                                     textFormat: Text.RichText
 
@@ -1133,18 +1208,118 @@ Item {
                         visible: previewPanel.currentItem && !previewPanel.currentItem.isImage && !previewPanel.currentItem.isFile
                         clip: true
                         contentWidth: width
-                        contentHeight: previewText.height
+                        contentHeight: textPreviewColumn.height
                         boundsBehavior: Flickable.StopAtBounds
-
-                        Text {
-                            id: previewText
-                            text: root.currentFullContent || (previewPanel.currentItem ? previewPanel.currentItem.preview : "")
-                            font.family: Config.theme.font
-                            font.pixelSize: Config.theme.fontSize
-                            color: Colors.overBackground
-                            wrapMode: Text.Wrap
+                        
+                        Column {
+                            id: textPreviewColumn
                             width: parent.width
-                            textFormat: Text.PlainText
+                            spacing: 12
+                            
+                            // URL preview with favicon
+                            Item {
+                                width: parent.width
+                                height: urlPreview.visible ? 60 : 0
+                                visible: previewPanel.currentItem && ClipboardUtils.isUrl(root.currentFullContent || previewPanel.currentItem.preview)
+                                
+                                Rectangle {
+                                    id: urlPreview
+                                    anchors.centerIn: parent
+                                    width: parent.width
+                                    height: 60
+                                    color: Colors.surface
+                                    radius: Config.roundness > 0 ? Config.roundness + 4 : 0
+                                    
+                                    Row {
+                                        anchors.fill: parent
+                                        anchors.margins: 12
+                                        spacing: 12
+                                        
+                                        // Favicon or fallback icon
+                                        Rectangle {
+                                            width: 36
+                                            height: 36
+                                            color: Colors.surfaceBright
+                                            radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
+                                            
+                                            Image {
+                                                id: previewFavicon
+                                                anchors.centerIn: parent
+                                                width: 24
+                                                height: 24
+                                                visible: previewPanel.currentItem !== null
+                                                source: {
+                                                    if (!previewPanel.currentItem) return "";
+                                                    return ClipboardUtils.getFaviconUrl(root.currentFullContent || previewPanel.currentItem.preview);
+                                                }
+                                                fillMode: Image.PreserveAspectFit
+                                                asynchronous: true
+                                                cache: true
+                                                
+                                                onStatusChanged: {
+                                                    if (status === Image.Error) {
+                                                        visible = false;
+                                                    }
+                                                }
+                                            }
+                                            
+                                            Text {
+                                                anchors.centerIn: parent
+                                                visible: !previewFavicon.visible || previewFavicon.status === Image.Error
+                                                text: "󰖟" // Nerd Font link icon
+                                                font.family: "Symbols Nerd Font Mono"
+                                                font.pixelSize: 20
+                                                color: Colors.primary
+                                                textFormat: Text.RichText
+                                            }
+                                        }
+                                        
+                                        Column {
+                                            width: parent.width - 48 - parent.spacing
+                                            height: parent.height
+                                            spacing: 4
+                                            
+                                            Text {
+                                                text: "Link"
+                                                font.family: Config.theme.font
+                                                font.pixelSize: Config.theme.fontSize - 1
+                                                font.weight: Font.Medium
+                                                color: Colors.surfaceBright
+                                            }
+                                            
+                                            Text {
+                                                text: {
+                                                    if (!previewPanel.currentItem) return "";
+                                                    var url = root.currentFullContent || previewPanel.currentItem.preview;
+                                                    try {
+                                                        var urlObj = new URL(url.trim());
+                                                        return urlObj.hostname;
+                                                    } catch (e) {
+                                                        return url.substring(0, 40) + (url.length > 40 ? "..." : "");
+                                                    }
+                                                }
+                                                font.family: Config.theme.font
+                                                font.pixelSize: Config.theme.fontSize
+                                                font.weight: Font.Bold
+                                                color: Colors.overBackground
+                                                elide: Text.ElideRight
+                                                width: parent.width
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                id: previewText
+                                text: root.currentFullContent || (previewPanel.currentItem ? previewPanel.currentItem.preview : "")
+                                font.family: Config.theme.font
+                                font.pixelSize: Config.theme.fontSize
+                                color: Colors.overBackground
+                                wrapMode: Text.Wrap
+                                width: parent.width
+                                textFormat: Text.PlainText
+                            }
                         }
 
                         ScrollBar.vertical: ScrollBar {
@@ -1208,9 +1383,29 @@ Item {
                                 
                                 Text {
                                     anchors.centerIn: parent
-                                    text: Icons.file
+                                    text: {
+                                        if (!previewPanel.currentItem) return Icons.file;
+                                        var content = root.currentFullContent || previewPanel.currentItem.preview;
+                                        var filePath = root.getFilePathFromUri(content);
+                                        if (filePath) {
+                                            var nerdIcon = ClipboardUtils.getNerdFontIconForExtension(filePath);
+                                            if (nerdIcon) return nerdIcon;
+                                        }
+                                        return Icons.file;
+                                    }
                                     textFormat: Text.RichText
-                                    font.family: Icons.font
+                                    font.family: {
+                                        if (!previewPanel.currentItem) return Icons.font;
+                                        var content = root.currentFullContent || previewPanel.currentItem.preview;
+                                        var filePath = root.getFilePathFromUri(content);
+                                        if (filePath) {
+                                            var nerdIcon = ClipboardUtils.getNerdFontIconForExtension(filePath);
+                                            if (nerdIcon && nerdIcon.charCodeAt(0) >= 0xE000 && nerdIcon.charCodeAt(0) <= 0xF8FF) {
+                                                return "Symbols Nerd Font Mono";
+                                            }
+                                        }
+                                        return Icons.font;
+                                    }
                                     font.pixelSize: 48
                                     color: Colors.primary
                                 }
