@@ -1381,9 +1381,10 @@ Item {
                                             
                                             // Loading indicator
                                             Rectangle {
+                                                id: imageLoadingRect
                                                 anchors.fill: parent
                                                 color: Colors.surfaceBright
-                                                radius: parent.parent.radius
+                                                radius: parent.parent ? parent.parent.radius : 0
                                                 visible: parent.status === Image.Loading
                                                 
                                                 Text {
@@ -1399,7 +1400,7 @@ Item {
                                                         to: 360
                                                         duration: 1000
                                                         loops: Animation.Infinite
-                                                        running: parent.parent.visible
+                                                        running: imageLoadingRect.visible
                                                     }
                                                 }
                                             }
@@ -1551,6 +1552,7 @@ Item {
                             
                             // Loading indicator for link preview
                             Rectangle {
+                                id: linkPreviewLoadingRect
                                 width: parent.width
                                 height: 60
                                 visible: root.loadingLinkPreview && previewPanel.currentItem && 
@@ -1574,7 +1576,7 @@ Item {
                                             to: 360
                                             duration: 1000
                                             loops: Animation.Infinite
-                                            running: parent.parent.parent.visible
+                                            running: linkPreviewLoadingRect.visible
                                         }
                                     }
                                     
