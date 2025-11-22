@@ -2969,10 +2969,18 @@ Item {
                                     Drag.supportedActions: Qt.CopyAction
                                     Drag.mimeData: {
                                         if (!previewPanel.currentItem) return {};
-                                        var content = (root.currentFullContent || previewPanel.currentItem.preview).trim();
-                                        if (previewPanel.currentItem.isFile) {
+                                        
+                                        var item = previewPanel.currentItem;
+                                        var content = (root.currentFullContent || item.preview).trim();
+                                        
+                                        if (item.isFile) {
+                                            // File: send as URI list
                                             return { "text/uri-list": content };
+                                        } else if (item.isImage && item.binaryPath) {
+                                            // Image from clipboard: send as file URI
+                                            return { "text/uri-list": "file://" + item.binaryPath };
                                         } else {
+                                            // Text: send as plain text
                                             return { "text/plain": content };
                                         }
                                     }
