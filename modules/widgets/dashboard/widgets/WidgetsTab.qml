@@ -20,8 +20,13 @@ Rectangle {
     implicitWidth: 600
     implicitHeight: 300
 
-    property int currentTab: 0  // 0=launcher, 1=clip, 2=emoji, 3=tmux, 4=wall
+    property int currentTab: GlobalStates.widgetsTabCurrentIndex  // 0=launcher, 1=clip, 2=emoji, 3=tmux, 4=wall
     property bool prefixDisabled: false  // Flag to prevent re-activation after backspace
+
+    // Sync with GlobalStates
+    onCurrentTabChanged: {
+        GlobalStates.widgetsTabCurrentIndex = currentTab;
+    }
 
     // Function to focus app search when tab becomes active
     function focusAppSearch() {

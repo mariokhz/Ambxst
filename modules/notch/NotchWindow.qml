@@ -168,9 +168,10 @@ PanelWindow {
                 // Mostrar solo si hay notificaciones y el notch está expandido
                 if (!notchPanel.hasActiveNotifications || !notchPanel.screenNotchOpen) return false;
 
-                // NO mostrar si estamos en la pestaña de widgets del dashboard (tab 0)
+                // NO mostrar si estamos en el launcher (widgets tab con currentTab === 0)
                 if (screenVisibilities.dashboard) {
-                    return GlobalStates.dashboardCurrentTab !== 0;
+                    // Solo ocultar si estamos en el widgets tab (dashboard tab 0) Y mostrando el launcher (widgetsTab index 0)
+                    return !(GlobalStates.dashboardCurrentTab === 0 && GlobalStates.widgetsTabCurrentIndex === 0);
                 }
 
                 return true;
