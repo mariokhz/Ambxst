@@ -172,8 +172,7 @@ FocusScope {
 
             // Columna para el buscador y las opciones.
             ColumnLayout {
-                Layout.preferredWidth: parent.width - wallpaperGridContainer.width - 8
-                Layout.fillWidth: false
+                Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: 8
 
@@ -506,6 +505,13 @@ FocusScope {
                         }
                     }
                 }
+            }
+
+            Separator {
+                Layout.fillHeight: true
+                Layout.preferredWidth: 2
+                gradient: null
+                color: Colors.surface
             }
 
             // Contenedor para la cuadrícula de fondos de pantalla.
