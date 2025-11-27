@@ -35,7 +35,7 @@ void main() {
     
     vec2 center = vec2(ubuf.canvasWidth * 0.5, ubuf.canvasHeight * 0.5);
     
-    // Rotar posición
+    // Rotar posición para la grilla
     vec2 rotatedPos = rotation * (pixelPos - center);
     
     // Grid y celda
@@ -47,18 +47,39 @@ void main() {
     float distToCenter = length(posInCell);
     
     // Calcular posición del gradiente
-    // Usar vector perpendicular al ángulo para ir de arriba a abajo por defecto (90°)
-    vec2 gradientDir = vec2(sin(angleRad), -cos(angleRad));
+    // El gradiente debe rotar con el ángulo
+    // angle=0 -> vertical (arriba a abajo), angle=90 -> horizontal (izq a der)
+    // Vector del gradiente perpendicular al ángulo
+    vec2 gradientDir = vec2(sin(angleRad), cos(angleRad));
+    
+    // Proyectar el pixel en la dirección del gradiente
     vec2 relativePos = pixelPos - center;
     float projection = dot(relativePos, gradientDir);
     
-    // Normalizar (sin invertir, para que vaya de arriba a abajo correctamente)
-    float diagonal = sqrt(ubuf.canvasWidth * ubuf.canvasWidth + ubuf.canvasHeight * ubuf.canvasHeight);
-    float gradientPos = (projection / diagonal) * 0.5 + 0.5;
+    // Calcular el rango de proyección proyectando las esquinas del canvas
+    vec2 corners[4];
+    corners[0] = vec2(0.0, 0.0) - center;
+    corners[1] = vec2(ubuf.canvasWidth, 0.0) - center;
+    corners[2] = vec2(0.0, ubuf.canvasHeight) - center;
+    corners[3] = vec2(ubuf.canvasWidth, ubuf.canvasHeight) - center;
     
-    // Interpolar tamaño del dot
-    float t = smoothstep(ubuf.gradientStart, ubuf.gradientEnd, gradientPos);
-    float dotRadius = mix(ubuf.dotMinSize, ubuf.dotMaxSize, t);
+    float minProj = dot(corners[0], gradientDir);
+    float maxProj = minProj;
+    for (int i = 1; i < 4; i++) {
+        float proj = dot(corners[i], gradientDir);
+        minProj = min(minProj, proj);
+        maxProj = max(maxProj, proj);
+    }
+    
+    // Normalizar: 0 = inicio del canvas, 1 = final del canvas
+    float gradientPos = (projection - minProj) / (maxProj - minProj);
+    
+    // Aplicar start y end
+    float adjustedPos = (gradientPos - ubuf.gradientStart) / (ubuf.gradientEnd - ubuf.gradientStart);
+    adjustedPos = clamp(adjustedPos, 0.0, 1.0);
+    
+    // Interpolar tamaño del dot: start = max, end = min
+    float dotRadius = mix(ubuf.dotMaxSize, ubuf.dotMinSize, adjustedPos);
     
     // Bordes sólidos sin antialiasing
     float alpha = step(distToCenter, dotRadius);
