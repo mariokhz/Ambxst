@@ -634,7 +634,7 @@ Rectangle {
         // Widgets column (only visible when in launcher tab)
         ClippingRectangle {
             id: widgetsContainer
-            Layout.fillWidth: true
+            Layout.preferredWidth: controlButtonsContainer.implicitWidth
             Layout.fillHeight: true
             radius: Config.roundness > 0 ? Config.roundness + 4 : 0
             color: "transparent"
@@ -655,210 +655,96 @@ Rectangle {
                     width: parent.width
                     spacing: 8
 
-                    // Control grid 5+3
-                    GridLayout {
+                    // Control buttons - 5 buttons wrapped in StyledRect pane > internalbg
+                    StyledRect {
+                        id: controlButtonsContainer
+                        variant: "pane"
                         Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredHeight: 104
-                        columns: 5
-                        columnSpacing: 4
-                        rowSpacing: 4
+                        implicitWidth: internalBgRect.implicitWidth + 8
+                        implicitHeight: internalBgRect.implicitHeight + 8
+                        radius: Config.roundness > 0 ? Config.roundness + 4 : 0
 
-                        // Row 1 - 5 buttons
-                        ControlButton {
-                            Layout.preferredWidth: 48
-                            Layout.preferredHeight: 48
-                            iconName: {
-                                if (!NetworkService.wifiEnabled)
-                                    return Icons.wifiOff;
-                                const strength = NetworkService.signalStrength;
-                                if (strength === 0)
-                                    return Icons.wifiHigh;
-                                if (strength < 25)
-                                    return Icons.wifiNone;
-                                if (strength < 50)
-                                    return Icons.wifiLow;
-                                if (strength < 75)
-                                    return Icons.wifiMedium;
-                                return Icons.wifiHigh;
-                            }
-                            isActive: NetworkService.wifiEnabled
-                            tooltipText: NetworkService.wifiEnabled ? "Wi-Fi: On" : "Wi-Fi: Off"
-                            onClicked: NetworkService.toggleWifi()
-                        }
+                        StyledRect {
+                            id: internalBgRect
+                            variant: "internalbg"
+                            anchors.centerIn: parent
+                            implicitWidth: buttonRow.implicitWidth + 8
+                            implicitHeight: buttonRow.implicitHeight + 8
+                            radius: Config.roundness
 
-                        ControlButton {
-                            Layout.preferredWidth: 48
-                            Layout.preferredHeight: 48
-                            iconName: {
-                                if (!BluetoothService.enabled)
-                                    return Icons.bluetoothOff;
-                                if (BluetoothService.connected)
-                                    return Icons.bluetoothConnected;
-                                return Icons.bluetooth;
-                            }
-                            isActive: BluetoothService.enabled
-                            tooltipText: {
-                                if (!BluetoothService.enabled)
-                                    return "Bluetooth: Off";
-                                if (BluetoothService.connected)
-                                    return "Bluetooth: Connected";
-                                return "Bluetooth: On";
-                            }
-                            onClicked: BluetoothService.toggle()
-                        }
+                            RowLayout {
+                                id: buttonRow
+                                anchors.centerIn: parent
+                                spacing: 4
 
-                        ControlButton {
-                            Layout.preferredWidth: 48
-                            Layout.preferredHeight: 48
-                            iconName: Icons.nightLight
-                            isActive: NightLightService.active
-                            tooltipText: NightLightService.active ? "Night Light: On" : "Night Light: Off"
-                            onClicked: NightLightService.toggle()
-                        }
-
-                        ControlButton {
-                            Layout.preferredWidth: 48
-                            Layout.preferredHeight: 48
-                            iconName: Icons.caffeine
-                            isActive: CaffeineService.inhibit
-                            tooltipText: CaffeineService.inhibit ? "Caffeine: On" : "Caffeine: Off"
-                            onClicked: CaffeineService.toggleInhibit()
-                        }
-
-                        ControlButton {
-                            Layout.preferredWidth: 48
-                            Layout.preferredHeight: 48
-                            iconName: Icons.gameMode
-                            isActive: GameModeService.toggled
-                            tooltipText: GameModeService.toggled ? "Game Mode: On" : "Game Mode: Off"
-                            onClicked: GameModeService.toggle()
-                        }
-
-                        // Row 2 - 3 circular controls
-                        CircularControl {
-                            id: brightnessControl
-                            Layout.preferredWidth: 48
-                            Layout.preferredHeight: 48
-                            icon: Icons.sun
-                            value: brightnessValue
-                            accentColor: Colors.primary
-                            isToggleable: false
-                            isToggled: true
-                            enableIconRotation: true
-                            iconRotation: (value / 1.0) * 180
-                            iconScale: 0.8 + (value / 1.0) * 0.2
-
-                            property real brightnessValue: 0
-                            property var currentMonitor: {
-                                if (Brightness.monitors.length > 0) {
-                                    let focusedName = Hyprland.focusedMonitor?.name ?? "";
-                                    let found = null;
-                                    for (let i = 0; i < Brightness.monitors.length; i++) {
-                                        let mon = Brightness.monitors[i];
-                                        if (mon && mon.screen && mon.screen.name === focusedName) {
-                                            found = mon;
-                                            break;
-                                        }
+                                ControlButton {
+                                    Layout.preferredWidth: 48
+                                    Layout.preferredHeight: 48
+                                    iconName: {
+                                        if (!NetworkService.wifiEnabled)
+                                            return Icons.wifiOff;
+                                        const strength = NetworkService.signalStrength;
+                                        if (strength === 0)
+                                            return Icons.wifiHigh;
+                                        if (strength < 25)
+                                            return Icons.wifiNone;
+                                        if (strength < 50)
+                                            return Icons.wifiLow;
+                                        if (strength < 75)
+                                            return Icons.wifiMedium;
+                                        return Icons.wifiHigh;
                                     }
-                                    return found || Brightness.monitors[0];
+                                    isActive: NetworkService.wifiEnabled
+                                    tooltipText: NetworkService.wifiEnabled ? "Wi-Fi: On" : "Wi-Fi: Off"
+                                    onClicked: NetworkService.toggleWifi()
                                 }
-                                return null;
-                            }
 
-                            Component.onCompleted: {
-                                if (currentMonitor && currentMonitor.ready) {
-                                    brightnessValue = currentMonitor.brightness;
-                                }
-                            }
-
-                            onControlValueChanged: newValue => {
-                                brightnessValue = newValue;
-                                if (currentMonitor && currentMonitor.ready) {
-                                    currentMonitor.setBrightness(newValue);
-                                }
-                            }
-
-                            onDraggingChanged: isDragging => {
-                                widgetsContainer.circularControlDragging = isDragging;
-                            }
-
-                            Connections {
-                                target: brightnessControl.currentMonitor
-                                ignoreUnknownSignals: true
-                                function onBrightnessChanged() {
-                                    if (brightnessControl.currentMonitor && brightnessControl.currentMonitor.ready) {
-                                        brightnessControl.brightnessValue = brightnessControl.currentMonitor.brightness;
+                                ControlButton {
+                                    Layout.preferredWidth: 48
+                                    Layout.preferredHeight: 48
+                                    iconName: {
+                                        if (!BluetoothService.enabled)
+                                            return Icons.bluetoothOff;
+                                        if (BluetoothService.connected)
+                                            return Icons.bluetoothConnected;
+                                        return Icons.bluetooth;
                                     }
-                                }
-                                function onReadyChanged() {
-                                    if (brightnessControl.currentMonitor && brightnessControl.currentMonitor.ready) {
-                                        brightnessControl.brightnessValue = brightnessControl.currentMonitor.brightness;
+                                    isActive: BluetoothService.enabled
+                                    tooltipText: {
+                                        if (!BluetoothService.enabled)
+                                            return "Bluetooth: Off";
+                                        if (BluetoothService.connected)
+                                            return "Bluetooth: Connected";
+                                        return "Bluetooth: On";
                                     }
+                                    onClicked: BluetoothService.toggle()
                                 }
-                            }
-                        }
 
-                        CircularControl {
-                            id: volumeControl
-                            Layout.preferredWidth: 48
-                            Layout.preferredHeight: 48
-                            icon: {
-                                if (Audio.sink?.audio?.muted)
-                                    return Icons.speakerSlash;
-                                const vol = Audio.sink?.audio?.volume ?? 0;
-                                if (vol < 0.01)
-                                    return Icons.speakerX;
-                                if (vol < 0.19)
-                                    return Icons.speakerNone;
-                                if (vol < 0.49)
-                                    return Icons.speakerLow;
-                                return Icons.speakerHigh;
-                            }
-                            value: Audio.sink?.audio?.volume ?? 0
-                            accentColor: Audio.sink?.audio?.muted ? Colors.outline : Colors.primary
-                            isToggleable: true
-                            isToggled: !(Audio.sink?.audio?.muted ?? false)
-
-                            onControlValueChanged: newValue => {
-                                if (Audio.sink?.audio) {
-                                    Audio.sink.audio.volume = newValue;
+                                ControlButton {
+                                    Layout.preferredWidth: 48
+                                    Layout.preferredHeight: 48
+                                    iconName: Icons.nightLight
+                                    isActive: NightLightService.active
+                                    tooltipText: NightLightService.active ? "Night Light: On" : "Night Light: Off"
+                                    onClicked: NightLightService.toggle()
                                 }
-                            }
 
-                            onDraggingChanged: isDragging => {
-                                widgetsContainer.circularControlDragging = isDragging;
-                            }
-
-                            onToggled: {
-                                if (Audio.sink?.audio) {
-                                    Audio.sink.audio.muted = !Audio.sink.audio.muted;
+                                ControlButton {
+                                    Layout.preferredWidth: 48
+                                    Layout.preferredHeight: 48
+                                    iconName: Icons.caffeine
+                                    isActive: CaffeineService.inhibit
+                                    tooltipText: CaffeineService.inhibit ? "Caffeine: On" : "Caffeine: Off"
+                                    onClicked: CaffeineService.toggleInhibit()
                                 }
-                            }
-                        }
 
-                        CircularControl {
-                            id: micControl
-                            Layout.preferredWidth: 48
-                            Layout.preferredHeight: 48
-                            icon: Audio.source?.audio?.muted ? Icons.micSlash : Icons.mic
-                            value: Audio.source?.audio?.volume ?? 0
-                            accentColor: Audio.source?.audio?.muted ? Colors.outline : Colors.primary
-                            isToggleable: true
-                            isToggled: !(Audio.source?.audio?.muted ?? false)
-
-                            onControlValueChanged: newValue => {
-                                if (Audio.source?.audio) {
-                                    Audio.source.audio.volume = newValue;
-                                }
-                            }
-
-                            onDraggingChanged: isDragging => {
-                                widgetsContainer.circularControlDragging = isDragging;
-                            }
-
-                            onToggled: {
-                                if (Audio.source?.audio) {
-                                    Audio.source.audio.muted = !Audio.source.audio.muted;
+                                ControlButton {
+                                    Layout.preferredWidth: 48
+                                    Layout.preferredHeight: 48
+                                    iconName: Icons.gameMode
+                                    isActive: GameModeService.toggled
+                                    tooltipText: GameModeService.toggled ? "Game Mode: On" : "Game Mode: Off"
+                                    onClicked: GameModeService.toggle()
                                 }
                             }
                         }
@@ -887,6 +773,150 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             visible: currentTab === 0
+        }
+
+        // Circular controls column (only visible when in launcher tab)
+        ColumnLayout {
+            Layout.fillHeight: true
+            spacing: 8
+            visible: currentTab === 0
+
+            property bool circularControlDragging: false
+
+            CircularControl {
+                id: brightnessControl
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 48
+                Layout.preferredHeight: 48
+                icon: Icons.sun
+                value: brightnessValue
+                accentColor: Colors.primary
+                isToggleable: false
+                isToggled: true
+                enableIconRotation: true
+                iconRotation: (value / 1.0) * 180
+                iconScale: 0.8 + (value / 1.0) * 0.2
+
+                property real brightnessValue: 0
+                property var currentMonitor: {
+                    if (Brightness.monitors.length > 0) {
+                        let focusedName = Hyprland.focusedMonitor?.name ?? "";
+                        let found = null;
+                        for (let i = 0; i < Brightness.monitors.length; i++) {
+                            let mon = Brightness.monitors[i];
+                            if (mon && mon.screen && mon.screen.name === focusedName) {
+                                found = mon;
+                                break;
+                            }
+                        }
+                        return found || Brightness.monitors[0];
+                    }
+                    return null;
+                }
+
+                Component.onCompleted: {
+                    if (currentMonitor && currentMonitor.ready) {
+                        brightnessValue = currentMonitor.brightness;
+                    }
+                }
+
+                onControlValueChanged: newValue => {
+                    brightnessValue = newValue;
+                    if (currentMonitor && currentMonitor.ready) {
+                        currentMonitor.setBrightness(newValue);
+                    }
+                }
+
+                onDraggingChanged: isDragging => {
+                    parent.circularControlDragging = isDragging;
+                }
+
+                Connections {
+                    target: brightnessControl.currentMonitor
+                    ignoreUnknownSignals: true
+                    function onBrightnessChanged() {
+                        if (brightnessControl.currentMonitor && brightnessControl.currentMonitor.ready) {
+                            brightnessControl.brightnessValue = brightnessControl.currentMonitor.brightness;
+                        }
+                    }
+                    function onReadyChanged() {
+                        if (brightnessControl.currentMonitor && brightnessControl.currentMonitor.ready) {
+                            brightnessControl.brightnessValue = brightnessControl.currentMonitor.brightness;
+                        }
+                    }
+                }
+            }
+
+            CircularControl {
+                id: volumeControl
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 48
+                Layout.preferredHeight: 48
+                icon: {
+                    if (Audio.sink?.audio?.muted)
+                        return Icons.speakerSlash;
+                    const vol = Audio.sink?.audio?.volume ?? 0;
+                    if (vol < 0.01)
+                        return Icons.speakerX;
+                    if (vol < 0.19)
+                        return Icons.speakerNone;
+                    if (vol < 0.49)
+                        return Icons.speakerLow;
+                    return Icons.speakerHigh;
+                }
+                value: Audio.sink?.audio?.volume ?? 0
+                accentColor: Audio.sink?.audio?.muted ? Colors.outline : Colors.primary
+                isToggleable: true
+                isToggled: !(Audio.sink?.audio?.muted ?? false)
+
+                onControlValueChanged: newValue => {
+                    if (Audio.sink?.audio) {
+                        Audio.sink.audio.volume = newValue;
+                    }
+                }
+
+                onDraggingChanged: isDragging => {
+                    parent.circularControlDragging = isDragging;
+                }
+
+                onToggled: {
+                    if (Audio.sink?.audio) {
+                        Audio.sink.audio.muted = !Audio.sink.audio.muted;
+                    }
+                }
+            }
+
+            CircularControl {
+                id: micControl
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 48
+                Layout.preferredHeight: 48
+                icon: Audio.source?.audio?.muted ? Icons.micSlash : Icons.mic
+                value: Audio.source?.audio?.volume ?? 0
+                accentColor: Audio.source?.audio?.muted ? Colors.outline : Colors.primary
+                isToggleable: true
+                isToggled: !(Audio.source?.audio?.muted ?? false)
+
+                onControlValueChanged: newValue => {
+                    if (Audio.source?.audio) {
+                        Audio.source.audio.volume = newValue;
+                    }
+                }
+
+                onDraggingChanged: isDragging => {
+                    parent.circularControlDragging = isDragging;
+                }
+
+                onToggled: {
+                    if (Audio.source?.audio) {
+                        Audio.source.audio.muted = !Audio.source.audio.muted;
+                    }
+                }
+            }
+
+            Item {
+                Layout.fillHeight: true
+            }
         }
     }
 

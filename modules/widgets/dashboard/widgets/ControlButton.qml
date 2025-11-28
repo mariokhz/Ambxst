@@ -15,10 +15,13 @@ StyledRect {
     property bool isHovered: mouseArea.containsMouse
 
     variant: {
-        if (isActive && isHovered) return "primaryfocus"
-        if (isActive) return "primary"
-        if (isHovered) return "focus"
-        return "pane"
+        if (isActive && isHovered)
+            return "primaryfocus";
+        if (isActive)
+            return "primary";
+        if (isHovered)
+            return "focus";
+        return "pane";
     }
 
     radius: root.isActive ? Config.roundness : Config.roundness * 1.25
