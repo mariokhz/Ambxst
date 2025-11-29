@@ -106,24 +106,18 @@ FileView {
         property color sourceColor: "#7f2424"
     }
 
-    function applyOpacity(hexColor) {
-        var c = Qt.color(hexColor);
-        return Qt.rgba(c.r, c.g, c.b, Config.opacity);
-    }
+    property color background: Config.oledMode ? "#000000" : adapter.background
 
-    property color background: Config.oledMode ? Qt.rgba(0, 0, 0, Config.opacity) : applyOpacity(adapter.background)
-
-    property color surface: applyOpacity(Qt.tint(background, Qt.rgba(adapter.overBackground.r, adapter.overBackground.g, adapter.overBackground.b, 0.1)))
-    // property color surfaceBright: applyOpacity(adapter.surfaceBright)
-    property color surfaceBright: applyOpacity(Qt.tint(background, Qt.rgba(adapter.overBackground.r, adapter.overBackground.g, adapter.overBackground.b, 0.2)))
-    property color surfaceContainer: applyOpacity(adapter.surfaceContainer)
-    property color surfaceContainerHigh: applyOpacity(adapter.surfaceContainerHigh)
-    property color surfaceContainerHighest: applyOpacity(adapter.surfaceContainerHighest)
-    property color surfaceContainerLow: applyOpacity(adapter.surfaceContainerLow)
-    property color surfaceContainerLowest: applyOpacity(adapter.surfaceContainerLowest)
-    property color surfaceDim: applyOpacity(adapter.surfaceDim)
-    property color surfaceTint: applyOpacity(adapter.surfaceTint)
-    property color surfaceVariant: applyOpacity(adapter.surfaceVariant)
+    property color surface: Qt.tint(background, Qt.rgba(adapter.overBackground.r, adapter.overBackground.g, adapter.overBackground.b, 0.1))
+    property color surfaceBright: Qt.tint(background, Qt.rgba(adapter.overBackground.r, adapter.overBackground.g, adapter.overBackground.b, 0.2))
+    property color surfaceContainer: adapter.surfaceContainer
+    property color surfaceContainerHigh: adapter.surfaceContainerHigh
+    property color surfaceContainerHighest: adapter.surfaceContainerHighest
+    property color surfaceContainerLow: adapter.surfaceContainerLow
+    property color surfaceContainerLowest: adapter.surfaceContainerLowest
+    property color surfaceDim: adapter.surfaceDim
+    property color surfaceTint: adapter.surfaceTint
+    property color surfaceVariant: adapter.surfaceVariant
 
     // Direct color properties from adapter
     property color blue: adapter.blue

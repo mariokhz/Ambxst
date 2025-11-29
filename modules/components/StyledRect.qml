@@ -84,12 +84,15 @@ ClippingRectangle {
 
     readonly property color itemColor: Config.resolveColor(variantConfig.itemColor)
 
+    readonly property real rectOpacity: variantConfig.opacity
+
     radius: Config.roundness
     color: "transparent"
 
     // Linear gradient
     Rectangle {
         id: linearGrad
+        opacity: rectOpacity
         readonly property real maxDim: Math.max(parent.width, parent.height)
         readonly property real angleRad: gradientAngle * Math.PI / 180
         readonly property real cosAbs: Math.abs(Math.cos(angleRad))
@@ -150,6 +153,7 @@ ClippingRectangle {
     // Radial gradient
     Shape {
         id: radialShape
+        opacity: rectOpacity
         readonly property real maxDim: Math.max(parent.width, parent.height)
         width: maxDim + 2
         height: maxDim + 2
@@ -230,6 +234,7 @@ ClippingRectangle {
     // Halftone gradient
     ShaderEffect {
         anchors.fill: parent
+        opacity: rectOpacity
         visible: gradientType === "halftone"
 
         property real angle: gradientAngle
