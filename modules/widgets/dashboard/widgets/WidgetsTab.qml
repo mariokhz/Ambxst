@@ -808,9 +808,12 @@ Rectangle {
             // Tab 4: Wallpapers (with prefix from config)
             Loader {
                 id: wallpapersLoader
+                Layout.fillWidth: true
+                Layout.fillHeight: true
                 active: currentTab === 4
                 sourceComponent: Component {
                     WallpapersTab {
+                        anchors.fill: parent
                         leftPanelWidth: root.leftPanelWidth
                         prefixIcon: Icons.wallpapers
                         onBackspaceOnEmpty: {

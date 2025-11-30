@@ -890,11 +890,14 @@ Rectangle {
                     highlightFollowsCurrentItem: false
                 }
                 
-                // Info text when results are limited
-                Text {
-                    width: parent.width
-                    height: 20
-                    visible: searchText.length > 0 && filteredEmojis.length >= maxResults
+                    // Info text when results are limited
+                    Text {
+                        id: infoText
+                        width: parent.width
+                        height: 20
+                        anchors.bottom: parent.bottom
+                        visible: searchText.length > 0 && filteredEmojis.length >= maxResults
+
                     text: `Showing first ${maxResults} results - refine search for more`
                     color: Colors.outline
                     font.family: Config.theme.font
