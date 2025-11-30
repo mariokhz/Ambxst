@@ -19,6 +19,8 @@ Item {
     property string prefixIcon: ""
     signal backspaceOnEmpty
 
+    property int leftPanelWidth: 0
+
     Keys.onEscapePressed: {
         if (root.deleteMode) {
             console.log("DEBUG: Escape pressed in delete mode - canceling");
@@ -574,7 +576,7 @@ Item {
 
         // Columna izquierda: Search + Lista
         Column {
-            Layout.preferredWidth: LayoutMetrics.leftPanelWidth
+            Layout.preferredWidth: root.leftPanelWidth
             Layout.fillHeight: true
             spacing: 10
 

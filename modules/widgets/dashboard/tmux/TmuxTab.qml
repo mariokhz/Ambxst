@@ -17,6 +17,8 @@ Item {
     property string prefixIcon: ""
     signal backspaceOnEmpty()
 
+    property int leftPanelWidth: 0
+
     property string searchText: ""
     property bool showResults: searchText.length > 0
     property int selectedIndex: -1
@@ -609,7 +611,7 @@ Item {
 
         // Columna izquierda: Search + Lista
         Column {
-            Layout.preferredWidth: LayoutMetrics.leftPanelWidth
+            Layout.preferredWidth: root.leftPanelWidth
             Layout.fillHeight: true
             spacing: 8
 

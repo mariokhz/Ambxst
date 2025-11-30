@@ -18,6 +18,8 @@ FocusScope {
     // Propiedades personalizadas para la funcionalidad del componente.
     property string searchText: ""
     property int selectedIndex: GlobalStates.wallpaperSelectedIndex
+
+    property int leftPanelWidth: 0
     property var activeFilters: []  // Lista de tipos de archivo seleccionados para filtrar
 
     // Configuración interna del grid
@@ -192,7 +194,7 @@ FocusScope {
 
             // Columna para el buscador y las opciones.
             ColumnLayout {
-                Layout.preferredWidth: LayoutMetrics.leftPanelWidth
+                Layout.preferredWidth: root.leftPanelWidth
                 Layout.fillWidth: false
                 Layout.fillHeight: true
                 spacing: 8

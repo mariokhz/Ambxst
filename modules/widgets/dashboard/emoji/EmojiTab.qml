@@ -19,6 +19,8 @@ Rectangle {
     property string prefixIcon: ""
     signal backspaceOnEmpty
 
+    property int leftPanelWidth: 0
+
     property string searchText: ""
     property bool showResults: searchText.length > 0
     property int selectedIndex: -1
@@ -505,7 +507,7 @@ Rectangle {
 
             // Columna izquierda: Search + Lista normal de emojis
             Column {
-                Layout.preferredWidth: LayoutMetrics.leftPanelWidth
+                Layout.preferredWidth: root.leftPanelWidth
                 Layout.fillHeight: true
                 spacing: 8
 

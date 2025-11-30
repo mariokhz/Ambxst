@@ -7,8 +7,8 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import qs.modules.theme
 import qs.modules.components
-import qs.modules.services
 import qs.modules.globals
+import qs.modules.services
 import qs.config
 import "../clipboard"
 import "../emoji"
@@ -20,6 +20,8 @@ Rectangle {
     color: "transparent"
     implicitWidth: 600
     implicitHeight: 300
+
+    property int leftPanelWidth: 0
 
     property int currentTab: GlobalStates.widgetsTabCurrentIndex  // 0=launcher, 1=clip, 2=emoji, 3=tmux, 4=wall
     property bool prefixDisabled: false  // Flag to prevent re-activation after backspace
@@ -91,7 +93,7 @@ Rectangle {
         // App Launcher - shown only when currentTab === 0
         Rectangle {
             id: appLauncher
-            Layout.preferredWidth: LayoutMetrics.leftPanelWidth
+            Layout.preferredWidth: root.leftPanelWidth
             Layout.fillHeight: true
             visible: currentTab === 0
             color: "transparent"
@@ -735,6 +737,7 @@ Rectangle {
                 active: currentTab === 1
                 sourceComponent: Component {
                     ClipboardTab {
+                        leftPanelWidth: root.leftPanelWidth
                         prefixIcon: Icons.clipboard
                         onBackspaceOnEmpty: {
                             // Return to launcher with prefix text + space
@@ -762,6 +765,7 @@ Rectangle {
                 active: currentTab === 2
                 sourceComponent: Component {
                     EmojiTab {
+                        leftPanelWidth: root.leftPanelWidth
                         prefixIcon: Icons.emoji
                         onBackspaceOnEmpty: {
                             prefixDisabled = true;
@@ -784,6 +788,7 @@ Rectangle {
                 active: currentTab === 3
                 sourceComponent: Component {
                     TmuxTab {
+                        leftPanelWidth: root.leftPanelWidth
                         prefixIcon: Icons.terminal
                         onBackspaceOnEmpty: {
                             prefixDisabled = true;
@@ -806,6 +811,7 @@ Rectangle {
                 active: currentTab === 4
                 sourceComponent: Component {
                     WallpapersTab {
+                        leftPanelWidth: root.leftPanelWidth
                         prefixIcon: Icons.wallpapers
                         onBackspaceOnEmpty: {
                             prefixDisabled = true;

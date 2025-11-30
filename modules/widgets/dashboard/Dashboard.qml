@@ -18,6 +18,8 @@ import qs.config
 NotchAnimationBehavior {
     id: root
 
+    readonly property int leftPanelWidth: 300
+
     property var state: QtObject {
         property int currentTab: GlobalStates.dashboardCurrentTab
     }
@@ -462,7 +464,9 @@ NotchAnimationBehavior {
     // Component definitions for better performance (defined once, reused)
     Component {
         id: unifiedLauncherComponent
-        WidgetsTab {}
+        WidgetsTab {
+            leftPanelWidth: root.leftPanelWidth
+        }
     }
 
     Component {
