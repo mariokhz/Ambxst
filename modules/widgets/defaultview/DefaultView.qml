@@ -16,9 +16,9 @@ Item {
         // Removed forceActiveFocus to prevent shell from taking focus on startup
     }
 
-    readonly property real mainRowContentWidth: 200 + userInfo.width + separator1.width + separator2.width + notifIndicator.width + (mainRow.spacing * 4) + 32
+    readonly property real mainRowContentWidth: 200 + userInfo.width + separator1.width + separator2.width + notifIndicator.width + (mainRow.spacing * 4) + 16
 
-    implicitWidth: Math.round(hasActiveNotifications ? Math.max(expandedState ? 360 + 32 : 320 + 32, mainRowContentWidth) : mainRowContentWidth)
+    implicitWidth: Math.round(hasActiveNotifications ? Math.max(expandedState ? 360 + 16 : 320 + 16, mainRowContentWidth) : mainRowContentWidth)
     implicitHeight: hasActiveNotifications ? (mainRow.height + (expandedState ? notificationView.implicitHeight + (Config.notchTheme === "island" ? 56 : 52) : notificationView.implicitHeight + (Config.notchTheme === "island" ? 40 : 36))) : mainRow.height
 
     Behavior on implicitHeight {
@@ -88,7 +88,7 @@ Item {
         Row {
             id: mainRow
             anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width - 28
+            width: parent.width - 16
             height: Config.bar.showBackground ? (Config.notchTheme === "island" ? 36 : 44) : (Config.notchTheme === "island" ? 36 : 40)
             spacing: 4
 

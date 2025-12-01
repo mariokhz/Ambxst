@@ -28,9 +28,15 @@ Item {
     readonly property bool hasActiveNotifications: Notifications.popupList.length > 0
 
     property int defaultHeight: Config.bar.showBackground ? (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 44) : 44) : (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 40) : 40)
-    property int islandHeight: Config.bar.showBackground ? (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 36) : 36) : (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 36) : 36)
+    property int islandHeight: Config.bar.showBackground ? (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 40) : 40) : (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 36) : 36)
 
-    implicitWidth: screenNotchOpen ? Math.max(stackContainer.width + 40, 290) : stackContainer.width + 24
+    // Corner size calculation for dynamic width (only for default theme)
+    readonly property int cornerSize: Config.roundness > 0 ? Config.roundness + 4 : 0
+    readonly property int totalCornerWidth: Config.notchTheme === "default" ? cornerSize * 2 : 0
+
+    implicitWidth: screenNotchOpen 
+        ? Math.max(stackContainer.width + totalCornerWidth, 290) 
+        : stackContainer.width + totalCornerWidth
     implicitHeight: Config.notchTheme === "default" ? defaultHeight : (Config.notchTheme === "island" ? islandHeight : defaultHeight)
 
     Behavior on implicitWidth {
@@ -151,14 +157,14 @@ Item {
     Item {
         id: notchRect
         anchors.centerIn: parent
-        width: parent.implicitWidth - 40
+        width: parent.implicitWidth - totalCornerWidth
         height: parent.implicitHeight
 
         property int defaultRadius: Config.roundness > 0 ? (screenNotchOpen || hasActiveNotifications ? Config.roundness + 20 : Config.roundness + 4) : 0
-        property int islandRadius: Config.roundness > 0 ? (screenNotchOpen || hasActiveNotifications ? Config.roundness + 20 : Config.roundness) : 0
+        property int islandRadius: Config.roundness > 0 ? (screenNotchOpen || hasActiveNotifications ? Config.roundness + 20 : Config.roundness + 4) : 0
 
-        property int topLeftRadius: Config.notchTheme === "default" ? 0 : (Config.notchTheme === "island" ? islandRadius : 0)
-        property int topRightRadius: Config.notchTheme === "default" ? 0 : (Config.notchTheme === "island" ? islandRadius : 0)
+        property int topLeftRadius: Config.notchTheme === "default" ? 0 : islandRadius
+        property int topRightRadius: Config.notchTheme === "default" ? 0 : islandRadius
         property int bottomLeftRadius: Config.notchTheme === "island" ? islandRadius : defaultRadius
         property int bottomRightRadius: Config.notchTheme === "island" ? islandRadius : defaultRadius
 
