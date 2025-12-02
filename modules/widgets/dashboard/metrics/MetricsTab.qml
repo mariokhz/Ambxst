@@ -284,18 +284,54 @@ Rectangle {
 
                             const pointSpacing = w / (SystemResources.maxHistoryPoints - 1);
 
-                            // Helper function to draw a line chart
+                            // Helper function to draw a line chart with gradient fill
                             function drawLine(history, color) {
                                 if (history.length < 2)
                                     return;
 
+                                const startIndex = Math.max(0, SystemResources.maxHistoryPoints - history.length);
+
+                                // Create gradient from top to bottom
+                                const gradient = ctx.createLinearGradient(0, 0, 0, h);
+                                
+                                // Parse the color to create gradient stops
+                                // Gradient fades from the color with alpha to transparent at bottom
+                                const colorStr = color.toString();
+                                gradient.addColorStop(0, Qt.rgba(color.r, color.g, color.b, 0.4));
+                                gradient.addColorStop(0.5, Qt.rgba(color.r, color.g, color.b, 0.2));
+                                gradient.addColorStop(1, Qt.rgba(color.r, color.g, color.b, 0.0));
+
+                                // Draw filled area
+                                ctx.fillStyle = gradient;
+                                ctx.beginPath();
+
+                                // Start from bottom left
+                                const firstX = startIndex * pointSpacing;
+                                ctx.moveTo(firstX, h);
+
+                                // Draw line to first data point
+                                const firstY = h - (history[0] * h);
+                                ctx.lineTo(firstX, firstY);
+
+                                // Draw through all data points
+                                for (let i = 1; i < history.length; i++) {
+                                    const x = (startIndex + i) * pointSpacing;
+                                    const y = h - (history[i] * h);
+                                    ctx.lineTo(x, y);
+                                }
+
+                                // Close path along bottom
+                                const lastX = (startIndex + history.length - 1) * pointSpacing;
+                                ctx.lineTo(lastX, h);
+                                ctx.closePath();
+                                ctx.fill();
+
+                                // Draw the line on top
                                 ctx.strokeStyle = color;
                                 ctx.lineWidth = 2;
                                 ctx.lineCap = "round";
                                 ctx.lineJoin = "round";
                                 ctx.beginPath();
-
-                                const startIndex = Math.max(0, SystemResources.maxHistoryPoints - history.length);
 
                                 for (let i = 0; i < history.length; i++) {
                                     const x = (startIndex + i) * pointSpacing;
