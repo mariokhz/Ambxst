@@ -17,6 +17,8 @@ Rectangle {
 
     property string hostname: ""
     property string osName: ""
+    property string osIcon: ""
+    property var linuxLogos: null
     property real chartZoom: 1.0
 
     // Adjust history points based on zoom and repaint chart
@@ -29,6 +31,36 @@ Rectangle {
         chartCanvas.requestPaint();
     }
 
+    // Function to get OS icon based on name
+    function getOsIcon(osName) {
+        if (!osName || !linuxLogos) {
+            return "";
+        }
+
+        // Try exact match first
+        if (linuxLogos[osName]) {
+            return linuxLogos[osName];
+        }
+
+        // Try partial match
+        for (const distro in linuxLogos) {
+            if (osName.toLowerCase().includes(distro.toLowerCase())) {
+                return linuxLogos[distro];
+            }
+        }
+
+        // Default to generic Linux icon
+        return linuxLogos["Linux"] || "";
+    }
+
+    // Update OS icon when logos are loaded
+    onLinuxLogosChanged: {
+        if (linuxLogos && osName) {
+            const icon = getOsIcon(osName);
+            osIcon = icon || "";
+        }
+    }
+
     // Load refresh interval from state
     Component.onCompleted: {
         // Always store maximum (250 points) to allow smooth zooming
@@ -39,8 +71,34 @@ Rectangle {
         const savedZoom = StateService.get("metricsChartZoom", 1.0);
         // Limit zoom range: 0.2 (show all available) to 3.0 (zoom in)
         chartZoom = Math.max(0.2, Math.min(3.0, savedZoom));
+        
         hostnameReader.running = true;
         osReader.running = true;
+        linuxLogosReader.running = true;
+    }
+
+    // Load Linux logos JSON
+    Process {
+        id: linuxLogosReader
+        running: false
+        command: ["cat", Qt.resolvedUrl("../../../../assets/linux-logos.json").toString().replace("file://", "")]
+
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                try {
+                    if (!text || text.trim().length === 0) {
+                        console.warn("linux-logos.json is empty");
+                        return;
+                    }
+                    root.linuxLogos = JSON.parse(text);
+                    console.log("Loaded", Object.keys(root.linuxLogos).length, "Linux logos");
+                } catch (e) {
+                    console.warn("Failed to parse linux-logos.json:", e);
+                    console.warn("Text received:", text.substring(0, 100));
+                }
+            }
+        }
     }
 
     // Get hostname
@@ -72,6 +130,11 @@ Rectangle {
                 const os = text.trim();
                 if (os) {
                     root.osName = os;
+                    // Only set icon if logos are already loaded
+                    if (root.linuxLogos) {
+                        const icon = getOsIcon(os);
+                        root.osIcon = icon || "";
+                    }
                 }
             }
         }
@@ -106,7 +169,7 @@ Rectangle {
                     Layout.topMargin: 8
                     Layout.leftMargin: 16
                     Layout.rightMargin: 16
-                    spacing: 12
+                    spacing: 16
 
                     // User avatar
                     Rectangle {
@@ -158,7 +221,7 @@ Rectangle {
                         // Username
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 8
+                            spacing: 4
 
                             Text {
                                 text: Icons.user
@@ -169,7 +232,10 @@ Rectangle {
 
                             Text {
                                 Layout.fillWidth: true
-                                text: Quickshell.env("USER") || "user"
+                                text: {
+                                    const user = Quickshell.env("USER") || "user";
+                                    return user.charAt(0).toUpperCase() + user.slice(1);
+                                }
                                 font.family: Config.theme.font
                                 font.pixelSize: Config.theme.fontSize
                                 font.weight: Font.Medium
@@ -181,7 +247,7 @@ Rectangle {
                         // Hostname
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 8
+                            spacing: 4
 
                             Text {
                                 text: Icons.at
@@ -192,7 +258,11 @@ Rectangle {
 
                             Text {
                                 Layout.fillWidth: true
-                                text: root.hostname ? root.hostname.toLowerCase() : "hostname"
+                                text: {
+                                    if (!root.hostname) return "Hostname";
+                                    const host = root.hostname.toLowerCase();
+                                    return host.charAt(0).toUpperCase() + host.slice(1);
+                                }
                                 font.family: Config.theme.font
                                 font.pixelSize: Config.theme.fontSize
                                 font.weight: Font.Medium
@@ -204,11 +274,11 @@ Rectangle {
                         // OS
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 8
+                            spacing: 4
 
                             Text {
-                                text: Icons.linux
-                                font.family: Icons.font
+                                text: root.osIcon || Icons.linux
+                                font.family: root.osIcon ? "Symbols Nerd Font Mono" : Icons.font
                                 font.pixelSize: Config.theme.fontSize + 2
                                 color: Colors.primary
                             }
