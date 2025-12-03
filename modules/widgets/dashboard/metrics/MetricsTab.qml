@@ -71,7 +71,7 @@ Rectangle {
         const savedZoom = StateService.get("metricsChartZoom", 1.0);
         // Limit zoom range: 0.2 (show all available) to 3.0 (zoom in)
         chartZoom = Math.max(0.2, Math.min(3.0, savedZoom));
-        
+
         hostnameReader.running = true;
         osReader.running = true;
         linuxLogosReader.running = true;
@@ -161,7 +161,7 @@ Rectangle {
 
             ColumnLayout {
                 anchors.fill: parent
-                spacing: 8
+                spacing: 2
 
                 // User info section - Avatar left, info right
                 RowLayout {
@@ -172,16 +172,17 @@ Rectangle {
                     spacing: 16
 
                     // User avatar
-                    Rectangle {
+                    StyledRect {
                         id: avatarContainer
-                        Layout.preferredWidth: 80
-                        Layout.preferredHeight: 80
+                        Layout.preferredWidth: 96
+                        Layout.preferredHeight: 96
                         radius: Config.roundness > 0 ? (height / 2) * (Config.roundness / 16) : 0
-                        color: "transparent"
+                        variant: "primary"
 
                         Image {
                             id: userAvatar
                             anchors.fill: parent
+                            anchors.margins: 2
                             source: `file://${Quickshell.env("HOME")}/.face.icon`
                             fillMode: Image.PreserveAspectCrop
                             smooth: true
@@ -259,7 +260,8 @@ Rectangle {
                             Text {
                                 Layout.fillWidth: true
                                 text: {
-                                    if (!root.hostname) return "Hostname";
+                                    if (!root.hostname)
+                                        return "Hostname";
                                     const host = root.hostname.toLowerCase();
                                     return host.charAt(0).toUpperCase() + host.slice(1);
                                 }
@@ -304,10 +306,17 @@ Rectangle {
                     Layout.topMargin: 4
                     spacing: 8
 
+                    Separator {
+                        Layout.preferredHeight: 2
+                        Layout.fillWidth: true
+                        gradient: null
+                        color: Colors.surface
+                    }
+
                     Text {
                         text: "System"
                         font.family: Config.theme.font
-                        font.pixelSize: Config.theme.fontSize - 2
+                        font.pixelSize: Config.theme.fontSize
                         color: Colors.overBackground
                     }
 
