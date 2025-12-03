@@ -174,4 +174,5 @@ QtObject {
     readonly property string cactus: ""
     readonly property string countdown: ""
     readonly property string sync: ""
+    readonly property string cube: ""
 }
