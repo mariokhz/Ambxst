@@ -116,56 +116,7 @@ StyledRect {
         anchors.margins: 12
         spacing: 12
 
-        // Header
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 10
 
-            // Preview using StyledRect (shows current Config state - now real-time!)
-            StyledRect {
-                Layout.preferredWidth: 56
-                Layout.preferredHeight: 56
-                variant: root.variantId
-                enableBorder: true
-
-                Text {
-                    anchors.centerIn: parent
-                    text: Icons.cube
-                    font.family: Icons.font
-                    font.pixelSize: 24
-                    color: parent.itemColor
-                }
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 4
-
-                Text {
-                    text: root.variantDisplayName
-                    font.family: Styling.defaultFont
-                    font.pixelSize: Config.theme.fontSize + 2
-                    font.bold: true
-                    color: Colors.primary
-                }
-
-                Text {
-                    text: "variant: \"" + root.variantId + "\""
-                    font.family: "monospace"
-                    font.pixelSize: Config.theme.fontSize
-                    color: Colors.overBackground
-                    opacity: 0.6
-                }
-            }
-        }
-
-        // Separator
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            color: Colors.outline
-            opacity: 0.3
-        }
 
         // 3-column layout
         RowLayout {
