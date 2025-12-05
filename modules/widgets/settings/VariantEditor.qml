@@ -206,6 +206,7 @@ StyledRect {
                                         text: typeButton.modelData.charAt(0).toUpperCase() + typeButton.modelData.slice(1)
                                         font.family: Styling.defaultFont
                                         font.pixelSize: Styling.fontSize(0)
+                                        font.bold: true
                                         color: typeButton.isSelected ? Colors.overPrimary : Colors.overBackground
                                         horizontalAlignment: Text.AlignHCenter
                                         verticalAlignment: Text.AlignVCenter
