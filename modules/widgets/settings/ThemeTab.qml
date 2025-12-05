@@ -34,6 +34,16 @@ Item {
         { id: "overerror", label: "Over Error" }
     ]
 
+    // Helper function to get variant label by id
+    function getVariantLabel(variantId) {
+        for (var i = 0; i < allVariants.length; i++) {
+            if (allVariants[i].id === variantId) {
+                return allVariants[i].label;
+            }
+        }
+        return variantId;
+    }
+
     StyledRect {
         anchors.fill: parent
         variant: "pane"
@@ -43,100 +53,158 @@ Item {
             anchors.margins: 12
             spacing: 12
 
-            // Horizontal scrollable variant selector
-            ColumnLayout {
+            // Variant selector row: Preview + Flow tags
+            RowLayout {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 100
-                spacing: 8
+                Layout.preferredHeight: variantsFlow.implicitHeight
+                spacing: 12
 
-                // Flickable with variants
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 88
-                    color: "transparent"
-                    clip: true
+                // Selected variant preview
+                StyledRect {
+                    id: selectedPreview
+                    Layout.preferredWidth: 64
+                    Layout.preferredHeight: 64
+                    Layout.alignment: Qt.AlignTop
+                    variant: root.selectedVariant
+                    enableBorder: true
 
-                    Flickable {
-                        id: variantsFlickable
-                        anchors.fill: parent
-                        contentWidth: variantsRow.width
-                        contentHeight: height
-                        flickableDirection: Flickable.HorizontalFlick
-                        boundsBehavior: Flickable.StopAtBounds
-
-                        RowLayout {
-                            id: variantsRow
-                            height: parent.height
-                            spacing: 8
-
-                            Repeater {
-                                model: root.allVariants
-
-                                delegate: VariantPreview {
-                                    required property var modelData
-                                    required property int index
-
-                                    variantId: modelData.id
-                                    variantLabel: modelData.label
-                                    isSelected: root.selectedVariant === modelData.id
-
-                                    onClicked: root.selectedVariant = modelData.id
-                                }
-                            }
-                        }
+                    // Cube icon
+                    Text {
+                        anchors.centerIn: parent
+                        text: Icons.cube
+                        font.family: Icons.font
+                        font.pixelSize: 24
+                        color: selectedPreview.itemColor
                     }
                 }
 
-                // Custom horizontal scrollbar
-                Rectangle {
+                // Flow layout with variant tags
+                Flow {
+                    id: variantsFlow
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 6
-                    color: Colors.surface
-                    radius: 3
+                    Layout.alignment: Qt.AlignTop
+                    spacing: 4
 
-                    Rectangle {
-                        id: scrollHandle
-                        height: parent.height
-                        radius: 3
-                        color: Colors.primary
-                        opacity: variantsFlickable.moving || scrollbarMouseArea.containsMouse ? 0.8 : 0.5
+                    Repeater {
+                        model: root.allVariants
 
-                        readonly property real visibleRatio: Math.min(1.0, variantsFlickable.width / variantsFlickable.contentWidth)
-                        readonly property real maxX: parent.width - width
+                        delegate: StyledRect {
+                            id: variantTag
+                            required property var modelData
+                            required property int index
 
-                        width: parent.width * visibleRatio
-                        x: variantsFlickable.contentWidth > variantsFlickable.width 
-                           ? (variantsFlickable.contentX / (variantsFlickable.contentWidth - variantsFlickable.width)) * maxX 
-                           : 0
+                            property bool isSelected: root.selectedVariant === modelData.id
+                            property bool isHovered: false
 
-                        Behavior on opacity {
-                            enabled: (Config.animDuration ?? 0) > 0
-                            NumberAnimation { duration: (Config.animDuration ?? 0) / 2 }
-                        }
+                            // Use the variant's own styling for the tag
+                            variant: modelData.id
 
-                        MouseArea {
-                            id: scrollbarMouseArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
+                            // Dynamic width based on content
+                            width: tagContent.width + 24 + (isSelected ? checkIcon.width + 4 : 0)
+                            height: 32
+                            radius: isSelected ? Styling.radius(0) / 2 : Styling.radius(0)
 
-                            property real dragStartX: 0
-                            property real dragStartContentX: 0
-
-                            onPressed: mouse => {
-                                dragStartX = mouse.x;
-                                dragStartContentX = variantsFlickable.contentX;
+                            Behavior on radius {
+                                enabled: (Config.animDuration ?? 0) > 0
+                                NumberAnimation {
+                                    duration: (Config.animDuration ?? 0) / 2
+                                    easing.type: Easing.OutQuart
+                                }
                             }
 
-                            onPositionChanged: mouse => {
-                                if (pressed) {
-                                    const delta = mouse.x - dragStartX;
-                                    const contentDelta = delta / scrollHandle.maxX * (variantsFlickable.contentWidth - variantsFlickable.width);
-                                    variantsFlickable.contentX = Math.max(0, Math.min(
-                                        dragStartContentX + contentDelta,
-                                        variantsFlickable.contentWidth - variantsFlickable.width
-                                    ));
+                            Behavior on width {
+                                enabled: (Config.animDuration ?? 0) > 0
+                                NumberAnimation {
+                                    duration: (Config.animDuration ?? 0) / 3
+                                    easing.type: Easing.OutCubic
                                 }
+                            }
+
+                            Item {
+                                anchors.fill: parent
+                                anchors.margins: 8
+
+                                Row {
+                                    anchors.centerIn: parent
+                                    spacing: isSelected ? 4 : 0
+
+                                    // Check icon with reveal animation
+                                    Item {
+                                        width: checkIcon.visible ? checkIcon.width : 0
+                                        height: checkIcon.height
+                                        clip: true
+
+                                        Text {
+                                            id: checkIcon
+                                            text: Icons.accept
+                                            font.family: Icons.font
+                                            font.pixelSize: 16
+                                            color: variantTag.itemColor
+                                            visible: isSelected
+                                            opacity: isSelected ? 1 : 0
+
+                                            Behavior on opacity {
+                                                enabled: (Config.animDuration ?? 0) > 0
+                                                NumberAnimation {
+                                                    duration: (Config.animDuration ?? 0) / 3
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+                                        }
+
+                                        Behavior on width {
+                                            enabled: (Config.animDuration ?? 0) > 0
+                                            NumberAnimation {
+                                                duration: (Config.animDuration ?? 0) / 3
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        id: tagContent
+                                        text: modelData.label
+                                        font.family: Config.theme.font
+                                        font.pixelSize: Config.theme.fontSize
+                                        font.bold: true
+                                        color: variantTag.itemColor
+
+                                        Behavior on color {
+                                            enabled: (Config.animDuration ?? 0) > 0
+                                            ColorAnimation {
+                                                duration: (Config.animDuration ?? 0) / 3
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Hover overlay
+                            Rectangle {
+                                id: hoverOverlay
+                                anchors.fill: parent
+                                color: Colors.primary
+                                radius: parent.radius
+                                opacity: variantTag.isHovered ? 0.15 : 0
+
+                                Behavior on opacity {
+                                    enabled: (Config.animDuration ?? 0) > 0
+                                    NumberAnimation {
+                                        duration: (Config.animDuration ?? 0) / 2
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+
+                                onEntered: variantTag.isHovered = true
+                                onExited: variantTag.isHovered = false
+
+                                onClicked: root.selectedVariant = modelData.id
                             }
                         }
                     }
