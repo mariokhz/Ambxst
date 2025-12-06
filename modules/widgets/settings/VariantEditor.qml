@@ -26,6 +26,8 @@ Rectangle {
             return Config.theme.srBg;
         case "internalbg":
             return Config.theme.srInternalBg;
+        case "barbg":
+            return Config.theme.srBarBg;
         case "pane":
             return Config.theme.srPane;
         case "common":

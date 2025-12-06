@@ -151,6 +151,24 @@ Singleton {
                     property real opacity: 1.0
                 }
 
+                // SR: Bar Background variant (for bar background with corners)
+                property JsonObject srBarBg: JsonObject {
+                    property list<var> gradient: [["surfaceDim", 0.0]]
+                    property string gradientType: "linear"
+                    property int gradientAngle: 0
+                    property real gradientCenterX: 0.5
+                    property real gradientCenterY: 0.5
+                    property real halftoneDotMin: 0.0
+                    property real halftoneDotMax: 2.0
+                    property real halftoneStart: 0.0
+                    property real halftoneEnd: 1.0
+                    property string halftoneDotColor: "surface"
+                    property string halftoneBackgroundColor: "surfaceDim"
+                    property list<var> border: ["surfaceBright", 0]
+                    property string itemColor: "overBackground"
+                    property real opacity: 1.0
+                }
+
                 // SR: Pane variant
                 property JsonObject srPane: JsonObject {
                     property list<var> gradient: [["surface", 0.0]]

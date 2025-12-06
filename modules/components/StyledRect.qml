@@ -58,6 +58,8 @@ ClippingRectangle {
             return Config.theme.srErrorFocus;
         case "overerror":
             return Config.theme.srOverError;
+        case "barbg":
+            return Config.theme.srBarBg;
         default:
             return Config.theme.srCommon;
         }

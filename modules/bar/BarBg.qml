@@ -2,104 +2,123 @@ import QtQuick
 import QtQuick.Effects
 import qs.modules.theme
 import qs.modules.corners
+import qs.modules.components
 import qs.config
 
-Rectangle {
+Item {
     id: root
     required property string position
-    
+
     visible: Config.bar.showBackground
-    opacity: Config.bar.bgOpacity
 
-    property var firstColorData: Config.bar.barColor[0] || ["surface", 0.0]
-    property var lastColorData: Config.bar.barColor[Config.bar.barColor.length - 1] || ["surface", 0.0]
-    
-    property color firstColor: Config.resolveColor(firstColorData[0])
-    
-    property color lastColor: Config.resolveColor(lastColorData[0])
+    readonly property int cornerSize: Config.theme.enableCorners && Config.roundness > 0 ? Styling.radius(4) : 0
 
-    gradient: Gradient {
-        orientation: Config.bar.barOrientation === "horizontal" ? Gradient.Horizontal : Gradient.Vertical
-        
-        GradientStop {
-            property var stopData: Config.bar.barColor[0] || ["surface", 0.0]
-            position: stopData[1]
-            color: root.firstColor
-        }
-        
-        GradientStop {
-            property var stopData: Config.bar.barColor[1] || Config.bar.barColor[Config.bar.barColor.length - 1]
-            position: stopData[1]
-            color: Config.resolveColor(stopData[0])
-        }
-        
-        GradientStop {
-            property var stopData: Config.bar.barColor[2] || Config.bar.barColor[Config.bar.barColor.length - 1]
-            position: stopData[1]
-            color: Config.resolveColor(stopData[0])
-        }
-        
-        GradientStop {
-            property var stopData: Config.bar.barColor[3] || Config.bar.barColor[Config.bar.barColor.length - 1]
-            position: stopData[1]
-            color: Config.resolveColor(stopData[0])
-        }
-        
-        GradientStop {
-            property var stopData: Config.bar.barColor[4] || Config.bar.barColor[Config.bar.barColor.length - 1]
-            position: stopData[1]
-            color: root.lastColor
+    // Calcular offsets para expandir el area y cubrir las corners
+    readonly property int leftOffset: (position === "left") ? cornerSize : ((position === "right") ? cornerSize : 0)
+    readonly property int rightOffset: (position === "left") ? cornerSize : ((position === "right") ? cornerSize : 0)
+    readonly property int topOffset: (position === "top") ? cornerSize : ((position === "bottom") ? cornerSize : 0)
+    readonly property int bottomOffset: (position === "top") ? cornerSize : ((position === "bottom") ? cornerSize : 0)
+
+    // StyledRect expandido que cubre bar + corners
+    StyledRect {
+        id: barBackground
+        variant: "barbg"
+        radius: 0
+        enableBorder: false
+
+        // Expandir para cubrir las corners
+        x: position === "right" ? -cornerSize : 0
+        y: position === "bottom" ? -cornerSize : 0
+        width: root.width + (position === "left" || position === "right" ? cornerSize : 0)
+        height: root.height + (position === "top" || position === "bottom" ? cornerSize : 0)
+
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskSource: barMask
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 1.0
         }
     }
 
-    RoundCorner {
-        id: cornerLeft
-        visible: Config.theme.enableCorners
-        size: Styling.radius(4)
-        x: root.position === "left" ? parent.width : (root.position === "right" ? -size : 0)
-        y: root.position === "top" ? parent.height : (root.position === "bottom" ? -size : 0)
-        corner: {
-            if (root.position === "top") return RoundCorner.CornerEnum.TopLeft
-            if (root.position === "bottom") return RoundCorner.CornerEnum.BottomLeft
-            if (root.position === "left") return RoundCorner.CornerEnum.TopLeft
-            if (root.position === "right") return RoundCorner.CornerEnum.TopRight
+    // Mascara combinada para la bar + corners
+    Item {
+        id: barMask
+        visible: false
+        x: barBackground.x
+        y: barBackground.y
+        width: barBackground.width
+        height: barBackground.height
+        layer.enabled: true
+        layer.smooth: true
+
+        // Rectangulo central (la bar misma)
+        Rectangle {
+            id: centerMask
+            color: "white"
+            x: root.position === "right" ? cornerSize : 0
+            y: root.position === "bottom" ? cornerSize : 0
+            width: root.width
+            height: root.height
         }
-        color: {
-            if (Config.bar.barOrientation === "vertical") {
-                if (root.position === "top") return root.lastColor;
-                if (root.position === "bottom") return root.firstColor;
-                if (root.position === "left") return root.firstColor;
-                if (root.position === "right") return root.firstColor;
-            } else {
-                if (root.position === "top" || root.position === "bottom") return root.firstColor;
-                if (root.position === "left") return root.lastColor;
-                if (root.position === "right") return root.firstColor;
+
+        // Corner izquierdo/superior
+        Item {
+            id: cornerLeftMask
+            visible: Config.theme.enableCorners && cornerSize > 0
+            width: cornerSize
+            height: cornerSize
+            x: {
+                if (root.position === "left") return root.width + cornerSize;
+                if (root.position === "right") return 0;
+                return 0;
+            }
+            y: {
+                if (root.position === "top") return root.height;
+                if (root.position === "bottom") return 0;
+                return 0;
+            }
+
+            RoundCorner {
+                anchors.fill: parent
+                corner: {
+                    if (root.position === "top") return RoundCorner.CornerEnum.TopLeft
+                    if (root.position === "bottom") return RoundCorner.CornerEnum.BottomLeft
+                    if (root.position === "left") return RoundCorner.CornerEnum.TopLeft
+                    if (root.position === "right") return RoundCorner.CornerEnum.TopRight
+                }
+                size: Math.max(cornerSize, 1)
+                color: "white"
             }
         }
-    }
 
-    RoundCorner {
-        id: cornerRight
-        visible: Config.theme.enableCorners
-        size: Styling.radius(4)
-        x: root.position === "left" ? parent.width : (root.position === "right" ? -size : parent.width - size)
-        y: root.position === "top" ? parent.height : (root.position === "bottom" ? -size : parent.height - size)
-        corner: {
-            if (root.position === "top") return RoundCorner.CornerEnum.TopRight
-            if (root.position === "bottom") return RoundCorner.CornerEnum.BottomRight
-            if (root.position === "left") return RoundCorner.CornerEnum.BottomLeft
-            if (root.position === "right") return RoundCorner.CornerEnum.BottomRight
-        }
-        color: {
-            if (Config.bar.barOrientation === "vertical") {
-                if (root.position === "top") return root.lastColor;
-                if (root.position === "bottom") return root.firstColor;
-                if (root.position === "left") return root.lastColor;
-                if (root.position === "right") return root.lastColor;
-            } else {
-                if (root.position === "top" || root.position === "bottom") return root.lastColor;
-                if (root.position === "left") return root.lastColor;
-                if (root.position === "right") return root.firstColor;
+        // Corner derecho/inferior
+        Item {
+            id: cornerRightMask
+            visible: Config.theme.enableCorners && cornerSize > 0
+            width: cornerSize
+            height: cornerSize
+            x: {
+                if (root.position === "left") return root.width + cornerSize;
+                if (root.position === "right") return 0;
+                return root.width - cornerSize;
+            }
+            y: {
+                if (root.position === "top") return root.height;
+                if (root.position === "bottom") return 0;
+                return root.height + cornerSize - cornerSize;
+            }
+
+            RoundCorner {
+                anchors.fill: parent
+                corner: {
+                    if (root.position === "top") return RoundCorner.CornerEnum.TopRight
+                    if (root.position === "bottom") return RoundCorner.CornerEnum.BottomRight
+                    if (root.position === "left") return RoundCorner.CornerEnum.BottomLeft
+                    if (root.position === "right") return RoundCorner.CornerEnum.BottomRight
+                }
+                size: Math.max(cornerSize, 1)
+                color: "white"
             }
         }
     }

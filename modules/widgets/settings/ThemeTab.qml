@@ -18,6 +18,7 @@ Item {
     readonly property var allVariants: [
         { id: "bg", label: "Background" },
         { id: "internalbg", label: "Internal BG" },
+        { id: "barbg", label: "Bar BG" },
         { id: "pane", label: "Pane" },
         { id: "common", label: "Common" },
         { id: "focus", label: "Focus" },
