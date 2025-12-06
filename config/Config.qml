@@ -521,10 +521,10 @@ Singleton {
             }
 
             property JsonObject prefix: JsonObject {
-                property string clipboard: "clp"
-                property string emoji: "emo"
-                property string tmux: "tmx"
-                property string wallpapers: "wpp"
+                property string clipboard: "cc"
+                property string emoji: "ee"
+                property string tmux: "tt"
+                property string wallpapers: "ww"
             }
 
             property JsonObject system: JsonObject {

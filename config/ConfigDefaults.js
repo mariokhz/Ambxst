@@ -387,10 +387,10 @@ var data = {
         "position": "bottom"
     },
     "prefix": {
-        "clipboard": "clp",
-        "emoji": "emo",
-        "tmux": "tmx",
-        "wallpapers": "wpp"
+        "clipboard": "cc",
+        "emoji": "ee",
+        "tmux": "tt",
+        "wallpapers": "ww"
     },
     "system": {
         "disks": ["/"]
