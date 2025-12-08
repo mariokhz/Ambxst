@@ -8,7 +8,7 @@ import qs.modules.globals
 import qs.modules.services
 import qs.modules.notch
 import qs.modules.widgets.dashboard.widgets
-import qs.modules.widgets.dashboard.kanban
+import qs.modules.widgets.dashboard.controls
 import qs.modules.widgets.dashboard.assistant
 import qs.modules.widgets.dashboard.tmux
 import qs.modules.widgets.dashboard.clipboard
@@ -25,7 +25,7 @@ NotchAnimationBehavior {
         property int currentTab: GlobalStates.dashboardCurrentTab
     }
 
-    readonly property var tabModel: [Icons.widgets, Icons.kanban, Icons.heartbeat, Icons.assistant]
+    readonly property var tabModel: [Icons.widgets, Icons.faders, Icons.heartbeat, Icons.assistant]
     readonly property int tabCount: tabModel.length
     readonly property int tabSpacing: 8
 
@@ -482,7 +482,7 @@ NotchAnimationBehavior {
 
     Component {
         id: quickSettingsComponent
-        KanbanTab {}
+        ControlsTab {}
     }
 
     Component {

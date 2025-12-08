@@ -9,7 +9,7 @@ Rectangle {
 
     Text {
         anchors.centerIn: parent
-        text: "Kanban"
+        text: "Controls"
         color: Colors.overSurfaceVariant
         font.family: Config.theme.font
         font.pixelSize: 16
