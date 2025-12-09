@@ -15,7 +15,7 @@ Item {
     
     property bool expanded: false
 
-    implicitHeight: expanded ? contentColumn.implicitHeight : 48
+    implicitHeight: contentColumn.implicitHeight + 16  // 8px margins top + bottom
 
     Behavior on implicitHeight {
         enabled: Config.animDuration > 0
@@ -40,8 +40,12 @@ Item {
 
     ColumnLayout {
         id: contentColumn
-        anchors.fill: parent
-        anchors.margins: 8
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.leftMargin: 8
+        anchors.rightMargin: 8
+        anchors.topMargin: 8
         spacing: 8
 
         // Main row with device info
