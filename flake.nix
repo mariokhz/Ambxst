@@ -159,6 +159,7 @@
 
         pipewire
         wireplumber
+        easyeffects
 
         # Terminal
         (wrapWithNixGL kitty)

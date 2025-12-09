@@ -1173,7 +1173,7 @@ Rectangle {
                                     iconName: {
                                         if (!NetworkService.wifiEnabled)
                                             return Icons.wifiOff;
-                                        const strength = NetworkService.signalStrength;
+                                        const strength = NetworkService.networkStrength;
                                         if (strength === 0)
                                             return Icons.wifiHigh;
                                         if (strength < 25)
