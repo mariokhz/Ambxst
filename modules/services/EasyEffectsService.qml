@@ -32,7 +32,20 @@ Singleton {
         bypassToggleProcess.running = true;
     }
 
-    // Load a preset
+    // Load a preset (optimistic update)
+    function loadOutputPreset(name: string) {
+        root.activeOutputPreset = name;  // Optimistic update
+        loadPresetProcess.command = ["easyeffects", "-l", name];
+        loadPresetProcess.running = true;
+    }
+
+    function loadInputPreset(name: string) {
+        root.activeInputPreset = name;  // Optimistic update
+        loadPresetProcess.command = ["easyeffects", "-l", name];
+        loadPresetProcess.running = true;
+    }
+
+    // Legacy function for compatibility
     function loadPreset(name: string) {
         loadPresetProcess.command = ["easyeffects", "-l", name];
         loadPresetProcess.running = true;
@@ -92,8 +105,19 @@ Singleton {
         id: loadPresetProcess
         running: false
         onExited: {
-            // Refresh active presets after loading
+            // Small delay to let EasyEffects apply the preset
+            refreshDelayTimer.restart();
+        }
+    }
+
+    // Delay timer for refresh after preset load
+    Timer {
+        id: refreshDelayTimer
+        interval: 100
+        repeat: false
+        onTriggered: {
             activePresetsProcess.running = true;
+            bypassStateProcess.running = true;
         }
     }
 

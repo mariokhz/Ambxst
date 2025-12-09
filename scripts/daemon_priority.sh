@@ -21,7 +21,7 @@ fi
 # Start hypridle from flake (will be in PATH via the flake)
 if command -v hypridle >/dev/null; then
   echo "Starting hypridle from Ambxst environment..."
-  hypridle &
+  nohup hypridle >/dev/null 2>&1 &
 else
   echo "Warning: hypridle not found in PATH"
 fi

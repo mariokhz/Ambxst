@@ -117,7 +117,7 @@ Item {
                                     bottomPadding: 6
                                 }
 
-                                onClicked: EasyEffectsService.loadPreset(modelData)
+                                onClicked: EasyEffectsService.loadOutputPreset(modelData)
                             }
                         }
                     }
@@ -171,7 +171,7 @@ Item {
                                     bottomPadding: 6
                                 }
 
-                                onClicked: EasyEffectsService.loadPreset(modelData)
+                                onClicked: EasyEffectsService.loadInputPreset(modelData)
                             }
                         }
                     }
