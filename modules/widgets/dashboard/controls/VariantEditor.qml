@@ -84,16 +84,10 @@ Item {
         enabled: root.variantConfig !== null
 
         // === GRADIENT TYPE SELECTOR ===
-        StyledRect {
+        Row {
             id: typeSelector
-            variant: "common"
             Layout.fillWidth: true
-            Layout.preferredHeight: 40
-            radius: Styling.radius(-2)
-
-            readonly property int buttonCount: 3
-            readonly property int spacing: 2
-            readonly property int padding: 2
+            spacing: 4
 
             readonly property int currentIndex: {
                 if (!root.variantConfig)
@@ -102,103 +96,59 @@ Item {
                 return idx >= 0 ? idx : 0;
             }
 
-            Item {
-                anchors.fill: parent
-                anchors.margins: typeSelector.padding
+            Repeater {
+                model: root.gradientTypes
 
-                // Sliding highlight
-                Rectangle {
-                    id: typeHighlight
-                    color: Colors.primary
-                    z: 0
-                    radius: Styling.radius(-3)
+                delegate: StyledRect {
+                    id: typeButton
+                    required property string modelData
+                    required property int index
 
-                    readonly property real buttonWidth: (parent.width - (typeSelector.buttonCount - 1) * typeSelector.spacing) / typeSelector.buttonCount
+                    readonly property bool isSelected: typeSelector.currentIndex === index
+                    property bool isHovered: false
 
-                    width: buttonWidth
-                    height: parent.height
-                    x: typeSelector.currentIndex * (buttonWidth + typeSelector.spacing)
+                    variant: isSelected ? "primary" : (isHovered ? "focus" : "common")
+                    enableShadow: true
+                    width: (typeSelector.width - (root.gradientTypes.length - 1) * typeSelector.spacing) / root.gradientTypes.length
+                    height: 36
+                    radius: isSelected ? Styling.radius(0) / 2 : Styling.radius(0)
 
-                    Behavior on x {
-                        enabled: Config.animDuration > 0
-                        NumberAnimation {
-                            duration: Config.animDuration / 2
-                            easing.type: Easing.OutCubic
+                    Text {
+                        id: typeIcon
+                        anchors.left: parent.left
+                        anchors.leftMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: {
+                            switch(typeButton.modelData) {
+                                case "linear": return Icons.arrowFatLinesDown;
+                                case "radial": return Icons.arrowsOutCardinal;
+                                case "halftone": return Icons.dotsNine;
+                                default: return "";
+                            }
                         }
+                        font.family: Icons.font
+                        font.pixelSize: 14
+                        color: typeButton.itemColor
                     }
-                }
 
-                // Buttons
-                RowLayout {
-                    anchors.fill: parent
-                    spacing: typeSelector.spacing
-                    z: 1
+                    Text {
+                        anchors.centerIn: parent
+                        text: typeButton.modelData.charAt(0).toUpperCase() + typeButton.modelData.slice(1)
+                        font.family: Styling.defaultFont
+                        font.pixelSize: Styling.fontSize(0)
+                        font.bold: true
+                        color: typeButton.itemColor
+                    }
 
-                    Repeater {
-                        model: root.gradientTypes
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
 
-                        Rectangle {
-                            id: typeButton
-                            required property string modelData
-                            required property int index
+                        onEntered: typeButton.isHovered = true
+                        onExited: typeButton.isHovered = false
 
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            color: "transparent"
-
-                            readonly property bool isSelected: typeSelector.currentIndex === index
-
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 6
-
-                                Text {
-                                    text: {
-                                        switch(typeButton.modelData) {
-                                            case "linear": return Icons.arrowRightLine;
-                                            case "radial": return Icons.sunFogFill;
-                                            case "halftone": return Icons.grid;
-                                            default: return "";
-                                        }
-                                    }
-                                    font.family: Icons.font
-                                    font.pixelSize: 14
-                                    color: typeButton.isSelected ? Colors.overPrimary : Colors.overBackground
-                                    anchors.verticalCenter: parent.verticalCenter
-
-                                    Behavior on color {
-                                        enabled: Config.animDuration > 0
-                                        ColorAnimation {
-                                            duration: Config.animDuration / 2
-                                            easing.type: Easing.OutQuart
-                                        }
-                                    }
-                                }
-
-                                Text {
-                                    text: typeButton.modelData.charAt(0).toUpperCase() + typeButton.modelData.slice(1)
-                                    font.family: Styling.defaultFont
-                                    font.pixelSize: Styling.fontSize(0)
-                                    font.bold: true
-                                    color: typeButton.isSelected ? Colors.overPrimary : Colors.overBackground
-                                    anchors.verticalCenter: parent.verticalCenter
-
-                                    Behavior on color {
-                                        enabled: Config.animDuration > 0
-                                        ColorAnimation {
-                                            duration: Config.animDuration / 2
-                                            easing.type: Easing.OutQuart
-                                        }
-                                    }
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.updateProp("gradientType", typeButton.modelData)
-                            }
-                        }
+                        onClicked: root.updateProp("gradientType", typeButton.modelData)
                     }
                 }
             }

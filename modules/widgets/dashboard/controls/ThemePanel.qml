@@ -587,16 +587,15 @@ Item {
                     }
 
                     // Editor section
-                    StyledRect {
-                        variant: "pane"
+                    Item {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: editorContent.implicitHeight + 24
-                        radius: Styling.radius(-2)
+                        Layout.preferredHeight: editorContent.implicitHeight
 
                         ColumnLayout {
                             id: editorContent
-                            anchors.fill: parent
-                            anchors.margins: 12
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
                             spacing: 8
 
                             Text {
@@ -605,6 +604,7 @@ Item {
                                 font.pixelSize: Styling.fontSize(-1)
                                 font.weight: Font.Medium
                                 color: Colors.overSurfaceVariant
+                                Layout.bottomMargin: -4
                             }
 
                             VariantEditor {
