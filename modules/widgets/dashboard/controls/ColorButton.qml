@@ -5,7 +5,8 @@ import QtQuick.Layouts
 import qs.modules.theme
 import qs.config
 
-// Reusable color picker button with preview, label, and popup
+// Reusable color picker button with preview and label
+// Emits openColorPicker signal for parent to handle
 Rectangle {
     id: root
 
@@ -18,6 +19,7 @@ Rectangle {
     property string dialogTitle: "Select Color"
 
     signal colorSelected(string color)
+    signal openColorPicker(var colorNames, string currentColor, string dialogTitle)
 
     height: compact ? 36 : 56
     color: Colors.surfaceContainer
@@ -74,7 +76,7 @@ Rectangle {
         }
 
         Text {
-            text: Icons.caretDown
+            text: Icons.caretRight
             font.family: Icons.font
             font.pixelSize: compact ? 12 : 14
             color: Colors.overBackground
@@ -85,15 +87,8 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: colorPopup.open()
-    }
-
-    ColorPickerPopup {
-        id: colorPopup
-        y: parent.height + 4
-        colorNames: root.colorNames
-        currentColor: root.currentColor
-        dialogTitle: root.dialogTitle
-        onColorSelected: color => root.colorSelected(color)
+        onClicked: {
+            root.openColorPicker(root.colorNames, root.currentColor, root.dialogTitle);
+        }
     }
 }

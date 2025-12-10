@@ -17,6 +17,33 @@ Item {
 
     property string selectedVariant: "bg"
 
+    // Color picker state
+    property bool colorPickerActive: false
+    property var colorPickerColorNames: []
+    property string colorPickerCurrentColor: ""
+    property string colorPickerDialogTitle: ""
+    property var colorPickerCallback: null
+
+    function openColorPicker(colorNames, currentColor, dialogTitle, callback) {
+        colorPickerColorNames = colorNames;
+        colorPickerCurrentColor = currentColor;
+        colorPickerDialogTitle = dialogTitle;
+        colorPickerCallback = callback;
+        colorPickerActive = true;
+    }
+
+    function closeColorPicker() {
+        colorPickerActive = false;
+        colorPickerCallback = null;
+    }
+
+    function handleColorSelected(color) {
+        if (colorPickerCallback) {
+            colorPickerCallback(color);
+        }
+        colorPickerCurrentColor = color;
+    }
+
     readonly property var allVariants: [
         {
             id: "bg",
@@ -109,6 +136,16 @@ Item {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         interactive: true
+        visible: !root.colorPickerActive
+
+        opacity: root.colorPickerActive ? 0 : 1
+        Behavior on opacity {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration / 2
+                easing.type: Easing.OutQuart
+            }
+        }
 
         ColumnLayout {
             id: mainColumn
@@ -611,9 +648,55 @@ Item {
                                 Layout.fillWidth: true
                                 variantId: root.selectedVariant
                                 onClose: {}
+                                onOpenColorPickerRequested: (colorNames, currentColor, dialogTitle, callback) => {
+                                    root.openColorPicker(colorNames, currentColor, dialogTitle, callback);
+                                }
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    // Color picker view (shown when colorPickerActive)
+    Flickable {
+        id: colorPickerFlickable
+        anchors.fill: parent
+        contentHeight: colorPickerColumn.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        interactive: true
+        visible: root.colorPickerActive
+
+        opacity: root.colorPickerActive ? 1 : 0
+        Behavior on opacity {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration / 2
+                easing.type: Easing.OutQuart
+            }
+        }
+
+        ColumnLayout {
+            id: colorPickerColumn
+            width: colorPickerFlickable.width
+            spacing: 8
+
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredHeight: colorPickerContent.implicitHeight
+
+                ColorPickerView {
+                    id: colorPickerContent
+                    width: root.contentWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    colorNames: root.colorPickerColorNames
+                    currentColor: root.colorPickerCurrentColor
+                    dialogTitle: root.colorPickerDialogTitle
+
+                    onColorSelected: color => root.handleColorSelected(color)
+                    onClosed: root.closeColorPicker()
                 }
             }
         }

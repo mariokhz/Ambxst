@@ -15,6 +15,7 @@ Item {
     required property string variantId
 
     signal close
+    signal openColorPickerRequested(var colorNames, string currentColor, string dialogTitle, var callback)
 
     implicitHeight: mainColumn.implicitHeight
 
@@ -167,6 +168,11 @@ Item {
                 label: "Item Color"
                 dialogTitle: "Select Item Color"
                 onColorSelected: color => root.updateProp("itemColor", color)
+                onOpenColorPicker: (names, current, title) => {
+                    root.openColorPickerRequested(names, current, title, function(color) {
+                        root.updateProp("itemColor", color);
+                    });
+                }
             }
 
             // Opacity & Border
@@ -599,6 +605,11 @@ Item {
                     circlePreview: true
                     dialogTitle: "Select Dot Color"
                     onColorSelected: color => root.updateProp("halftoneDotColor", color)
+                    onOpenColorPicker: (names, current, title) => {
+                        root.openColorPickerRequested(names, current, title, function(color) {
+                            root.updateProp("halftoneDotColor", color);
+                        });
+                    }
                 }
 
                 // Background Color
@@ -609,6 +620,11 @@ Item {
                     label: "Background"
                     dialogTitle: "Select Background Color"
                     onColorSelected: color => root.updateProp("halftoneBackgroundColor", color)
+                    onOpenColorPicker: (names, current, title) => {
+                        root.openColorPickerRequested(names, current, title, function(color) {
+                            root.updateProp("halftoneBackgroundColor", color);
+                        });
+                    }
                 }
             }
 
