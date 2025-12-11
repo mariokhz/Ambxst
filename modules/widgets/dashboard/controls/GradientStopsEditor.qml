@@ -35,7 +35,27 @@ Item {
 
     // Get the default gradient for this variant
     readonly property var defaultGradient: {
-        const variantKey = "sr" + variantId.charAt(0).toUpperCase() + variantId.slice(1);
+        const variantKeyMap = {
+            "bg": "srBg",
+            "internalbg": "srInternalBg",
+            "barbg": "srBarBg",
+            "pane": "srPane",
+            "common": "srCommon",
+            "focus": "srFocus",
+            "primary": "srPrimary",
+            "primaryfocus": "srPrimaryFocus",
+            "overprimary": "srOverPrimary",
+            "secondary": "srSecondary",
+            "secondaryfocus": "srSecondaryFocus",
+            "oversecondary": "srOverSecondary",
+            "tertiary": "srTertiary",
+            "tertiaryfocus": "srTertiaryFocus",
+            "overtertiary": "srOverTertiary",
+            "error": "srError",
+            "errorfocus": "srErrorFocus",
+            "overerror": "srOverError"
+        };
+        const variantKey = variantKeyMap[variantId] || "srCommon";
         const defaults = ConfigDefaults.data.theme[variantKey];
         if (defaults && defaults.gradient) {
             return defaults.gradient;
