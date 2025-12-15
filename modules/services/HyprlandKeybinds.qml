@@ -19,6 +19,22 @@ QtObject {
         applyTimer.restart();
     }
 
+    // Helper function to check if an action is compatible with the current layout
+    function isActionCompatibleWithLayout(action) {
+        // If no compositor specified, action works everywhere
+        if (!action.compositor) return true;
+        
+        // If compositor type is not hyprland, skip (future-proofing)
+        if (action.compositor.type && action.compositor.type !== "hyprland") return false;
+        
+        // If no layouts specified or empty array, action works in all layouts
+        if (!action.compositor.layouts || action.compositor.layouts.length === 0) return true;
+        
+        // Check if current layout is in the allowed list
+        const currentLayout = Config.hyprland.layout;
+        return action.compositor.layouts.indexOf(currentLayout) !== -1;
+    }
+
     function applyKeybindsInternal() {
         // Verificar que el adapter esté cargado
         if (!Config.keybindsLoader.loaded) {
@@ -26,7 +42,7 @@ QtObject {
             return;
         }
 
-        console.log("HyprlandKeybinds: Aplicando keybindings...");
+        console.log("HyprlandKeybinds: Aplicando keybindings (layout: " + Config.hyprland.layout + ")...");
 
         // Construir lista de unbinds
         let unbindCommands = [];
@@ -124,17 +140,21 @@ QtObject {
                 
                 // Check if bind has the new format
                 if (bind.keys && bind.actions) {
-                    // Unbind all keys first
+                    // Unbind all keys first (always unbind regardless of layout)
                     for (let k = 0; k < bind.keys.length; k++) {
                         unbindCommands.push(createUnbindFromKey(bind.keys[k]));
                     }
                     
                     // Only create binds if enabled
                     if (bind.enabled !== false) {
-                        // For each key, bind all actions
+                        // For each key, bind only compatible actions
                         for (let k = 0; k < bind.keys.length; k++) {
                             for (let a = 0; a < bind.actions.length; a++) {
-                                batchCommands.push(createBindFromKeyAction(bind.keys[k], bind.actions[a]));
+                                const action = bind.actions[a];
+                                // Check if this action is compatible with the current layout
+                                if (isActionCompatibleWithLayout(action)) {
+                                    batchCommands.push(createBindFromKeyAction(bind.keys[k], action));
+                                }
                             }
                         }
                     }
@@ -166,6 +186,15 @@ QtObject {
             applyKeybinds();
         }
         function onAdapterUpdated() {
+            applyKeybinds();
+        }
+    }
+
+    // Re-apply keybinds when layout changes
+    property Connections hyprlandConfigConnections: Connections {
+        target: Config.hyprland
+        function onLayoutChanged() {
+            console.log("HyprlandKeybinds: Layout changed to " + Config.hyprland.layout + ", reapplying keybindings...");
             applyKeybinds();
         }
     }

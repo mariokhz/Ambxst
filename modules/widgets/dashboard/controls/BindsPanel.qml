@@ -59,7 +59,7 @@ Item {
     // Edit form state - new format with keys[] and actions[]
     property string editName: ""
     property var editKeys: []  // Array of { modifiers: [], key: "" }
-    property var editActions: []  // Array of { dispatcher: "", argument: "", flags: "" }
+    property var editActions: []  // Array of { dispatcher: "", argument: "", flags: "", compositor: { type: "", layouts: [] } }
     property int currentKeyPage: 0  // Current key page index
     property int currentActionPage: 0  // Current action page index
 
@@ -71,8 +71,10 @@ Item {
     property string editDispatcher: editActions.length > currentActionPage ? (editActions[currentActionPage].dispatcher || "") : ""
     property string editArgument: editActions.length > currentActionPage ? (editActions[currentActionPage].argument || "") : ""
     property string editFlags: editActions.length > currentActionPage ? (editActions[currentActionPage].flags || "") : ""
+    property var editCompositor: editActions.length > currentActionPage ? (editActions[currentActionPage].compositor || { "type": "hyprland", "layouts": [] }) : { "type": "hyprland", "layouts": [] }
 
     readonly property var availableModifiers: ["SUPER", "SHIFT", "CTRL", "ALT"]
+    readonly property var availableLayouts: ["dwindle", "master", "scrolling"]
 
     // Helper to update current key in editKeys array
     function updateCurrentKey(modifiers, key) {
@@ -89,17 +91,47 @@ Item {
     }
 
     // Helper to update current action in editActions array
-    function updateCurrentAction(dispatcher, argument, flags) {
+    function updateCurrentAction(dispatcher, argument, flags, compositor) {
         if (editActions.length <= currentActionPage) return;
         let newActions = [];
         for (let i = 0; i < editActions.length; i++) {
             if (i === currentActionPage) {
-                newActions.push({ "dispatcher": dispatcher, "argument": argument, "flags": flags });
+                newActions.push({ "dispatcher": dispatcher, "argument": argument, "flags": flags, "compositor": compositor });
             } else {
                 newActions.push(editActions[i]);
             }
         }
         editActions = newActions;
+    }
+
+    // Helper to check if a layout is selected for current action
+    function hasLayout(layout) {
+        const comp = root.editCompositor;
+        if (!comp || !comp.layouts || comp.layouts.length === 0) return false;
+        return comp.layouts.indexOf(layout) !== -1;
+    }
+
+    // Helper to toggle a layout for current action
+    function toggleLayout(layout) {
+        if (root.editActions.length <= root.currentActionPage) return;
+        
+        const currentAction = root.editActions[root.currentActionPage];
+        let comp = currentAction.compositor || { "type": "hyprland", "layouts": [] };
+        let layouts = comp.layouts ? comp.layouts.slice() : [];
+        
+        const idx = layouts.indexOf(layout);
+        if (idx !== -1) {
+            layouts.splice(idx, 1);
+        } else {
+            layouts.push(layout);
+        }
+        
+        updateCurrentAction(
+            currentAction.dispatcher || "",
+            currentAction.argument || "",
+            currentAction.flags || "",
+            { "type": "hyprland", "layouts": layouts }
+        );
     }
 
     // Add a new key page
@@ -128,7 +160,7 @@ Item {
     // Add a new action page
     function addActionPage() {
         let newActions = editActions.slice();
-        newActions.push({ "dispatcher": "", "argument": "", "flags": "" });
+        newActions.push({ "dispatcher": "", "argument": "", "flags": "", "compositor": { "type": "hyprland", "layouts": [] } });
         editActions = newActions;
         currentActionPage = newActions.length - 1;
     }
@@ -354,7 +386,7 @@ Item {
         const newBind = {
             "name": "",
             "keys": [{ "modifiers": ["SUPER"], "key": "" }],
-            "actions": [{ "dispatcher": "", "argument": "", "flags": "" }],
+            "actions": [{ "dispatcher": "", "argument": "", "flags": "", "compositor": { "type": "hyprland", "layouts": [] } }],
             "enabled": true
         };
 
@@ -599,6 +631,24 @@ Item {
                             // Helper to get first action's dispatcher/argument
                             readonly property string firstDispatcher: modelData.actions && modelData.actions.length > 0 ? (modelData.actions[0].dispatcher || "") : (modelData.dispatcher || "")
                             readonly property string firstArgument: modelData.actions && modelData.actions.length > 0 ? (modelData.actions[0].argument || "") : (modelData.argument || "")
+                            
+                            // Helper to get unique layouts from all actions
+                            function getUniqueLayouts() {
+                                if (!modelData.actions || modelData.actions.length === 0) return [];
+                                let allLayouts = [];
+                                for (let i = 0; i < modelData.actions.length; i++) {
+                                    const action = modelData.actions[i];
+                                    if (action.compositor && action.compositor.layouts) {
+                                        for (let j = 0; j < action.compositor.layouts.length; j++) {
+                                            const layout = action.compositor.layouts[j];
+                                            if (allLayouts.indexOf(layout) === -1) {
+                                                allLayouts.push(layout);
+                                            }
+                                        }
+                                    }
+                                }
+                                return allLayouts;
+                            }
 
                             Layout.fillWidth: true
                             customName: modelData.name || ""
@@ -608,6 +658,7 @@ Item {
                             argument: firstArgument
                             isEnabled: modelData.enabled !== false
                             isAmbxst: false
+                            layouts: getUniqueLayouts()
 
                             onToggleEnabled: {
                                 const customBinds = Config.keybindsLoader.adapter.custom;
@@ -1321,7 +1372,7 @@ Item {
                                     onTextChanged: {
                                         if (root.editActions.length > root.currentActionPage) {
                                             const currentAction = root.editActions[root.currentActionPage];
-                                            root.updateCurrentAction(text, currentAction.argument || "", currentAction.flags || "");
+                                            root.updateCurrentAction(text, currentAction.argument || "", currentAction.flags || "", currentAction.compositor || { "type": "hyprland", "layouts": [] });
                                         }
                                     }
 
@@ -1364,7 +1415,7 @@ Item {
                                     onTextChanged: {
                                         if (root.editActions.length > root.currentActionPage) {
                                             const currentAction = root.editActions[root.currentActionPage];
-                                            root.updateCurrentAction(currentAction.dispatcher || "", text, currentAction.flags || "");
+                                            root.updateCurrentAction(currentAction.dispatcher || "", text, currentAction.flags || "", currentAction.compositor || { "type": "hyprland", "layouts": [] });
                                         }
                                     }
 
@@ -1407,7 +1458,7 @@ Item {
                                     onTextChanged: {
                                         if (root.editActions.length > root.currentActionPage) {
                                             const currentAction = root.editActions[root.currentActionPage];
-                                            root.updateCurrentAction(currentAction.dispatcher || "", currentAction.argument || "", text);
+                                            root.updateCurrentAction(currentAction.dispatcher || "", currentAction.argument || "", text, currentAction.compositor || { "type": "hyprland", "layouts": [] });
                                         }
                                     }
 
@@ -1426,6 +1477,112 @@ Item {
                                 font.family: Config.theme.font
                                 font.pixelSize: Styling.fontSize(-2)
                                 color: Colors.overSurfaceVariant
+                            }
+
+                            // =====================
+                            // LAYOUT SELECTOR (for Hyprland)
+                            // =====================
+                            Text {
+                                text: "Layouts (Hyprland)"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(-1)
+                                font.weight: Font.Medium
+                                color: Colors.overSurfaceVariant
+                                Layout.topMargin: 8
+                            }
+
+                            Text {
+                                text: "Leave all unselected to work in all layouts"
+                                font.family: Config.theme.font
+                                font.pixelSize: Styling.fontSize(-2)
+                                color: Colors.overSurfaceVariant
+                                Layout.topMargin: -4
+                            }
+
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 8
+
+                                Repeater {
+                                    model: root.availableLayouts
+
+                                    delegate: StyledRect {
+                                        id: layoutTag
+                                        required property string modelData
+                                        required property int index
+
+                                        property bool isSelected: root.hasLayout(modelData)
+                                        property bool isHovered: false
+
+                                        variant: isSelected ? "primary" : (isHovered ? "focus" : "common")
+                                        width: layoutContent.width + 24 + (isSelected ? layoutCheckIcon.width + 4 : 0)
+                                        height: 36
+                                        radius: Styling.radius(-2)
+
+                                        Behavior on width {
+                                            enabled: (Config.animDuration ?? 0) > 0
+                                            NumberAnimation {
+                                                duration: (Config.animDuration ?? 0) / 3
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+
+                                        Row {
+                                            anchors.centerIn: parent
+                                            spacing: layoutTag.isSelected ? 4 : 0
+
+                                            Item {
+                                                width: layoutCheckIcon.visible ? layoutCheckIcon.width : 0
+                                                height: layoutCheckIcon.height
+                                                clip: true
+
+                                                Text {
+                                                    id: layoutCheckIcon
+                                                    text: Icons.accept
+                                                    font.family: Icons.font
+                                                    font.pixelSize: 14
+                                                    color: layoutTag.itemColor
+                                                    visible: layoutTag.isSelected
+                                                    opacity: layoutTag.isSelected ? 1 : 0
+
+                                                    Behavior on opacity {
+                                                        enabled: (Config.animDuration ?? 0) > 0
+                                                        NumberAnimation {
+                                                            duration: (Config.animDuration ?? 0) / 3
+                                                            easing.type: Easing.OutCubic
+                                                        }
+                                                    }
+                                                }
+
+                                                Behavior on width {
+                                                    enabled: (Config.animDuration ?? 0) > 0
+                                                    NumberAnimation {
+                                                        duration: (Config.animDuration ?? 0) / 3
+                                                        easing.type: Easing.OutCubic
+                                                    }
+                                                }
+                                            }
+
+                                            Text {
+                                                id: layoutContent
+                                                text: layoutTag.modelData.charAt(0).toUpperCase() + layoutTag.modelData.slice(1)
+                                                font.family: Config.theme.font
+                                                font.pixelSize: Styling.fontSize(0)
+                                                font.weight: layoutTag.isSelected ? Font.Bold : Font.Normal
+                                                color: layoutTag.itemColor
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onEntered: layoutTag.isHovered = true
+                                            onExited: layoutTag.isHovered = false
+                                            onClicked: root.toggleLayout(layoutTag.modelData)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1446,11 +1603,14 @@ Item {
         property bool isEnabled: true
         property bool isAmbxst: true
         property bool isHovered: false
+        property var layouts: []  // Layouts this bind is restricted to (empty = all layouts)
 
         // Computed display values
         readonly property bool hasCustomName: customName !== ""
         readonly property string displayName: hasCustomName ? customName : bindName
         readonly property string displaySubtitle: hasCustomName ? "" : (argument || dispatcher)
+        readonly property bool hasLayoutRestriction: layouts && layouts.length > 0
+        readonly property var displayLayouts: hasLayoutRestriction ? layouts : ["dwindle", "master", "scrolling"]
 
         signal editRequested()
         signal toggleEnabled()
@@ -1537,14 +1697,63 @@ Item {
                     Layout.fillWidth: true
                 }
 
-                Text {
-                    text: bindItem.displaySubtitle
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.overSurfaceVariant
-                    elide: Text.ElideRight
+                RowLayout {
                     Layout.fillWidth: true
-                    visible: text !== ""
+                    spacing: 6
+
+                    Text {
+                        text: bindItem.displaySubtitle
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-2)
+                        color: Colors.overSurfaceVariant
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                        visible: text !== ""
+                    }
+
+                    // Layout indicator
+                    Row {
+                        visible: !bindItem.isAmbxst
+                        spacing: 4
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Repeater {
+                            model: bindItem.displayLayouts
+
+                            delegate: Rectangle {
+                                id: layoutBadge
+                                required property string modelData
+                                property bool isHovered: false
+                                width: layoutBadgeText.width + 8
+                                height: 16
+                                radius: 4
+                                color: Colors.primary
+                                opacity: isHovered ? 1.0 : 0.8
+
+                                Text {
+                                    id: layoutBadgeText
+                                    anchors.centerIn: parent
+                                    text: layoutBadge.modelData.charAt(0).toUpperCase()
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Styling.fontSize(-3)
+                                    font.weight: Font.Bold
+                                    color: Config.resolveColor(Config.theme.srPrimary.itemColor)
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onEntered: layoutBadge.isHovered = true
+                                    onExited: layoutBadge.isHovered = false
+                                }
+
+                                StyledToolTip {
+                                    visible: layoutBadge.isHovered
+                                    tooltipText: layoutBadge.modelData.charAt(0).toUpperCase() + layoutBadge.modelData.slice(1) + " layout"
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

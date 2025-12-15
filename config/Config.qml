@@ -1077,7 +1077,7 @@ Singleton {
             }
         }
 
-        // Normalize custom binds to new format with keys[] and actions[]
+        // Normalize custom binds to new format with keys[], actions[] and compositor
         function normalizeCustomBinds() {
             if (!adapter || !adapter.custom)
                 return;
@@ -1100,17 +1100,47 @@ Singleton {
                         "actions": [{
                             "dispatcher": bind.dispatcher || "",
                             "argument": bind.argument || "",
-                            "flags": bind.flags || ""
+                            "flags": bind.flags || "",
+                            "compositor": { "type": "hyprland", "layouts": [] }
                         }],
                         "enabled": bind.enabled !== false
                     });
                 } else {
-                    normalizedBinds.push(bind);
+                    // Check if actions need compositor field added
+                    let actionsNeedUpdate = false;
+                    let normalizedActions = [];
+                    
+                    for (let a = 0; a < bind.actions.length; a++) {
+                        let action = bind.actions[a];
+                        if (action.compositor === undefined) {
+                            actionsNeedUpdate = true;
+                            normalizedActions.push({
+                                "dispatcher": action.dispatcher || "",
+                                "argument": action.argument || "",
+                                "flags": action.flags || "",
+                                "compositor": { "type": "hyprland", "layouts": [] }
+                            });
+                        } else {
+                            normalizedActions.push(action);
+                        }
+                    }
+                    
+                    if (actionsNeedUpdate) {
+                        needsUpdate = true;
+                        normalizedBinds.push({
+                            "name": bind.name || "",
+                            "keys": bind.keys,
+                            "actions": normalizedActions,
+                            "enabled": bind.enabled !== false
+                        });
+                    } else {
+                        normalizedBinds.push(bind);
+                    }
                 }
             }
 
             if (needsUpdate) {
-                console.log("Normalizing custom binds: migrating to new keys/actions format");
+                console.log("Normalizing custom binds: migrating to new keys/actions/compositor format");
                 adapter.custom = normalizedBinds;
             }
         }
@@ -1499,7 +1529,7 @@ Singleton {
                         { "modifiers": ["SUPER"], "key": "Up" },
                         { "modifiers": ["SUPER", "CTRL"], "key": "k" }
                     ],
-                    "actions": [{ "dispatcher": "layoutmsg", "argument": "focus u", "flags": "" }],
+                    "actions": [{ "dispatcher": "layoutmsg", "argument": "focus u", "flags": "", "compositor": { "type": "hyprland", "layouts": ["scrolling"] } }],
                     "enabled": true
                 },
                 {
@@ -1508,7 +1538,7 @@ Singleton {
                         { "modifiers": ["SUPER"], "key": "Down" },
                         { "modifiers": ["SUPER", "CTRL"], "key": "j" }
                     ],
-                    "actions": [{ "dispatcher": "layoutmsg", "argument": "focus d", "flags": "" }],
+                    "actions": [{ "dispatcher": "layoutmsg", "argument": "focus d", "flags": "", "compositor": { "type": "hyprland", "layouts": ["scrolling"] } }],
                     "enabled": true
                 },
                 {
@@ -1518,7 +1548,7 @@ Singleton {
                         { "modifiers": ["SUPER", "CTRL"], "key": "z" },
                         { "modifiers": ["SUPER", "CTRL"], "key": "h" }
                     ],
-                    "actions": [{ "dispatcher": "layoutmsg", "argument": "focus l", "flags": "" }],
+                    "actions": [{ "dispatcher": "layoutmsg", "argument": "focus l", "flags": "", "compositor": { "type": "hyprland", "layouts": ["scrolling"] } }],
                     "enabled": true
                 },
                 {
@@ -1528,31 +1558,31 @@ Singleton {
                         { "modifiers": ["SUPER", "CTRL"], "key": "x" },
                         { "modifiers": ["SUPER", "CTRL"], "key": "l" }
                     ],
-                    "actions": [{ "dispatcher": "layoutmsg", "argument": "focus r", "flags": "" }],
+                    "actions": [{ "dispatcher": "layoutmsg", "argument": "focus r", "flags": "", "compositor": { "type": "hyprland", "layouts": ["scrolling"] } }],
                     "enabled": true
                 },
                 {
                     "name": "Promote (Scrolling)",
                     "keys": [{ "modifiers": ["SUPER", "ALT"], "key": "SPACE" }],
-                    "actions": [{ "dispatcher": "layoutmsg", "argument": "promote", "flags": "" }],
+                    "actions": [{ "dispatcher": "layoutmsg", "argument": "promote", "flags": "", "compositor": { "type": "hyprland", "layouts": ["scrolling"] } }],
                     "enabled": true
                 },
                 {
                     "name": "Swap Column Left (Scrolling)",
                     "keys": [{ "modifiers": ["SUPER", "ALT"], "key": "Left" }],
-                    "actions": [{ "dispatcher": "layoutmsg", "argument": "swapcol l", "flags": "" }],
+                    "actions": [{ "dispatcher": "layoutmsg", "argument": "swapcol l", "flags": "", "compositor": { "type": "hyprland", "layouts": ["scrolling"] } }],
                     "enabled": true
                 },
                 {
                     "name": "Swap Column Right (Scrolling)",
                     "keys": [{ "modifiers": ["SUPER", "ALT"], "key": "Right" }],
-                    "actions": [{ "dispatcher": "layoutmsg", "argument": "swapcol r", "flags": "" }],
+                    "actions": [{ "dispatcher": "layoutmsg", "argument": "swapcol r", "flags": "", "compositor": { "type": "hyprland", "layouts": ["scrolling"] } }],
                     "enabled": true
                 },
                 {
                     "name": "Toggle Fit (Scrolling)",
                     "keys": [{ "modifiers": ["SUPER", "CTRL"], "key": "SPACE" }],
-                    "actions": [{ "dispatcher": "layoutmsg", "argument": "togglefit", "flags": "" }],
+                    "actions": [{ "dispatcher": "layoutmsg", "argument": "togglefit", "flags": "", "compositor": { "type": "hyprland", "layouts": ["scrolling"] } }],
                     "enabled": true
                 },
                 {
@@ -1561,7 +1591,7 @@ Singleton {
                         { "modifiers": ["SUPER", "CTRL"], "key": "Right" },
                         { "modifiers": ["SUPER", "ALT"], "key": "l" }
                     ],
-                    "actions": [{ "dispatcher": "layoutmsg", "argument": "colresize +0.1", "flags": "" }],
+                    "actions": [{ "dispatcher": "layoutmsg", "argument": "colresize +0.1", "flags": "", "compositor": { "type": "hyprland", "layouts": ["scrolling"] } }],
                     "enabled": true
                 },
                 {
@@ -1570,13 +1600,13 @@ Singleton {
                         { "modifiers": ["SUPER", "CTRL"], "key": "Left" },
                         { "modifiers": ["SUPER", "ALT"], "key": "h" }
                     ],
-                    "actions": [{ "dispatcher": "layoutmsg", "argument": "colresize -0.1", "flags": "" }],
+                    "actions": [{ "dispatcher": "layoutmsg", "argument": "colresize -0.1", "flags": "", "compositor": { "type": "hyprland", "layouts": ["scrolling"] } }],
                     "enabled": true
                 },
                 {
                     "name": "Toggle Full Column (Scrolling)",
                     "keys": [{ "modifiers": ["SUPER", "SHIFT"], "key": "SPACE" }],
-                    "actions": [{ "dispatcher": "layoutmsg", "argument": "colresize +conf", "flags": "" }],
+                    "actions": [{ "dispatcher": "layoutmsg", "argument": "colresize +conf", "flags": "", "compositor": { "type": "hyprland", "layouts": ["scrolling"] } }],
                     "enabled": true
                 }
             ]

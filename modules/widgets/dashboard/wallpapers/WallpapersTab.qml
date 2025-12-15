@@ -57,7 +57,7 @@ FocusScope {
     function focusSearch() {
         currentFocusIndex = -1;
         wallpaperSearchInput.focusInput();
-        
+
         // Restaurar índice válido si está en -1 y hay wallpapers
         if (selectedIndex === -1 && filteredWallpapers.length > 0) {
             const currentIndex = findCurrentWallpaperIndex();
@@ -627,7 +627,7 @@ FocusScope {
                                 Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                        width: wallpaperGrid.cellWidth - 20
+                                    width: wallpaperGrid.cellWidth - 20
                                     height: parent.height
                                     color: "transparent"
                                     clip: true
@@ -783,7 +783,8 @@ FocusScope {
                         cursorShape: Qt.PointingHandCursor
 
                         onEntered: {
-                            if (wallpaperGrid.isScrolling) return;
+                            if (wallpaperGrid.isScrolling)
+                                return;
                             parent.isHovered = true;
                             setSelectedIndex(index);
                         }
@@ -791,12 +792,14 @@ FocusScope {
                             parent.isHovered = false;
                         }
                         onPressed: {
-                            if (!wallpaperGrid.isScrolling) parent.scale = 0.95;
+                            if (!wallpaperGrid.isScrolling)
+                                parent.scale = 0.95;
                         }
                         onReleased: parent.scale = 1.0
 
                         onClicked: {
-                            if (wallpaperGrid.isScrolling) return;
+                            if (wallpaperGrid.isScrolling)
+                                return;
                             if (GlobalStates.wallpaperManager) {
                                 GlobalStates.wallpaperManager.setWallpaper(modelData);
                             }
