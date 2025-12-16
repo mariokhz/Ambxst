@@ -108,17 +108,17 @@ QtObject {
         unbindCommands.push(createUnbindCommand(dashboard.clipboard));
         unbindCommands.push(createUnbindCommand(dashboard.emoji));
         unbindCommands.push(createUnbindCommand(dashboard.tmux));
-        unbindCommands.push(createUnbindCommand(dashboard.kanban));
         unbindCommands.push(createUnbindCommand(dashboard.wallpapers));
         unbindCommands.push(createUnbindCommand(dashboard.assistant));
+        unbindCommands.push(createUnbindCommand(dashboard.notes));
         
         batchCommands.push(createBindCommand(dashboard.widgets));
         batchCommands.push(createBindCommand(dashboard.clipboard));
         batchCommands.push(createBindCommand(dashboard.emoji));
         batchCommands.push(createBindCommand(dashboard.tmux));
-        batchCommands.push(createBindCommand(dashboard.kanban));
         batchCommands.push(createBindCommand(dashboard.wallpapers));
         batchCommands.push(createBindCommand(dashboard.assistant));
+        batchCommands.push(createBindCommand(dashboard.notes));
 
         // System keybinds
         const system = ambxst.system;

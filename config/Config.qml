@@ -1174,12 +1174,6 @@ Singleton {
                         property string dispatcher: "global"
                         property string argument: "ambxst:dashboard-tmux"
                     }
-                    property JsonObject kanban: JsonObject {
-                        property list<string> modifiers: ["SUPER"]
-                        property string key: "N"
-                        property string dispatcher: "global"
-                        property string argument: "ambxst:dashboard-kanban"
-                    }
                     property JsonObject wallpapers: JsonObject {
                         property list<string> modifiers: ["SUPER"]
                         property string key: "COMMA"
@@ -1193,7 +1187,7 @@ Singleton {
                         property string argument: "ambxst:dashboard-assistant"
                     }
                     property JsonObject notes: JsonObject {
-                        property list<string> modifiers: ["SUPER", "SHIFT"]
+                        property list<string> modifiers: ["SUPER"]
                         property string key: "N"
                         property string dispatcher: "global"
                         property string argument: "ambxst:dashboard-notes"
