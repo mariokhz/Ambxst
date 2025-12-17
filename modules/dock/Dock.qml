@@ -101,8 +101,8 @@ Scope {
             // Content sizing helper
             Item {
                 id: dockContent
-                implicitWidth: root.isVertical ? dockWindow.dockSize : dockBackground.implicitWidth
-                implicitHeight: root.isVertical ? dockBackground.implicitHeight : dockWindow.dockSize
+                implicitWidth: root.isVertical ? dockWindow.dockSize : dockLayoutHorizontal.implicitWidth + 16
+                implicitHeight: root.isVertical ? dockLayoutVertical.implicitHeight + 16 : dockWindow.dockSize
             }
 
             MouseArea {
