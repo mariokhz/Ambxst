@@ -663,11 +663,14 @@ Item {
 
                         SelectorRow {
                             label: ""
-                            options: [
-                                { label: "Bottom", value: "bottom", icon: Icons.arrowDown },
-                                { label: "Left", value: "left", icon: Icons.arrowLeft },
-                                { label: "Right", value: "right", icon: Icons.arrowRight }
-                            ]
+                            options: {
+                                const isIntegrated = (Config.dock.theme ?? "default") === "integrated";
+                                return [
+                                    { label: "Left", value: "left", icon: isIntegrated ? Icons.alignLeft : Icons.arrowLeft },
+                                    { label: isIntegrated ? "Center" : "Bottom", value: "bottom", icon: isIntegrated ? Icons.alignCenter : Icons.arrowDown },
+                                    { label: "Right", value: "right", icon: isIntegrated ? Icons.alignRight : Icons.arrowRight }
+                                ];
+                            }
                             value: Config.dock.position ?? "bottom"
                             onValueSelected: newValue => {
                                 Config.dock.position = newValue;
@@ -680,6 +683,7 @@ Item {
                             minValue: 32
                             maxValue: 128
                             suffix: "px"
+                            visible: (Config.dock.theme ?? "default") !== "integrated"
                             onValueEdited: newValue => {
                                 Config.dock.height = newValue;
                             }
@@ -691,6 +695,7 @@ Item {
                             minValue: 16
                             maxValue: 96
                             suffix: "px"
+                            visible: (Config.dock.theme ?? "default") !== "integrated"
                             onValueEdited: newValue => {
                                 Config.dock.iconSize = newValue;
                             }
@@ -702,6 +707,7 @@ Item {
                             minValue: 0
                             maxValue: 24
                             suffix: "px"
+                            visible: (Config.dock.theme ?? "default") !== "integrated"
                             onValueEdited: newValue => {
                                 Config.dock.spacing = newValue;
                             }
@@ -713,6 +719,7 @@ Item {
                             minValue: 0
                             maxValue: 32
                             suffix: "px"
+                            visible: (Config.dock.theme ?? "default") !== "integrated"
                             onValueEdited: newValue => {
                                 Config.dock.margin = newValue;
                             }
@@ -724,6 +731,7 @@ Item {
                             minValue: 0
                             maxValue: 32
                             suffix: "px"
+                            visible: (Config.dock.theme ?? "default") !== "integrated"
                             onValueEdited: newValue => {
                                 Config.dock.hoverRegionHeight = newValue;
                             }
@@ -732,6 +740,7 @@ Item {
                         ToggleRow {
                             label: "Pinned on Startup"
                             checked: Config.dock.pinnedOnStartup ?? false
+                            visible: (Config.dock.theme ?? "default") !== "integrated"
                             onToggled: value => {
                                 Config.dock.pinnedOnStartup = value;
                             }
@@ -740,6 +749,7 @@ Item {
                         ToggleRow {
                             label: "Hover to Reveal"
                             checked: Config.dock.hoverToReveal ?? true
+                            visible: (Config.dock.theme ?? "default") !== "integrated"
                             onToggled: value => {
                                 Config.dock.hoverToReveal = value;
                             }
@@ -756,6 +766,7 @@ Item {
                         ToggleRow {
                             label: "Show Running Indicators"
                             checked: Config.dock.showRunningIndicators ?? true
+                            visible: (Config.dock.theme ?? "default") !== "integrated"
                             onToggled: value => {
                                 Config.dock.showRunningIndicators = value;
                             }
@@ -764,6 +775,7 @@ Item {
                         ToggleRow {
                             label: "Show Pin Button"
                             checked: Config.dock.showPinButton ?? true
+                            visible: (Config.dock.theme ?? "default") !== "integrated"
                             onToggled: value => {
                                 Config.dock.showPinButton = value;
                             }
@@ -772,6 +784,7 @@ Item {
                         ToggleRow {
                             label: "Show Overview Button"
                             checked: Config.dock.showOverviewButton ?? true
+                            visible: (Config.dock.theme ?? "default") !== "integrated"
                             onToggled: value => {
                                 Config.dock.showOverviewButton = value;
                             }

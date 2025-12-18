@@ -107,9 +107,11 @@ ShellRoot {
         }
     }
 
-    // Application Dock
-    Dock {
-        id: applicationDock
+    // Application Dock - only load when enabled and not integrated
+    Loader {
+        id: dockLoader
+        active: (Config.dock?.enabled ?? false) && (Config.dock?.theme ?? "default") !== "integrated"
+        sourceComponent: Dock {}
     }
 
     // Secure lockscreen using WlSessionLock

@@ -25,6 +25,16 @@ PanelWindow {
     property string position: ["top", "bottom", "left", "right"].includes(Config.bar.position) ? Config.bar.position : "top"
     property string orientation: position === "left" || position === "right" ? "vertical" : "horizontal"
 
+    // Integrated dock configuration
+    readonly property bool integratedDockEnabled: (Config.dock?.enabled ?? false) && (Config.dock?.theme ?? "default") === "integrated"
+    // Map dock position for integrated: "bottom"/"top" should be "center" for integrated dock
+    readonly property string integratedDockPosition: {
+        const pos = Config.dock?.position ?? "center";
+        // For integrated, "bottom" and "top" don't make sense - map to "center"
+        if (pos === "bottom" || pos === "top") return "center";
+        return pos;
+    }
+
     anchors {
         top: position !== "bottom"
         bottom: position !== "top"
@@ -196,6 +206,14 @@ PanelWindow {
                                     id: overviewButton
                                     enableShadow: false
                                 }
+                                // Integrated dock - left position (after overview button)
+                                IntegratedDock {
+                                    id: integratedDockLeft
+                                    bar: panel
+                                    orientation: "horizontal"
+                                    visible: panel.integratedDockEnabled && panel.integratedDockPosition === "left"
+                                    layer.enabled: false
+                                }
                             }
 
                             Item {
@@ -206,10 +224,21 @@ PanelWindow {
                 }
             }
 
-            // Espaciador sincronizado con el ancho del notch
+            // Espaciador sincronizado con el ancho del notch (oculto cuando dock integrated está activo)
             Item {
+                visible: !panel.integratedDockEnabled
                 Layout.preferredWidth: horizontalLayout.notchContainer ? horizontalLayout.notchContainer.implicitWidth - 40 : 0
                 Layout.fillHeight: true
+            }
+
+            // Integrated dock - center position
+            IntegratedDock {
+                id: integratedDockCenter
+                bar: panel
+                orientation: "horizontal"
+                visible: panel.integratedDockEnabled && panel.integratedDockPosition === "center"
+                layer.enabled: Config.showBackground
+                layer.effect: Shadow {}
             }
 
             RowLayout {
@@ -250,6 +279,15 @@ PanelWindow {
                             RowLayout {
                                 id: rightWidgets
                                 spacing: 4
+
+                                // Integrated dock - right position (before power profile)
+                                IntegratedDock {
+                                    id: integratedDockRight
+                                    bar: panel
+                                    orientation: "horizontal"
+                                    visible: panel.integratedDockEnabled && panel.integratedDockPosition === "right"
+                                    layer.enabled: false
+                                }
 
                                 Bar.PowerProfileSelector {
                                     id: powerProfileSelector
@@ -344,8 +382,26 @@ PanelWindow {
                             Layout.preferredHeight: 36
                             enableShadow: false
                         }
+                        // Integrated dock - left/top position (after overview button)
+                        IntegratedDock {
+                            id: integratedDockTop
+                            bar: panel
+                            orientation: "vertical"
+                            visible: panel.integratedDockEnabled && panel.integratedDockPosition === "left"
+                            layer.enabled: false
+                        }
                     }
                 }
+            }
+
+            // Integrated dock - center position
+            IntegratedDock {
+                id: integratedDockCenterVert
+                bar: panel
+                orientation: "vertical"
+                visible: panel.integratedDockEnabled && panel.integratedDockPosition === "center"
+                layer.enabled: Config.showBackground
+                layer.effect: Shadow {}
             }
 
             ColumnLayout {
@@ -385,6 +441,15 @@ PanelWindow {
                             ColumnLayout {
                                 id: bottomWidgets
                                 spacing: 4
+
+                                // Integrated dock - right/bottom position (before power profile)
+                                IntegratedDock {
+                                    id: integratedDockBottomInner
+                                    bar: panel
+                                    orientation: "vertical"
+                                    visible: panel.integratedDockEnabled && panel.integratedDockPosition === "right"
+                                    layer.enabled: false
+                                }
 
                                 Bar.PowerProfileSelector {
                                     id: powerProfileSelectorVert

@@ -17,6 +17,11 @@ Scope {
     
     property bool pinned: Config.dock?.pinnedOnStartup ?? false
 
+    // Theme configuration
+    readonly property string theme: Config.dock?.theme ?? "default"
+    readonly property bool isFloating: theme === "floating"
+    readonly property bool isDefault: theme === "default"
+
     // Position configuration with fallback logic to avoid bar collision
     readonly property string userPosition: Config.dock?.position ?? "bottom"
     readonly property string barPosition: Config.bar?.position ?? "top"
@@ -41,13 +46,22 @@ Scope {
     readonly property bool isRight: position === "right"
     readonly property bool isVertical: isLeft || isRight
 
-    // Margin calculations
+    // Margin calculations - different for each theme
     readonly property int dockMargin: Config.dock?.margin ?? 8
     readonly property int hyprlandGapsOut: Config.hyprland?.gapsOut ?? 4
-    // Side facing windows needs to subtract gapsOut to maintain visual consistency
-    // But only if margin > 0, otherwise both sides are 0
-    readonly property int windowSideMargin: dockMargin > 0 ? Math.max(0, dockMargin - hyprlandGapsOut) : 0
-    readonly property int edgeSideMargin: dockMargin
+    
+    // For default theme: edge margin is 0, window side margin is also adjusted
+    // For floating theme: both margins use dockMargin
+    readonly property int windowSideMargin: {
+        if (isDefault) {
+            // Default: no margin on edge, normal margin on window side minus gaps
+            return dockMargin > 0 ? Math.max(0, dockMargin - hyprlandGapsOut) : 0;
+        } else {
+            // Floating: normal margin calculation
+            return dockMargin > 0 ? Math.max(0, dockMargin - hyprlandGapsOut) : 0;
+        }
+    }
+    readonly property int edgeSideMargin: isDefault ? 0 : dockMargin
 
     Variants {
         model: {
@@ -63,7 +77,6 @@ Scope {
             
             required property ShellScreen modelData
             screen: modelData
-            visible: Config.dock?.enabled ?? false
 
             // Reveal logic: pinned, hover, no active window
             property bool reveal: root.pinned || 
@@ -200,7 +213,48 @@ Scope {
                         anchors.fill: parent
                         variant: "bg"
                         enableShadow: true
-                        radius: Styling.radius(4)
+                        
+                        // Radius depends on theme and position
+                        // Default: corners touching edge have 0 radius
+                        // Floating: all corners have full radius
+                        readonly property int fullRadius: Styling.radius(4)
+                        
+                        topLeftRadius: {
+                            if (root.isFloating) return fullRadius;
+                            if (root.isDefault) {
+                                if (root.isBottom) return fullRadius;
+                                if (root.isLeft) return 0;
+                                if (root.isRight) return fullRadius;
+                            }
+                            return fullRadius;
+                        }
+                        topRightRadius: {
+                            if (root.isFloating) return fullRadius;
+                            if (root.isDefault) {
+                                if (root.isBottom) return fullRadius;
+                                if (root.isLeft) return fullRadius;
+                                if (root.isRight) return 0;
+                            }
+                            return fullRadius;
+                        }
+                        bottomLeftRadius: {
+                            if (root.isFloating) return fullRadius;
+                            if (root.isDefault) {
+                                if (root.isBottom) return 0;
+                                if (root.isLeft) return 0;
+                                if (root.isRight) return fullRadius;
+                            }
+                            return fullRadius;
+                        }
+                        bottomRightRadius: {
+                            if (root.isFloating) return fullRadius;
+                            if (root.isDefault) {
+                                if (root.isBottom) return 0;
+                                if (root.isLeft) return fullRadius;
+                                if (root.isRight) return 0;
+                            }
+                            return fullRadius;
+                        }
                         
                         implicitWidth: root.isVertical 
                             ? dockWindow.dockSize 

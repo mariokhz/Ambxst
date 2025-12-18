@@ -1091,6 +1091,7 @@ Singleton {
 
         adapter: JsonAdapter {
             property bool enabled: false
+            property string theme: "default"
             property string position: "bottom"
             property int height: 56
             property int iconSize: 40
