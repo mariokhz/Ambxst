@@ -32,14 +32,10 @@ Button {
     enabled: !isSeparator
     implicitWidth: isSeparator 
         ? (isVertical ? iconSize : 2) 
-        : (isVertical 
-            ? (showIndicators ? iconSize + 12 : iconSize + 8)
-            : iconSize + 8)
+        : iconSize + 8
     implicitHeight: isSeparator 
         ? (isVertical ? 2 : iconSize) 
-        : (isVertical 
-            ? iconSize + 8
-            : (showIndicators ? iconSize + 12 : iconSize + 8))
+        : iconSize + 8
 
     padding: 0
     topPadding: 0
@@ -92,8 +88,6 @@ Button {
                 Item {
                     id: appIconContainer
                     anchors.centerIn: parent
-                    anchors.verticalCenterOffset: !root.isVertical && root.showIndicators ? -2 : 0
-                    anchors.horizontalCenterOffset: root.isVertical && root.showIndicators ? 2 : 0
                     width: root.iconSize
                     height: root.iconSize
 
@@ -131,22 +125,12 @@ Button {
                             colorizationColor: Colors.primary
                         }
                     }
-
-                    Behavior on anchors.verticalCenterOffset {
-                        enabled: Config.animDuration > 0
-                        NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart }
-                    }
-
-                    Behavior on anchors.horizontalCenterOffset {
-                        enabled: Config.animDuration > 0
-                        NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart }
-                    }
                 }
 
                 // Running indicators - horizontal (for horizontal bar)
                 Row {
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 1
+                    anchors.bottomMargin: -2
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 2
                     visible: root.showIndicators && !root.isVertical
@@ -171,7 +155,7 @@ Button {
                 // Running indicators - vertical (for vertical bar)
                 Column {
                     anchors.left: parent.left
-                    anchors.leftMargin: 1
+                    anchors.leftMargin: -2
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
                     visible: root.showIndicators && root.isVertical
@@ -237,15 +221,5 @@ Button {
     StyledToolTip {
         show: root.hovered && !root.isSeparator
         tooltipText: root.desktopEntry?.name ?? root.appToplevel.appId
-    }
-
-    Behavior on implicitWidth {
-        enabled: Config.animDuration > 0 && root.isVertical
-        NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart }
-    }
-
-    Behavior on implicitHeight {
-        enabled: Config.animDuration > 0 && !root.isVertical
-        NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart }
     }
 }

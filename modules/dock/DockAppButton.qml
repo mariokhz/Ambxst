@@ -38,14 +38,10 @@ Button {
     enabled: !isSeparator
     implicitWidth: isSeparator 
         ? (isVertical ? iconSize * 0.6 : 2) 
-        : (isVertical 
-            ? (showIndicators ? iconSize + 16 : iconSize + 8)
-            : iconSize + 8)
+        : iconSize + 8
     implicitHeight: isSeparator 
         ? (isVertical ? 2 : iconSize * 0.6) 
-        : (isVertical 
-            ? iconSize + 8
-            : (showIndicators ? iconSize + 16 : iconSize + 8))
+        : iconSize + 8
     
     padding: 0
     topPadding: 0
@@ -93,13 +89,6 @@ Button {
                 Item {
                     id: appIconContainer
                     anchors.centerIn: parent
-                    // Offset for indicators: icon shifts away from indicator edge
-                    // bottom: shift up (-), left: shift right (+), right: shift left (-)
-                    anchors.verticalCenterOffset: root.isBottom ? (root.showIndicators ? -4 : 0) : 0
-                    anchors.horizontalCenterOffset: root.isVertical 
-                        ? (root.showIndicators ? (root.isLeft ? 4 : -4) : 0) 
-                        : 0
-                    
                     width: root.iconSize
                     height: root.iconSize
 
@@ -137,22 +126,12 @@ Button {
                             colorizationColor: Colors.primary
                         }
                     }
-                    
-                    Behavior on anchors.verticalCenterOffset {
-                        enabled: Config.animDuration > 0
-                        NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart }
-                    }
-                    
-                    Behavior on anchors.horizontalCenterOffset {
-                        enabled: Config.animDuration > 0
-                        NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart }
-                    }
                 }
 
                 // Running indicators - horizontal layout (for bottom dock)
                 Row {
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 2
+                    anchors.bottomMargin: -2
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 3
                     visible: root.showIndicators && !root.isVertical
@@ -178,9 +157,9 @@ Button {
                 // Left dock: indicators on left edge, Right dock: indicators on right edge
                 Column {
                     anchors.left: root.isLeft ? parent.left : undefined
-                    anchors.leftMargin: root.isLeft ? 2 : 0
+                    anchors.leftMargin: -2
                     anchors.right: root.isRight ? parent.right : undefined
-                    anchors.rightMargin: root.isRight ? 2 : 0
+                    anchors.rightMargin: -2
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 3
                     visible: root.showIndicators && root.isVertical
@@ -203,16 +182,6 @@ Button {
                 }
             }
         }
-    }
-
-    Behavior on implicitWidth {
-        enabled: Config.animDuration > 0 && root.isVertical
-        NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart }
-    }
-    
-    Behavior on implicitHeight {
-        enabled: Config.animDuration > 0 && !root.isVertical
-        NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart }
     }
 
     // Left click: launch or cycle through windows
