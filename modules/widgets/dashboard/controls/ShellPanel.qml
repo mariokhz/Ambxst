@@ -5,6 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.globals
 import qs.config
 
 Item {
@@ -51,6 +52,17 @@ Item {
         property bool checked: false
         signal toggled(bool value)
 
+        // Track if we're updating from external binding
+        property bool _updating: false
+
+        onCheckedChanged: {
+            if (!_updating && toggleSwitch.checked !== checked) {
+                _updating = true;
+                toggleSwitch.checked = checked;
+                _updating = false;
+            }
+        }
+
         Layout.fillWidth: true
         spacing: 8
 
@@ -65,7 +77,12 @@ Item {
         Switch {
             id: toggleSwitch
             checked: toggleRowRoot.checked
-            onCheckedChanged: toggleRowRoot.toggled(checked)
+
+            onCheckedChanged: {
+                if (!toggleRowRoot._updating && checked !== toggleRowRoot.checked) {
+                    toggleRowRoot.toggled(checked);
+                }
+            }
 
             indicator: Rectangle {
                 implicitWidth: 40
@@ -127,6 +144,7 @@ Item {
             radius: Styling.radius(-2)
 
             TextInput {
+                id: numberTextInput
                 anchors.fill: parent
                 anchors.margins: 8
                 font.family: Config.theme.font
@@ -137,7 +155,15 @@ Item {
                 verticalAlignment: TextInput.AlignVCenter
                 horizontalAlignment: TextInput.AlignHCenter
                 validator: IntValidator { bottom: numberInputRowRoot.minValue; top: numberInputRowRoot.maxValue }
-                text: numberInputRowRoot.value.toString()
+
+                // Sync text when external value changes
+                readonly property int configValue: numberInputRowRoot.value
+                onConfigValueChanged: {
+                    if (!activeFocus && text !== configValue.toString()) {
+                        text = configValue.toString();
+                    }
+                }
+                Component.onCompleted: text = configValue.toString()
 
                 onEditingFinished: {
                     let newVal = parseInt(text);
@@ -184,6 +210,7 @@ Item {
             radius: Styling.radius(-2)
 
             TextInput {
+                id: textInputField
                 anchors.fill: parent
                 anchors.margins: 8
                 font.family: Config.theme.font
@@ -192,7 +219,15 @@ Item {
                 selectByMouse: true
                 clip: true
                 verticalAlignment: TextInput.AlignVCenter
-                text: textInputRowRoot.value
+
+                // Sync text when external value changes
+                readonly property string configValue: textInputRowRoot.value
+                onConfigValueChanged: {
+                    if (!activeFocus && text !== configValue) {
+                        text = configValue;
+                    }
+                }
+                Component.onCompleted: text = configValue
 
                 Text {
                     anchors.fill: parent
@@ -201,7 +236,7 @@ Item {
                     font.family: Config.theme.font
                     font.pixelSize: Styling.fontSize(0)
                     color: Colors.overSurfaceVariant
-                    visible: parent.text === ""
+                    visible: textInputField.text === ""
                 }
 
                 onEditingFinished: {
@@ -341,6 +376,27 @@ Item {
                     width: root.contentWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     title: "Shell"
+                    statusText: GlobalStates.shellHasChanges ? "Unsaved changes" : ""
+                    statusColor: Colors.error
+
+                    actions: [
+                        {
+                            icon: Icons.arrowCounterClockwise,
+                            tooltip: "Discard changes",
+                            enabled: GlobalStates.shellHasChanges,
+                            onClicked: function () {
+                                GlobalStates.discardShellChanges();
+                            }
+                        },
+                        {
+                            icon: Icons.disk,
+                            tooltip: "Apply changes",
+                            enabled: GlobalStates.shellHasChanges,
+                            onClicked: function () {
+                                GlobalStates.applyShellChanges();
+                            }
+                        }
+                    ]
                 }
             }
 
@@ -381,7 +437,10 @@ Item {
                             ]
                             value: Config.bar.position ?? "top"
                             onValueSelected: newValue => {
-                                Config.bar.position = newValue;
+                                if (newValue !== Config.bar.position) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.position = newValue;
+                                }
                             }
                         }
 
@@ -390,7 +449,10 @@ Item {
                             value: Config.bar.launcherIcon ?? ""
                             placeholder: "Symbol or path to icon..."
                             onValueEdited: newValue => {
-                                Config.bar.launcherIcon = newValue;
+                                if (newValue !== Config.bar.launcherIcon) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.launcherIcon = newValue;
+                                }
                             }
                         }
 
@@ -398,7 +460,10 @@ Item {
                             label: "Launcher Icon Tint"
                             checked: Config.bar.launcherIconTint ?? true
                             onToggled: value => {
-                                Config.bar.launcherIconTint = value;
+                                if (value !== Config.bar.launcherIconTint) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.launcherIconTint = value;
+                                }
                             }
                         }
 
@@ -406,7 +471,10 @@ Item {
                             label: "Launcher Icon Full Tint"
                             checked: Config.bar.launcherIconFullTint ?? true
                             onToggled: value => {
-                                Config.bar.launcherIconFullTint = value;
+                                if (value !== Config.bar.launcherIconFullTint) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.launcherIconFullTint = value;
+                                }
                             }
                         }
 
@@ -417,7 +485,10 @@ Item {
                             maxValue: 64
                             suffix: "px"
                             onValueEdited: newValue => {
-                                Config.bar.launcherIconSize = newValue;
+                                if (newValue !== Config.bar.launcherIconSize) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.launcherIconSize = newValue;
+                                }
                             }
                         }
 
@@ -425,7 +496,10 @@ Item {
                             label: "Enable Firefox Player"
                             checked: Config.bar.enableFirefoxPlayer ?? false
                             onToggled: value => {
-                                Config.bar.enableFirefoxPlayer = value;
+                                if (value !== Config.bar.enableFirefoxPlayer) {
+                                    GlobalStates.markShellChanged();
+                                    Config.bar.enableFirefoxPlayer = value;
+                                }
                             }
                         }
                     }
@@ -456,7 +530,10 @@ Item {
                             ]
                             value: Config.notch.theme ?? "default"
                             onValueSelected: newValue => {
-                                Config.notch.theme = newValue;
+                                if (newValue !== Config.notch.theme) {
+                                    GlobalStates.markShellChanged();
+                                    Config.notch.theme = newValue;
+                                }
                             }
                         }
 
@@ -467,7 +544,10 @@ Item {
                             maxValue: 32
                             suffix: "px"
                             onValueEdited: newValue => {
-                                Config.notch.hoverRegionHeight = newValue;
+                                if (newValue !== Config.notch.hoverRegionHeight) {
+                                    GlobalStates.markShellChanged();
+                                    Config.notch.hoverRegionHeight = newValue;
+                                }
                             }
                         }
                     }
@@ -496,7 +576,10 @@ Item {
                             minValue: 1
                             maxValue: 20
                             onValueEdited: newValue => {
-                                Config.workspaces.shown = newValue;
+                                if (newValue !== Config.workspaces.shown) {
+                                    GlobalStates.markShellChanged();
+                                    Config.workspaces.shown = newValue;
+                                }
                             }
                         }
 
@@ -504,7 +587,10 @@ Item {
                             label: "Show App Icons"
                             checked: Config.workspaces.showAppIcons ?? true
                             onToggled: value => {
-                                Config.workspaces.showAppIcons = value;
+                                if (value !== Config.workspaces.showAppIcons) {
+                                    GlobalStates.markShellChanged();
+                                    Config.workspaces.showAppIcons = value;
+                                }
                             }
                         }
 
@@ -512,7 +598,10 @@ Item {
                             label: "Always Show Numbers"
                             checked: Config.workspaces.alwaysShowNumbers ?? false
                             onToggled: value => {
-                                Config.workspaces.alwaysShowNumbers = value;
+                                if (value !== Config.workspaces.alwaysShowNumbers) {
+                                    GlobalStates.markShellChanged();
+                                    Config.workspaces.alwaysShowNumbers = value;
+                                }
                             }
                         }
 
@@ -520,7 +609,10 @@ Item {
                             label: "Show Numbers"
                             checked: Config.workspaces.showNumbers ?? false
                             onToggled: value => {
-                                Config.workspaces.showNumbers = value;
+                                if (value !== Config.workspaces.showNumbers) {
+                                    GlobalStates.markShellChanged();
+                                    Config.workspaces.showNumbers = value;
+                                }
                             }
                         }
 
@@ -528,7 +620,10 @@ Item {
                             label: "Dynamic"
                             checked: Config.workspaces.dynamic ?? false
                             onToggled: value => {
-                                Config.workspaces.dynamic = value;
+                                if (value !== Config.workspaces.dynamic) {
+                                    GlobalStates.markShellChanged();
+                                    Config.workspaces.dynamic = value;
+                                }
                             }
                         }
                     }
@@ -557,7 +652,10 @@ Item {
                             minValue: 1
                             maxValue: 5
                             onValueEdited: newValue => {
-                                Config.overview.rows = newValue;
+                                if (newValue !== Config.overview.rows) {
+                                    GlobalStates.markShellChanged();
+                                    Config.overview.rows = newValue;
+                                }
                             }
                         }
 
@@ -567,7 +665,10 @@ Item {
                             minValue: 1
                             maxValue: 10
                             onValueEdited: newValue => {
-                                Config.overview.columns = newValue;
+                                if (newValue !== Config.overview.columns) {
+                                    GlobalStates.markShellChanged();
+                                    Config.overview.columns = newValue;
+                                }
                             }
                         }
 
@@ -590,11 +691,21 @@ Item {
                                 progressColor: Colors.primary
                                 tooltipText: `${(value * 0.2).toFixed(2)}`
                                 scroll: false
-                                value: ((Config.overview.scale ?? 0.1) / 0.2)
+
+                                readonly property real configValue: (Config.overview.scale ?? 0.1) / 0.2
+
+                                onConfigValueChanged: {
+                                    if (Math.abs(value - configValue) > 0.001) {
+                                        value = configValue;
+                                    }
+                                }
+
+                                Component.onCompleted: value = configValue
 
                                 onValueChanged: {
                                     let newScale = value * 0.2;
                                     if (Math.abs(newScale - (Config.overview.scale ?? 0.1)) > 0.001) {
+                                        GlobalStates.markShellChanged();
                                         Config.overview.scale = newScale;
                                     }
                                 }
@@ -617,7 +728,10 @@ Item {
                             maxValue: 20
                             suffix: "px"
                             onValueEdited: newValue => {
-                                Config.overview.workspaceSpacing = newValue;
+                                if (newValue !== Config.overview.workspaceSpacing) {
+                                    GlobalStates.markShellChanged();
+                                    Config.overview.workspaceSpacing = newValue;
+                                }
                             }
                         }
                     }
@@ -644,7 +758,10 @@ Item {
                             label: "Enabled"
                             checked: Config.dock.enabled ?? false
                             onToggled: value => {
-                                Config.dock.enabled = value;
+                                if (value !== Config.dock.enabled) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.enabled = value;
+                                }
                             }
                         }
 
@@ -657,7 +774,10 @@ Item {
                             ]
                             value: Config.dock.theme ?? "default"
                             onValueSelected: newValue => {
-                                Config.dock.theme = newValue;
+                                if (newValue !== Config.dock.theme) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.theme = newValue;
+                                }
                             }
                         }
 
@@ -673,7 +793,10 @@ Item {
                             }
                             value: Config.dock.position ?? "bottom"
                             onValueSelected: newValue => {
-                                Config.dock.position = newValue;
+                                if (newValue !== Config.dock.position) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.position = newValue;
+                                }
                             }
                         }
 
@@ -685,7 +808,10 @@ Item {
                             suffix: "px"
                             visible: (Config.dock.theme ?? "default") !== "integrated"
                             onValueEdited: newValue => {
-                                Config.dock.height = newValue;
+                                if (newValue !== Config.dock.height) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.height = newValue;
+                                }
                             }
                         }
 
@@ -697,7 +823,10 @@ Item {
                             suffix: "px"
                             visible: (Config.dock.theme ?? "default") !== "integrated"
                             onValueEdited: newValue => {
-                                Config.dock.iconSize = newValue;
+                                if (newValue !== Config.dock.iconSize) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.iconSize = newValue;
+                                }
                             }
                         }
 
@@ -709,7 +838,10 @@ Item {
                             suffix: "px"
                             visible: (Config.dock.theme ?? "default") !== "integrated"
                             onValueEdited: newValue => {
-                                Config.dock.spacing = newValue;
+                                if (newValue !== Config.dock.spacing) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.spacing = newValue;
+                                }
                             }
                         }
 
@@ -721,7 +853,10 @@ Item {
                             suffix: "px"
                             visible: (Config.dock.theme ?? "default") !== "integrated"
                             onValueEdited: newValue => {
-                                Config.dock.margin = newValue;
+                                if (newValue !== Config.dock.margin) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.margin = newValue;
+                                }
                             }
                         }
 
@@ -733,7 +868,10 @@ Item {
                             suffix: "px"
                             visible: (Config.dock.theme ?? "default") !== "integrated"
                             onValueEdited: newValue => {
-                                Config.dock.hoverRegionHeight = newValue;
+                                if (newValue !== Config.dock.hoverRegionHeight) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.hoverRegionHeight = newValue;
+                                }
                             }
                         }
 
@@ -742,7 +880,10 @@ Item {
                             checked: Config.dock.pinnedOnStartup ?? false
                             visible: (Config.dock.theme ?? "default") !== "integrated"
                             onToggled: value => {
-                                Config.dock.pinnedOnStartup = value;
+                                if (value !== Config.dock.pinnedOnStartup) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.pinnedOnStartup = value;
+                                }
                             }
                         }
 
@@ -751,7 +892,10 @@ Item {
                             checked: Config.dock.hoverToReveal ?? true
                             visible: (Config.dock.theme ?? "default") !== "integrated"
                             onToggled: value => {
-                                Config.dock.hoverToReveal = value;
+                                if (value !== Config.dock.hoverToReveal) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.hoverToReveal = value;
+                                }
                             }
                         }
 
@@ -760,7 +904,10 @@ Item {
                             checked: Config.dock.showRunningIndicators ?? true
                             visible: (Config.dock.theme ?? "default") !== "integrated"
                             onToggled: value => {
-                                Config.dock.showRunningIndicators = value;
+                                if (value !== Config.dock.showRunningIndicators) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.showRunningIndicators = value;
+                                }
                             }
                         }
 
@@ -769,7 +916,10 @@ Item {
                             checked: Config.dock.showPinButton ?? true
                             visible: (Config.dock.theme ?? "default") !== "integrated"
                             onToggled: value => {
-                                Config.dock.showPinButton = value;
+                                if (value !== Config.dock.showPinButton) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.showPinButton = value;
+                                }
                             }
                         }
 
@@ -778,7 +928,10 @@ Item {
                             checked: Config.dock.showOverviewButton ?? true
                             visible: (Config.dock.theme ?? "default") !== "integrated"
                             onToggled: value => {
-                                Config.dock.showOverviewButton = value;
+                                if (value !== Config.dock.showOverviewButton) {
+                                    GlobalStates.markShellChanged();
+                                    Config.dock.showOverviewButton = value;
+                                }
                             }
                         }
                     }
@@ -809,7 +962,10 @@ Item {
                             ]
                             value: Config.lockscreen.position ?? "bottom"
                             onValueSelected: newValue => {
-                                Config.lockscreen.position = newValue;
+                                if (newValue !== Config.lockscreen.position) {
+                                    GlobalStates.markShellChanged();
+                                    Config.lockscreen.position = newValue;
+                                }
                             }
                         }
                     }
@@ -836,7 +992,10 @@ Item {
                             label: "Enabled"
                             checked: Config.desktop.enabled ?? false
                             onToggled: value => {
-                                Config.desktop.enabled = value;
+                                if (value !== Config.desktop.enabled) {
+                                    GlobalStates.markShellChanged();
+                                    Config.desktop.enabled = value;
+                                }
                             }
                         }
 
@@ -847,7 +1006,10 @@ Item {
                             maxValue: 96
                             suffix: "px"
                             onValueEdited: newValue => {
-                                Config.desktop.iconSize = newValue;
+                                if (newValue !== Config.desktop.iconSize) {
+                                    GlobalStates.markShellChanged();
+                                    Config.desktop.iconSize = newValue;
+                                }
                             }
                         }
 
@@ -858,7 +1020,10 @@ Item {
                             maxValue: 48
                             suffix: "px"
                             onValueEdited: newValue => {
-                                Config.desktop.spacingVertical = newValue;
+                                if (newValue !== Config.desktop.spacingVertical) {
+                                    GlobalStates.markShellChanged();
+                                    Config.desktop.spacingVertical = newValue;
+                                }
                             }
                         }
 
@@ -886,7 +1051,10 @@ Item {
 
                                 onOpenColorPicker: (colorNames, currentColor, dialogTitle) => {
                                     root.openColorPicker(colorNames, currentColor, dialogTitle, function(color) {
-                                        Config.desktop.textColor = color;
+                                        if (color !== Config.desktop.textColor) {
+                                            GlobalStates.markShellChanged();
+                                            Config.desktop.textColor = color;
+                                        }
                                     });
                                 }
                             }

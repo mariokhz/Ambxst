@@ -38,6 +38,8 @@ FloatingWindow {
                 color: Colors.surfaceContainer
                 radius: Styling.radius(-1)
 
+                readonly property bool hasAnyChanges: GlobalStates.themeHasChanges || GlobalStates.shellHasChanges
+
                 RowLayout {
                     anchors.fill: parent
                     anchors.leftMargin: 8
@@ -56,7 +58,7 @@ FloatingWindow {
 
                     // Unsaved indicator
                     Text {
-                        visible: GlobalStates.themeHasChanges
+                        visible: parent.parent.hasAnyChanges
                         text: "Unsaved changes"
                         font.family: Styling.defaultFont
                         font.pixelSize: Styling.fontSize(0)
@@ -67,15 +69,17 @@ FloatingWindow {
                     // Discard button
                     Button {
                         id: discardButton
-                        enabled: GlobalStates.themeHasChanges
+                        enabled: parent.parent.hasAnyChanges
                         Layout.preferredHeight: 32
                         leftPadding: 12
                         rightPadding: 12
 
+                        readonly property bool hasChanges: parent.parent.hasAnyChanges
+
                         background: Rectangle {
-                            color: GlobalStates.themeHasChanges ? Colors.error : Colors.surfaceContainer
+                            color: discardButton.hasChanges ? Colors.error : Colors.surfaceContainer
                             radius: Styling.radius(-4)
-                            opacity: GlobalStates.themeHasChanges ? (discardButton.hovered ? 0.8 : 1.0) : 0.5
+                            opacity: discardButton.hasChanges ? (discardButton.hovered ? 0.8 : 1.0) : 0.5
                         }
 
                         contentItem: RowLayout {
@@ -85,7 +89,7 @@ FloatingWindow {
                                 text: Icons.sync
                                 font.family: Icons.font
                                 font.pixelSize: 18
-                                color: GlobalStates.themeHasChanges ? Colors.overError : Colors.overBackground
+                                color: discardButton.hasChanges ? Colors.overError : Colors.overBackground
                                 Layout.alignment: Qt.AlignVCenter
                             }
 
@@ -94,12 +98,15 @@ FloatingWindow {
                                 font.family: Styling.defaultFont
                                 font.pixelSize: Styling.fontSize(0)
                                 font.bold: true
-                                color: GlobalStates.themeHasChanges ? Colors.overError : Colors.overBackground
+                                color: discardButton.hasChanges ? Colors.overError : Colors.overBackground
                                 Layout.alignment: Qt.AlignVCenter
                             }
                         }
 
-                        onClicked: GlobalStates.discardThemeChanges()
+                        onClicked: {
+                            if (GlobalStates.themeHasChanges) GlobalStates.discardThemeChanges();
+                            if (GlobalStates.shellHasChanges) GlobalStates.discardShellChanges();
+                        }
 
                         ToolTip.visible: hovered
                         ToolTip.text: "Discard all changes"
@@ -113,10 +120,12 @@ FloatingWindow {
                         leftPadding: 12
                         rightPadding: 12
 
+                        readonly property bool hasChanges: parent.parent.hasAnyChanges
+
                         background: Rectangle {
-                            color: GlobalStates.themeHasChanges ? Colors.primary : Colors.surfaceContainer
+                            color: applyButton.hasChanges ? Colors.primary : Colors.surfaceContainer
                             radius: Styling.radius(-4)
-                            opacity: GlobalStates.themeHasChanges ? (applyButton.hovered ? 0.8 : 1.0) : 0.5
+                            opacity: applyButton.hasChanges ? (applyButton.hovered ? 0.8 : 1.0) : 0.5
                         }
 
                         contentItem: RowLayout {
@@ -126,7 +135,7 @@ FloatingWindow {
                                 text: Icons.disk
                                 font.family: Icons.font
                                 font.pixelSize: 18
-                                color: GlobalStates.themeHasChanges ? Colors.overPrimary : Colors.overBackground
+                                color: applyButton.hasChanges ? Colors.overPrimary : Colors.overBackground
                                 Layout.alignment: Qt.AlignVCenter
                             }
 
@@ -135,12 +144,15 @@ FloatingWindow {
                                 font.family: Styling.defaultFont
                                 font.pixelSize: Styling.fontSize(0)
                                 font.bold: true
-                                color: GlobalStates.themeHasChanges ? Colors.overPrimary : Colors.overBackground
+                                color: applyButton.hasChanges ? Colors.overPrimary : Colors.overBackground
                                 Layout.alignment: Qt.AlignVCenter
                             }
                         }
 
-                        onClicked: GlobalStates.applyThemeChanges()
+                        onClicked: {
+                            if (GlobalStates.themeHasChanges) GlobalStates.applyThemeChanges();
+                            if (GlobalStates.shellHasChanges) GlobalStates.applyShellChanges();
+                        }
 
                         ToolTip.visible: hovered
                         ToolTip.text: "Save changes to config"
@@ -168,9 +180,8 @@ FloatingWindow {
                         }
 
                         onClicked: {
-                            if (GlobalStates.themeHasChanges) {
-                                GlobalStates.discardThemeChanges();
-                            }
+                            if (GlobalStates.themeHasChanges) GlobalStates.discardThemeChanges();
+                            if (GlobalStates.shellHasChanges) GlobalStates.discardShellChanges();
                             GlobalStates.settingsVisible = false;
                         }
                     }
@@ -213,7 +224,7 @@ FloatingWindow {
                                     icon: Icons.cube
                                 },
                                 {
-                                    name: "Bar",
+                                    name: "Shell",
                                     icon: Icons.gear
                                 },
                                 {
@@ -287,18 +298,9 @@ FloatingWindow {
                         id: themeTab
                     }
 
-                    // Bar tab (placeholder)
-                    Rectangle {
-                        color: Colors.surfaceContainer
-                        radius: Styling.radius(-1)
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "Bar Settings (Coming Soon)"
-                            font.family: Styling.defaultFont
-                            font.pixelSize: Styling.fontSize(0)
-                            color: Colors.overBackground
-                        }
+                    // Shell tab
+                    ShellPanel {
+                        id: shellTab
                     }
 
                     // Hyprland tab (placeholder)

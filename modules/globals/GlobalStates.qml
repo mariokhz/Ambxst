@@ -193,4 +193,78 @@ Singleton {
             Config.pauseAutoSave = false;
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SHELL SETTINGS STATE
+    // ═══════════════════════════════════════════════════════════════
+    property bool shellHasChanges: false
+    property var shellSnapshot: null
+
+    // Shell config sections and their properties
+    readonly property var _shellSections: {
+        "bar": ["position", "launcherIcon", "launcherIconTint", "launcherIconFullTint", "launcherIconSize", "enableFirefoxPlayer"],
+        "notch": ["theme", "hoverRegionHeight"],
+        "workspaces": ["shown", "showAppIcons", "alwaysShowNumbers", "showNumbers", "dynamic"],
+        "overview": ["rows", "columns", "scale", "workspaceSpacing"],
+        "dock": ["enabled", "theme", "position", "height", "iconSize", "spacing", "margin", "hoverRegionHeight", "pinnedOnStartup", "hoverToReveal", "showRunningIndicators", "showPinButton", "showOverviewButton"],
+        "lockscreen": ["position"],
+        "desktop": ["enabled", "iconSize", "spacingVertical", "textColor"]
+    }
+
+    // Create a deep copy of the current shell config
+    function createShellSnapshot() {
+        var snapshot = {};
+        var sections = Object.keys(_shellSections);
+        for (var i = 0; i < sections.length; i++) {
+            var section = sections[i];
+            var props = _shellSections[section];
+            snapshot[section] = {};
+            for (var j = 0; j < props.length; j++) {
+                var prop = props[j];
+                snapshot[section][prop] = Config[section][prop];
+            }
+        }
+        return snapshot;
+    }
+
+    // Restore shell config from snapshot
+    function restoreShellSnapshot(snapshot) {
+        if (!snapshot) return;
+        var sections = Object.keys(_shellSections);
+        for (var i = 0; i < sections.length; i++) {
+            var section = sections[i];
+            var props = _shellSections[section];
+            for (var j = 0; j < props.length; j++) {
+                var prop = props[j];
+                Config[section][prop] = snapshot[section][prop];
+            }
+        }
+    }
+
+    function markShellChanged() {
+        // Take a snapshot before the first change
+        if (!shellHasChanges) {
+            shellSnapshot = createShellSnapshot();
+            Config.pauseAutoSave = true;
+        }
+        shellHasChanges = true;
+    }
+
+    function applyShellChanges() {
+        if (shellHasChanges) {
+            Config.loader.writeAdapter();
+            shellHasChanges = false;
+            shellSnapshot = null;
+            Config.pauseAutoSave = false;
+        }
+    }
+
+    function discardShellChanges() {
+        if (shellHasChanges && shellSnapshot) {
+            restoreShellSnapshot(shellSnapshot);
+            shellHasChanges = false;
+            shellSnapshot = null;
+            Config.pauseAutoSave = false;
+        }
+    }
 }
