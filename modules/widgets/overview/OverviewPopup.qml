@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
@@ -93,7 +94,7 @@ PanelWindow {
     Item {
         id: mainContainer
         anchors.centerIn: parent
-        width: Math.max(searchContainer.width, overviewContainer.width)
+        width: Math.max(searchContainer.width, overviewContainer.width + (scrollbarContainer.visible ? scrollbarContainer.width + 8 : 0))
         height: searchContainer.height + 16 + overviewContainer.height
 
         opacity: overviewOpen ? 1 : 0
@@ -275,8 +276,70 @@ PanelWindow {
                 anchors.centerIn: parent
                 active: overviewOpen
                 
-                sourceComponent: Overview {
+                sourceComponent: OverviewView {
                     currentScreen: overviewPopup.screen
+                }
+            }
+        }
+
+        // External scrollbar for scrolling mode (to the right of overview)
+        StyledRect {
+            id: scrollbarContainer
+            visible: overviewLoader.item && overviewLoader.item.needsScrollbar
+            variant: "bg"
+            anchors.left: overviewContainer.right
+            anchors.leftMargin: 8
+            anchors.top: overviewContainer.top
+            anchors.bottom: overviewContainer.bottom
+            width: 24
+            radius: 12
+
+            layer.enabled: true
+            layer.effect: Shadow {}
+
+            ScrollBar {
+                id: externalScrollBar
+                anchors.centerIn: parent
+                height: parent.height - 16
+                width: 6
+                orientation: Qt.Vertical
+                policy: ScrollBar.AlwaysOn
+                
+                position: overviewLoader.item && overviewLoader.item.flickable 
+                    ? overviewLoader.item.flickable.visibleArea.yPosition : 0
+                size: overviewLoader.item && overviewLoader.item.flickable 
+                    ? overviewLoader.item.flickable.visibleArea.heightRatio : 1
+                
+                onPositionChanged: {
+                    if (active && overviewLoader.item && overviewLoader.item.flickable) {
+                        overviewLoader.item.flickable.contentY = position * overviewLoader.item.flickable.contentHeight;
+                    }
+                }
+                
+                contentItem: Rectangle {
+                    implicitWidth: 6
+                    radius: 3
+                    color: {
+                        if (!Colors.loaded) return "gray";
+                        return externalScrollBar.pressed ? Colors.primary : (externalScrollBar.hovered ? Colors.onSurfaceVariant : Colors.outline);
+                    }
+                    opacity: externalScrollBar.pressed ? 1.0 : (externalScrollBar.hovered ? 0.8 : 0.5)
+                    
+                    Behavior on color {
+                        enabled: Config.animDuration > 0
+                        ColorAnimation { duration: Config.animDuration / 2 }
+                    }
+                    Behavior on opacity {
+                        enabled: Config.animDuration > 0
+                        NumberAnimation { duration: Config.animDuration / 2 }
+                    }
+                }
+                
+                background: Rectangle {
+                    implicitWidth: 6
+                    radius: 3
+                    color: Colors.loaded ? Colors.surfaceContainer : "darkgray"
+                    opacity: 0.3
                 }
             }
         }
