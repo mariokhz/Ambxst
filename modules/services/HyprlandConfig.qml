@@ -63,6 +63,12 @@ QtObject {
             return;
         }
 
+        // Esperar a que el layout esté listo
+        if (!GlobalStates.hyprlandLayoutReady) {
+            console.log("HyprlandConfig: Esperando que se detecte el layout de Hyprland...");
+            return;
+        }
+
         // Determinar colores activos
         let activeColorFormatted = "";
         const borderColors = Config.hyprland.activeBorderColor;
@@ -271,6 +277,11 @@ QtObject {
         target: GlobalStates
         function onHyprlandLayoutChanged() {
             applyHyprlandConfig();
+        }
+        function onHyprlandLayoutReadyChanged() {
+            if (GlobalStates.hyprlandLayoutReady) {
+                applyHyprlandConfig();
+            }
         }
     }
 

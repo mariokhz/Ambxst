@@ -43,6 +43,12 @@ QtObject {
             return;
         }
 
+        // Esperar a que el layout esté listo
+        if (!GlobalStates.hyprlandLayoutReady) {
+            console.log("HyprlandKeybinds: Esperando que se detecte el layout de Hyprland...");
+            return;
+        }
+
         console.log("HyprlandKeybinds: Aplicando keybindings (layout: " + GlobalStates.hyprlandLayout + ")...");
 
         // Construir lista de unbinds
@@ -197,6 +203,11 @@ QtObject {
         function onHyprlandLayoutChanged() {
             console.log("HyprlandKeybinds: Layout changed to " + GlobalStates.hyprlandLayout + ", reapplying keybindings...");
             applyKeybinds();
+        }
+        function onHyprlandLayoutReadyChanged() {
+            if (GlobalStates.hyprlandLayoutReady) {
+                applyKeybinds();
+            }
         }
     }
 

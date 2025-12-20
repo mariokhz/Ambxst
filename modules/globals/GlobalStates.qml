@@ -16,6 +16,7 @@ Singleton {
     // HYPRLAND LAYOUT STATE (dynamic, not persisted)
     // ═══════════════════════════════════════════════════════════════
     property string hyprlandLayout: "dwindle"
+    property bool hyprlandLayoutReady: false
     readonly property var availableLayouts: ["dwindle", "master", "scrolling"]
 
     function setHyprlandLayout(layout) {
@@ -46,7 +47,12 @@ Singleton {
                 } catch (e) {
                     console.warn("GlobalStates: Error parsing layout from hyprctl: " + e);
                 }
+                root.hyprlandLayoutReady = true;
             }
+        }
+        onExited: {
+            // Mark as ready even if parsing failed
+            root.hyprlandLayoutReady = true;
         }
     }
 
