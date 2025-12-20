@@ -68,7 +68,7 @@ Item {
 
     RowLayout {
         anchors.fill: parent
-        spacing: 12
+        spacing: 8
 
         // Icon button
         Item {
