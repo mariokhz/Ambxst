@@ -11,6 +11,24 @@ Singleton {
 
     property var wallpaperManager: null
 
+    // ═══════════════════════════════════════════════════════════════
+    // HYPRLAND LAYOUT STATE (dynamic, not persisted)
+    // ═══════════════════════════════════════════════════════════════
+    property string hyprlandLayout: Config.hyprland?.layout ?? "dwindle"
+    readonly property var availableLayouts: ["dwindle", "master", "scrolling"]
+
+    function setHyprlandLayout(layout) {
+        if (availableLayouts.includes(layout)) {
+            hyprlandLayout = layout;
+        }
+    }
+
+    function cycleHyprlandLayout() {
+        const currentIndex = availableLayouts.indexOf(hyprlandLayout);
+        const nextIndex = (currentIndex + 1) % availableLayouts.length;
+        hyprlandLayout = availableLayouts[nextIndex];
+    }
+
     // Ensure LockscreenService singleton is loaded
     Component.onCompleted: {
         // Reference the singleton to ensure it loads

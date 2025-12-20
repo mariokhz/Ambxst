@@ -1,6 +1,7 @@
 import QtQuick
 import qs.modules.widgets.overview
 import qs.modules.services
+import qs.modules.globals
 import qs.config
 
 Item {
@@ -8,7 +9,7 @@ Item {
     property var currentScreen
 
     // Detect if we're in scrolling layout mode
-    readonly property bool isScrollingLayout: Config.hyprland.layout === "scrolling"
+    readonly property bool isScrollingLayout: GlobalStates.hyprlandLayout === "scrolling"
 
     implicitWidth: overviewLoader.item ? overviewLoader.item.implicitWidth : 400
     implicitHeight: overviewLoader.item ? overviewLoader.item.implicitHeight : 300

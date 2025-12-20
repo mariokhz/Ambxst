@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import qs.config
+import qs.modules.globals
 
 QtObject {
     id: root
@@ -31,7 +32,7 @@ QtObject {
         if (!action.compositor.layouts || action.compositor.layouts.length === 0) return true;
         
         // Check if current layout is in the allowed list
-        const currentLayout = Config.hyprland.layout;
+        const currentLayout = GlobalStates.hyprlandLayout;
         return action.compositor.layouts.indexOf(currentLayout) !== -1;
     }
 
@@ -42,7 +43,7 @@ QtObject {
             return;
         }
 
-        console.log("HyprlandKeybinds: Aplicando keybindings (layout: " + Config.hyprland.layout + ")...");
+        console.log("HyprlandKeybinds: Aplicando keybindings (layout: " + GlobalStates.hyprlandLayout + ")...");
 
         // Construir lista de unbinds
         let unbindCommands = [];
@@ -191,10 +192,10 @@ QtObject {
     }
 
     // Re-apply keybinds when layout changes
-    property Connections hyprlandConfigConnections: Connections {
-        target: Config.hyprland
-        function onLayoutChanged() {
-            console.log("HyprlandKeybinds: Layout changed to " + Config.hyprland.layout + ", reapplying keybindings...");
+    property Connections globalStatesConnections: Connections {
+        target: GlobalStates
+        function onHyprlandLayoutChanged() {
+            console.log("HyprlandKeybinds: Layout changed to " + GlobalStates.hyprlandLayout + ", reapplying keybindings...");
             applyKeybinds();
         }
     }
