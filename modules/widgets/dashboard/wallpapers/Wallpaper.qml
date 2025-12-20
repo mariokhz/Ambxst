@@ -92,7 +92,6 @@ PanelWindow {
 
     function getLockscreenFramePath(filePath) {
         if (!filePath) {
-            console.warn("getLockscreenFramePath: empty filePath");
             return "";
         }
         
@@ -100,7 +99,6 @@ PanelWindow {
         
         // Para imágenes estáticas, usar el archivo original
         if (fileType === 'image') {
-            console.log("getLockscreenFramePath: using original image:", filePath);
             return filePath;
         }
         
@@ -108,11 +106,9 @@ PanelWindow {
         if (fileType === 'video' || fileType === 'gif') {
             var fileName = filePath.split('/').pop();
             var cachePath = Quickshell.dataDir + "/lockscreen/" + fileName + ".jpg";
-            console.log("getLockscreenFramePath: using cached frame:", cachePath);
             return cachePath;
         }
         
-        console.warn("getLockscreenFramePath: unknown file type, using original:", filePath);
         return filePath;
     }
 
