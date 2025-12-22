@@ -387,7 +387,7 @@ Item {
                     
                     // Add bottom margin to avoid input overlap
                     // Default height of input is around 48-150, plus margins. Safety buffer 180.
-                    bottomMargin: mainChatArea.isWelcome ? 0 : 180
+                    bottomMargin: mainChatArea.isWelcome ? 0 : inputContainer.height
                     
                     // Auto scroll to bottom
                     onCountChanged: {
