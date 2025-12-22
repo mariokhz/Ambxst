@@ -10,6 +10,7 @@ with pkgs; [
   jq
   matugen
   sqlite
+  upower
   wl-clip-persist
   wl-clipboard
   wtype
