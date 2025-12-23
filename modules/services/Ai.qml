@@ -10,9 +10,30 @@ import "ai/strategies"
 Singleton {
     id: root
 
+    property string litellmConfig: Qt.resolvedUrl("ai/litellm_config.yaml").replace("file://", "")
+    
     // ============================================ 
     // PROPERTIES
     // ============================================ 
+    
+    // ... (dataDir, chatDir, tmpDir) ...
+
+    // Start LiteLLM Proxy on load
+    Process {
+        id: litellmProcess
+        command: ["litellm", "--config", litellmConfig, "--port", "4000"]
+        running: true
+        stdout: StdioCollector { id: litellmStdout }
+        stderr: StdioCollector { id: litellmStderr }
+        
+        onExited: exitCode => {
+            console.warn("LiteLLM Proxy exited with code: " + exitCode + ". Stderr: " + litellmStderr.text)
+            // Retry logic could go here
+        }
+    }
+    
+    // ... (rest of the file)
+
 
     property string dataDir: (Quickshell.env("XDG_DATA_HOME") || (Quickshell.env("HOME") + "/.local/share")) + "/Ambxst"
     property string chatDir: dataDir + "/chats"
@@ -65,14 +86,21 @@ Singleton {
         createNewChat();
     }
 
-    property ApiStrategy currentStrategy: !currentModel ? geminiStrategy : 
-                                          (currentModel.api_format === "openai" ? openaiStrategy : 
-                                          (currentModel.api_format === "mistral" ? mistralStrategy : geminiStrategy))
-
     // Strategies
-    property GeminiApiStrategy geminiStrategy: GeminiApiStrategy {}
+    // We only need OpenAI strategy now since LiteLLM standardizes everything to it
     property OpenAiApiStrategy openaiStrategy: OpenAiApiStrategy {}
+    
+    // Kept for compatibility if strategy switching logic is still used elsewhere, but they are unused now
+    property GeminiApiStrategy geminiStrategy: GeminiApiStrategy {}
     property MistralApiStrategy mistralStrategy: MistralApiStrategy {}
+    
+    // Always use OpenAI strategy
+    property ApiStrategy currentStrategy: openaiStrategy 
+
+    function updateStrategy() {
+        // No-op: LiteLLM handles the differences
+        currentStrategy = openaiStrategy;
+    }
 
     // State
     property bool isLoading: false
@@ -158,16 +186,6 @@ Singleton {
                 updateStrategy();
                 return;
             }
-        }
-    }
-
-    function updateStrategy() {
-        if (!currentModel) return;
-        switch (currentModel.api_format) {
-            case "gemini": currentStrategy = geminiStrategy; break;
-            case "openai": currentStrategy = openaiStrategy; break;
-            case "mistral": currentStrategy = mistralStrategy; break;
-            default: currentStrategy = geminiStrategy;
         }
     }
 
@@ -582,43 +600,52 @@ Singleton {
         if (fetchingModels) return;
         
         fetchingModels = true;
-        pendingFetches = 0;
+        pendingFetches = 1; // Only one fetch needed now (LiteLLM)
         
-        // Gemini
-        if (geminiStrategy && Quickshell.env("GEMINI_API_KEY")) {
-            pendingFetches++;
-            fetchProcessGemini.command = ["bash", "-c", "curl -s 'https://generativelanguage.googleapis.com/v1beta/models?key=" + Quickshell.env("GEMINI_API_KEY") + "'"];
-            fetchProcessGemini.running = true;
-        }
-        
-        // OpenAI
-        if (openaiStrategy && Quickshell.env("OPENAI_API_KEY")) {
-            pendingFetches++;
-            fetchProcessOpenAi.command = ["bash", "-c", "curl -s https://api.openai.com/v1/models -H 'Authorization: Bearer " + Quickshell.env("OPENAI_API_KEY") + "'"];
-            fetchProcessOpenAi.running = true;
-        }
-        
-        // Mistral
-        if (mistralStrategy && Quickshell.env("MISTRAL_API_KEY")) {
-            pendingFetches++;
-            fetchProcessMistral.command = ["bash", "-c", "curl -s https://api.mistral.ai/v1/models -H 'Authorization: Bearer " + Quickshell.env("MISTRAL_API_KEY") + "'"];
-            fetchProcessMistral.running = true;
-        }
-
-        // OpenRouter
-        if (Quickshell.env("OPENROUTER_API_KEY")) {
-            pendingFetches++;
-            fetchProcessOpenRouter.command = ["bash", "-c", "curl -s https://openrouter.ai/api/v1/models -H 'Authorization: Bearer " + Quickshell.env("OPENROUTER_API_KEY") + "'"];
-            fetchProcessOpenRouter.running = true;
-        }
-
-        // Ollama (Local)
-        pendingFetches++;
-        fetchProcessOllama.command = ["bash", "-c", "curl -s http://127.0.0.1:11434/api/tags"];
-        fetchProcessOllama.running = true;
-        
-        if (pendingFetches === 0) {
-            fetchingModels = false;
+        // Fetch from LiteLLM Proxy (Standard OpenAI format)
+        fetchProcessLiteLLM.command = ["bash", "-c", "curl -s http://127.0.0.1:4000/v1/models"];
+        fetchProcessLiteLLM.running = true;
+    }
+    
+    Process {
+        id: fetchProcessLiteLLM
+        stdout: StdioCollector { id: fetchLiteLLMOut }
+        onExited: exitCode => {
+            if (exitCode === 0) {
+                try {
+                    let data = JSON.parse(fetchLiteLLMOut.text);
+                    if (data.data) {
+                        let newModels = [];
+                        for (let i=0; i<data.data.length; i++) {
+                            let item = data.data[i];
+                            let id = item.id; 
+                            
+                            // Determine icon based on name
+                            let iconPath = "robot"; // Default
+                            if (id.includes("gemini")) iconPath = Qt.resolvedUrl("../../../assets/aiproviders/gemini.svg");
+                            else if (id.includes("gpt")) iconPath = Qt.resolvedUrl("../../../assets/aiproviders/openai.svg");
+                            else if (id.includes("mistral")) iconPath = Qt.resolvedUrl("../../../assets/aiproviders/mistral.svg");
+                            else if (id.includes("claude")) iconPath = Qt.resolvedUrl("../../../assets/aiproviders/anthropic.svg");
+                            else if (id.includes("deepseek")) iconPath = Qt.resolvedUrl("../../../assets/aiproviders/deepseek.svg");
+                            
+                            let m = aiModelFactory.createObject(root, {
+                                name: id,
+                                icon: iconPath,
+                                description: "LiteLLM Model: " + id,
+                                endpoint: "http://127.0.0.1:4000/v1", // Centralized endpoint
+                                model: id,
+                                api_format: "openai", // Always OpenAI format
+                                requires_key: false // Keys managed by LiteLLM config
+                            });
+                            if (m) newModels.push(m);
+                        }
+                        mergeModels(newModels);
+                    }
+                } catch(e) { console.log("LiteLLM fetch error: " + e) }
+            } else {
+                 console.warn("LiteLLM fetch failed. Is the proxy running?");
+            }
+            checkFetchCompletion();
         }
     }
     
@@ -666,173 +693,6 @@ Singleton {
         }
         
         models = updatedList;
-    }
-
-    Process {
-        id: fetchProcessGemini
-        stdout: StdioCollector { id: fetchGeminiOut }
-        onExited: exitCode => {
-            if (exitCode === 0) {
-                try {
-                    let data = JSON.parse(fetchGeminiOut.text);
-                    if (data.models) {
-                        let newModels = [];
-                        for (let i=0; i<data.models.length; i++) {
-                            let item = data.models[i]; // name: "models/gemini-pro", displayName: "Gemini Pro"
-                            let id = item.name.replace("models/", "");
-                            // Filter for generative models if possible, but for now just add them
-                            if (id.includes("gemini") || id.includes("flash") || id.includes("pro")) {
-                                let m = aiModelFactory.createObject(root, {
-                                    name: item.displayName || id,
-                                    icon: "sparkles",
-                                    description: item.description || "Google Gemini Model",
-                                    endpoint: "https://generativelanguage.googleapis.com/v1beta/models/",
-                                    model: id,
-                                    api_format: "gemini",
-                                    requires_key: true,
-                                    key_id: "GEMINI_API_KEY"
-                                });
-                                if (m) newModels.push(m);
-                            }
-                        }
-                        mergeModels(newModels);
-                    }
-                } catch(e) { console.log("Gemini fetch error: " + e) }
-            }
-            checkFetchCompletion();
-        }
-    }
-
-    Process {
-        id: fetchProcessOpenAi
-        stdout: StdioCollector { id: fetchOpenAiOut }
-        onExited: exitCode => {
-            if (exitCode === 0) {
-                try {
-                    let data = JSON.parse(fetchOpenAiOut.text);
-                    if (data.data) {
-                        let newModels = [];
-                        for (let i=0; i<data.data.length; i++) {
-                            let item = data.data[i];
-                            let id = item.id;
-                            if (id.includes("gpt")) {
-                                let m = aiModelFactory.createObject(root, {
-                                    name: id,
-                                    icon: "openai",
-                                    description: "OpenAI Model",
-                                    endpoint: "https://api.openai.com/v1",
-                                    model: id,
-                                    api_format: "openai",
-                                    requires_key: true,
-                                    key_id: "OPENAI_API_KEY"
-                                });
-                                if (m) newModels.push(m);
-                            }
-                        }
-                        mergeModels(newModels);
-                    }
-                } catch(e) { console.log("OpenAI fetch error: " + e) }
-            }
-            checkFetchCompletion();
-        }
-    }
-
-    Process {
-        id: fetchProcessMistral
-        stdout: StdioCollector { id: fetchMistralOut }
-        onExited: exitCode => {
-            if (exitCode === 0) {
-                try {
-                    let data = JSON.parse(fetchMistralOut.text);
-                    if (data.data) {
-                        let newModels = [];
-                        for (let i=0; i<data.data.length; i++) {
-                            let item = data.data[i];
-                            let id = item.id;
-                             let m = aiModelFactory.createObject(root, {
-                                name: id,
-                                icon: "wind",
-                                description: "Mistral Model",
-                                endpoint: "https://api.mistral.ai/v1",
-                                model: id,
-                                api_format: "mistral",
-                                requires_key: true,
-                                key_id: "MISTRAL_API_KEY"
-                            });
-                            if (m) newModels.push(m);
-                        }
-                        mergeModels(newModels);
-                    }
-                } catch(e) { console.log("Mistral fetch error: " + e) }
-            }
-            checkFetchCompletion();
-        }
-    }
-
-    Process {
-        id: fetchProcessOpenRouter
-        stdout: StdioCollector { id: fetchOpenRouterOut }
-        onExited: exitCode => {
-            if (exitCode === 0) {
-                try {
-                    let data = JSON.parse(fetchOpenRouterOut.text);
-                    if (data.data) {
-                        let newModels = [];
-                        // Sort by popularity or just take top ones? OpenRouter returns A LOT.
-                        // Let's filter or just take top 20 to avoid spamming the list
-                        let limit = 20;
-                        for (let i=0; i<Math.min(data.data.length, limit); i++) {
-                            let item = data.data[i];
-                            let id = item.id; // e.g. "anthropic/claude-3-opus"
-                            let m = aiModelFactory.createObject(root, {
-                                name: item.name || id,
-                                icon: "router",
-                                description: "OpenRouter: " + id,
-                                endpoint: "https://openrouter.ai/api/v1",
-                                model: id,
-                                api_format: "openai",
-                                requires_key: true,
-                                key_id: "OPENROUTER_API_KEY"
-                            });
-                            if (m) newModels.push(m);
-                        }
-                        mergeModels(newModels);
-                    }
-                } catch(e) { console.log("OpenRouter fetch error: " + e) }
-            }
-            checkFetchCompletion();
-        }
-    }
-
-    Process {
-        id: fetchProcessOllama
-        stdout: StdioCollector { id: fetchOllamaOut }
-        onExited: exitCode => {
-            if (exitCode === 0) {
-                try {
-                    let data = JSON.parse(fetchOllamaOut.text);
-                    if (data.models) {
-                        let newModels = [];
-                        for (let i=0; i<data.models.length; i++) {
-                            let item = data.models[i];
-                            // item.name is like "llama2:latest"
-                            let m = aiModelFactory.createObject(root, {
-                                name: item.name,
-                                icon: "hdd",
-                                description: "Local Ollama Model",
-                                endpoint: "http://127.0.0.1:11434/v1",
-                                model: item.name,
-                                api_format: "openai", // Ollama is OpenAI compatible
-                                requires_key: false
-                            });
-                            if (m) newModels.push(m);
-                        }
-                        mergeModels(newModels);
-                    }
-                } catch(e) { console.log("Ollama fetch error: " + e) }
-            }
-            checkFetchCompletion();
-        }
     }
 
     // Signals

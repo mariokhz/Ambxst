@@ -326,9 +326,22 @@ Popup {
                         Layout.preferredHeight: 24
                         Layout.alignment: Qt.AlignVCenter
                         
+                        // SVG Icon (if available)
+                        Image {
+                            anchors.centerIn: parent
+                            width: 24
+                            height: 24
+                            source: modelData.icon.endsWith(".svg") ? modelData.icon : ""
+                            visible: modelData.icon.endsWith(".svg")
+                            fillMode: Image.PreserveAspectFit
+                            mipmap: true
+                        }
+
+                        // Font Icon (fallback)
                         Text {
                             anchors.centerIn: parent
                             text: {
+                                if (modelData.icon.endsWith(".svg")) return "";
                                 switch(modelData.icon) {
                                     case "sparkles": return Icons.sparkle;
                                     case "openai": return Icons.lightning;
@@ -338,8 +351,7 @@ Popup {
                             }
                             font.family: Icons.font
                             font.pixelSize: 20
-                            // Logic: Text becomes white (overPrimary) when selected (because highlight is primary), 
-                            // otherwise uses standard colors.
+                            visible: !modelData.icon.endsWith(".svg")
                             color: delegateBtn.isSelected ? Config.resolveColor(Config.theme.srPrimary.itemColor) : (delegateBtn.isActiveModel ? Colors.primary : Colors.overSurface)
                             
                             Behavior on color {
