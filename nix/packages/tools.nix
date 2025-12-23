@@ -8,6 +8,7 @@ with pkgs; [
   hypridle
   imagemagick
   jq
+  litellm
   matugen
   sqlite
   upower
