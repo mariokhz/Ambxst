@@ -69,18 +69,63 @@ Rectangle {
                     spacing: 4
                     z: 1
 
-                        Repeater {
-                            model: [
-                                { icon: Icons.wifiHigh, label: "Network", section: 0, isIcon: true },
-                                { icon: Icons.bluetooth, label: "Bluetooth", section: 1, isIcon: true },
-                                { icon: Icons.faders, label: "Mixer", section: 2, isIcon: true },
-                                { icon: Icons.waveform, label: "Effects", section: 3, isIcon: true },
-                                { icon: Icons.paintBrush, label: "Theme", section: 4, isIcon: true },
-                                { icon: Icons.keyboard, label: "Binds", section: 5, isIcon: true },
-                                { icon: Icons.circuitry, label: "System", section: 6, isIcon: true },
-                                { icon: Icons.sparkle, label: "Compositor", section: 7, isIcon: true },
-                                { icon: Qt.resolvedUrl("../../../../assets/ambxst-icon.svg"), label: "Ambxst", section: 8, isIcon: false }
-                            ]
+                    Repeater {
+                        model: [
+                            {
+                                icon: Icons.wifiHigh,
+                                label: "Network",
+                                section: 0,
+                                isIcon: true
+                            },
+                            {
+                                icon: Icons.bluetooth,
+                                label: "Bluetooth",
+                                section: 1,
+                                isIcon: true
+                            },
+                            {
+                                icon: Icons.faders,
+                                label: "Mixer",
+                                section: 2,
+                                isIcon: true
+                            },
+                            {
+                                icon: Icons.waveform,
+                                label: "Effects",
+                                section: 3,
+                                isIcon: true
+                            },
+                            {
+                                icon: Icons.paintBrush,
+                                label: "Theme",
+                                section: 4,
+                                isIcon: true
+                            },
+                            {
+                                icon: Icons.keyboard,
+                                label: "Binds",
+                                section: 5,
+                                isIcon: true
+                            },
+                            {
+                                icon: Icons.circuitry,
+                                label: "System",
+                                section: 6,
+                                isIcon: true
+                            },
+                            {
+                                icon: Icons.compositor,
+                                label: "Compositor",
+                                section: 7,
+                                isIcon: true
+                            },
+                            {
+                                icon: Qt.resolvedUrl("../../../../assets/ambxst-icon.svg"),
+                                label: "Ambxst",
+                                section: 8,
+                                isIcon: false
+                            }
+                        ]
 
                         delegate: Button {
                             id: sidebarButton
@@ -107,9 +152,7 @@ Rectangle {
                                     text: sidebarButton.modelData.isIcon ? sidebarButton.modelData.icon : ""
                                     font.family: Icons.font
                                     font.pixelSize: 20
-                                    color: sidebarButton.isActive 
-                                        ? Config.resolveColor(Config.theme.srOverPrimary.itemColor)
-                                        : Config.resolveColor(Config.theme.srCommon.itemColor)
+                                    color: sidebarButton.isActive ? Config.resolveColor(Config.theme.srOverPrimary.itemColor) : Config.resolveColor(Config.theme.srCommon.itemColor)
                                     anchors.verticalCenter: parent.verticalCenter
                                     leftPadding: 10
                                     visible: sidebarButton.modelData.isIcon
@@ -145,9 +188,7 @@ Rectangle {
                                         layer.effect: MultiEffect {
                                             brightness: 1.0
                                             colorization: 1.0
-                                            colorizationColor: sidebarButton.isActive 
-                                                ? Config.resolveColor(Config.theme.srOverPrimary.itemColor)
-                                                : Config.resolveColor(Config.theme.srCommon.itemColor)
+                                            colorizationColor: sidebarButton.isActive ? Config.resolveColor(Config.theme.srOverPrimary.itemColor) : Config.resolveColor(Config.theme.srCommon.itemColor)
                                         }
                                     }
                                 }
@@ -158,9 +199,7 @@ Rectangle {
                                     font.family: Config.theme.font
                                     font.pixelSize: Styling.fontSize(0)
                                     font.weight: sidebarButton.isActive ? Font.Bold : Font.Normal
-                                    color: sidebarButton.isActive 
-                                        ? Config.resolveColor(Config.theme.srOverPrimary.itemColor)
-                                        : Config.resolveColor(Config.theme.srCommon.itemColor)
+                                    color: sidebarButton.isActive ? Config.resolveColor(Config.theme.srOverPrimary.itemColor) : Config.resolveColor(Config.theme.srCommon.itemColor)
                                     anchors.verticalCenter: parent.verticalCenter
 
                                     Behavior on color {
