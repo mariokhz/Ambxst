@@ -15,18 +15,8 @@ ActionGrid {
 
     actions: [
         {
-            icon: Icons.regionScreenshot,
-            tooltip: "Region Screenshot",
-            command: ""
-        },
-        {
-            icon: Icons.windowScreenshot,
-            tooltip: "Window Screenshot",
-            command: ""
-        },
-        {
-            icon: Icons.fullScreenshot,
-            tooltip: "Full Screenshot",
+            icon: Icons.camera,
+            tooltip: "Screenshot",
             command: ""
         },
         {
@@ -42,6 +32,26 @@ ActionGrid {
         {
             icon: Icons.recordings,
             tooltip: "Open Recordings",
+            command: ""
+        },
+        {
+            icon: Icons.picker,
+            tooltip: "Color Picker",
+            command: ""
+        },
+        {
+            icon: Icons.textT,
+            tooltip: "OCR",
+            command: ""
+        },
+        {
+            icon: Icons.qrCode,
+            tooltip: "QR Code",
+            command: ""
+        },
+        {
+            icon: Icons.webcam,
+            tooltip: "Mirror",
             command: ""
         }
     ]
