@@ -133,11 +133,13 @@ QtObject {
         unbindCommands.push(createUnbindCommand(system.powermenu));
         unbindCommands.push(createUnbindCommand(system.config));
         unbindCommands.push(createUnbindCommand(system.lockscreen));
+        unbindCommands.push(createUnbindCommand(system.tools));
         
         batchCommands.push(createBindCommand(system.overview));
         batchCommands.push(createBindCommand(system.powermenu));
         batchCommands.push(createBindCommand(system.config));
         batchCommands.push(createBindCommand(system.lockscreen));
+        batchCommands.push(createBindCommand(system.tools));
 
         // Procesar custom keybinds (new format with keys[] and actions[])
         const customBinds = Config.keybindsLoader.adapter.custom;

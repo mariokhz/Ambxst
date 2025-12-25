@@ -301,6 +301,10 @@ PanelWindow {
                                     layerEnabled: false
                                 }
 
+                                ToolsButton {
+                                    id: toolsButton
+                                }
+
                                 ControlsButton {
                                     id: controlsButton
                                     bar: panel
@@ -432,6 +436,10 @@ PanelWindow {
                                     id: batteryIndicatorVert
                                     bar: panel
                                     layerEnabled: false
+                                }
+
+                                ToolsButton {
+                                    id: toolsButtonVert
                                 }
 
                                 ControlsButton {

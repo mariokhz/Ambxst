@@ -9,6 +9,7 @@ import qs.modules.theme
 import qs.modules.widgets.defaultview
 import qs.modules.widgets.dashboard
 import qs.modules.widgets.powermenu
+import qs.modules.widgets.tools
 import qs.modules.services
 import qs.modules.components
 import qs.config
@@ -46,7 +47,7 @@ PanelWindow {
     }
 
     // Notch state properties
-    readonly property bool screenNotchOpen: screenVisibilities ? (screenVisibilities.dashboard || screenVisibilities.powermenu) : false
+    readonly property bool screenNotchOpen: screenVisibilities ? (screenVisibilities.dashboard || screenVisibilities.powermenu || screenVisibilities.tools) : false
     readonly property bool hasActiveNotifications: Notifications.popupList.length > 0
 
     // Hover state with delay to prevent flickering
@@ -92,7 +93,7 @@ PanelWindow {
             let windowList = [notchPanel];
             // Agregar la barra de esta pantalla al focus grab cuando el notch esté abierto
             let barPanel = Visibilities.panels[screen.name];
-            if (barPanel && (screenVisibilities.dashboard || screenVisibilities.powermenu)) {
+            if (barPanel && (screenVisibilities.dashboard || screenVisibilities.powermenu || screenVisibilities.tools)) {
                 windowList.push(barPanel);
             }
             return windowList;
@@ -136,6 +137,12 @@ PanelWindow {
     Component {
         id: powermenuViewComponent
         PowerMenuView {}
+    }
+
+    // Tools menu view component
+    Component {
+        id: toolsMenuViewComponent
+        ToolsMenuView {}
     }
 
     // Notification view component
@@ -216,6 +223,7 @@ PanelWindow {
                 defaultViewComponent: defaultViewComponent
                 dashboardViewComponent: dashboardViewComponent
                 powermenuViewComponent: powermenuViewComponent
+                toolsMenuViewComponent: toolsMenuViewComponent
                 notificationViewComponent: notificationViewComponent
                 visibilities: screenVisibilities
 
@@ -340,6 +348,19 @@ PanelWindow {
         function onPowermenuChanged() {
             if (screenVisibilities.powermenu) {
                 notchContainer.stackView.push(powermenuViewComponent);
+                Qt.callLater(() => notchContainer.forceActiveFocus());
+            } else {
+                if (notchContainer.stackView.depth > 1) {
+                    notchContainer.stackView.replace(defaultViewComponent);
+                    notchContainer.isShowingDefault = true;
+                    notchContainer.isShowingNotifications = false;
+                }
+            }
+        }
+
+        function onToolsChanged() {
+            if (screenVisibilities.tools) {
+                notchContainer.stackView.push(toolsMenuViewComponent);
                 Qt.callLater(() => notchContainer.forceActiveFocus());
             } else {
                 if (notchContainer.stackView.depth > 1) {

@@ -1404,6 +1404,12 @@ Singleton {
                         property string dispatcher: "global"
                         property string argument: "ambxst:powermenu"
                     }
+                    property JsonObject tools: JsonObject {
+                        property list<string> modifiers: ["SUPER"]
+                        property string key: "S"
+                        property string dispatcher: "global"
+                        property string argument: "ambxst:tools"
+                    }
                 }
             }
             property list<var> custom: [

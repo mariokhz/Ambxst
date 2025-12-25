@@ -106,6 +106,14 @@ Item {
         onPressed: toggleSimpleModule("powermenu")
     }
 
+    GlobalShortcut {
+        appid: root.appId
+        name: "tools"
+        description: "Toggle tools menu"
+
+        onPressed: toggleSimpleModule("tools")
+    }
+
     // Dashboard tab shortcuts
     GlobalShortcut {
         appid: root.appId

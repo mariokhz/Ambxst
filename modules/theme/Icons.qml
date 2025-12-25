@@ -91,13 +91,13 @@ QtObject {
 
     // Toolbox
     readonly property string toolbox: ""
-    readonly property string regionScreenshot: ""
+    readonly property string regionScreenshot: ""
     readonly property string windowScreenshot: ""
     readonly property string fullScreenshot: ""
     readonly property string screenshots: ""
 
-    readonly property string recordScreen: ""
-    readonly property string recordings: ""
+    readonly property string recordScreen: ""
+    readonly property string recordings: ""
 
     // Notifications
     readonly property string bell: ""
