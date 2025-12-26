@@ -247,49 +247,117 @@ PanelWindow {
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottomMargin: 50
-            width: modeSelector.width + 40
-            height: 60
-            radius: 30
+            
+            // Padding of 16px around the content
+            width: modeRow.width + 32
+            height: modeRow.height + 32
+            
+            radius: Styling.radius(20)
             color: Colors.background
             border.color: Colors.surface
             border.width: 1
             visible: screenshotPopup.state === "active"
             
+            // Catch-all MouseArea
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                preventStealing: true
+            }
+            
+            // Highlight que se desplaza
+            StyledRect {
+                variant: "primary"
+                id: highlight
+                radius: Styling.radius(4)
+                z: 0 
+                
+                property Item targetItem: modeRepeater.itemAt(modeSelector.currentIndex)
+                visible: targetItem !== null
+
+                // Target values relative to modeRow (container)
+                property real tx: targetItem ? targetItem.x : 0
+                property real ty: targetItem ? targetItem.y : 0
+                property real tw: targetItem ? targetItem.width : 0
+                property real th: targetItem ? targetItem.height : 0
+
+                // Tracker 1 (Fast / Lead)
+                property real t1x: tx; property real t1y: ty; property real t1w: tw; property real t1h: th
+                Behavior on t1x { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration / 3; easing.type: Easing.OutSine } }
+                Behavior on t1y { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration / 3; easing.type: Easing.OutSine } }
+                Behavior on t1w { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration / 3; easing.type: Easing.OutSine } }
+                Behavior on t1h { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration / 3; easing.type: Easing.OutSine } }
+
+                // Tracker 2 (Slow / Follow)
+                property real t2x: tx; property real t2y: ty; property real t2w: tw; property real t2h: th
+                Behavior on t2x { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutSine } }
+                Behavior on t2y { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutSine } }
+                Behavior on t2w { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutSine } }
+                Behavior on t2h { enabled: Config.animDuration > 0; NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutSine } }
+
+                // Elastic effect + Container offset
+                x: Math.min(t1x, t2x) + modeRow.x
+                y: Math.min(t1y, t2y) + modeRow.y
+                width: Math.max(t1x + t1w, t2x + t2w) - Math.min(t1x, t2x)
+                height: Math.max(t1y + t1h, t2y + t2h) - Math.min(t1y, t2y)
+            }
+
             Row {
-                id: modeSelector
+                id: modeRow
                 anchors.centerIn: parent
                 spacing: 10
                 
-                property int currentIndex: 0
-                property var modes: ["region", "window", "screen"]
-                
-                function cycle(direction) {
-                    currentIndex = (currentIndex + direction + modes.length) % modes.length
-                    screenshotPopup.currentMode = modes[currentIndex]
+                // Logic wrapper for index management
+                QtObject {
+                    id: modeSelector
+                    property int currentIndex: 0
+                    property var modes: [
+                        { name: "region", icon: Icons.regionScreenshot, label: "Region" }, 
+                        { name: "window", icon: Icons.windowScreenshot, label: "Window" }, 
+                        { name: "screen", icon: Icons.fullScreenshot, label: "Screen" }
+                    ]
+                    
+                    function cycle(direction) {
+                        currentIndex = (currentIndex + direction + modes.length) % modes.length
+                        screenshotPopup.currentMode = modes[currentIndex].name
+                    }
                 }
 
                 Repeater {
-                    model: ["Region", "Window", "Screen"]
-                    delegate: Rectangle {
-                        width: 80
-                        height: 40
-                        radius: 20
-                        color: index === modeSelector.currentIndex ? Colors.primary : "transparent"
-                        
-                        Text {
-                            anchors.centerIn: parent
-                            text: modelData
-                            // Reverting to Singleton colors now that logic is fixed
-                            color: (index === modeSelector.currentIndex) ? Colors.overPrimary : Colors.overSurface
-                            font.bold: true
-                        }
+                    id: modeRepeater
+                    model: modeSelector.modes
+                    delegate: Item {
+                        width: 48
+                        height: 48
                         
                         MouseArea {
                             anchors.fill: parent
+                            hoverEnabled: true
                             onClicked: {
                                 modeSelector.currentIndex = index
-                                screenshotPopup.currentMode = modeSelector.modes[index]
+                                screenshotPopup.currentMode = modelData.name
                             }
+                        }
+                        
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData.icon
+                            font.family: Icons.font
+                            font.pixelSize: 24
+                            color: (index === modeSelector.currentIndex) 
+                                ? Config.resolveColor(Config.theme.srPrimary.itemColor)
+                                : Colors.overBackground
+                            
+                            Behavior on color {
+                                enabled: Config.animDuration > 0
+                                ColorAnimation { duration: Config.animDuration / 2 }
+                            }
+                        }
+
+                        StyledToolTip {
+                            visible: parent.hovered
+                            tooltipText: modelData.label
+                            delay: 100
                         }
                     }
                 }
