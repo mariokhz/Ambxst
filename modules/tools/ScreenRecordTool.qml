@@ -322,16 +322,7 @@ PanelWindow {
                         newM.variant = recordPopup.recordAudioInput ? "primary" : "surface";
                         newM.icon = recordPopup.recordAudioInput ? Icons.mic : Icons.micSlash;
                     } else {
-                        // For modes, highlight if selected
-                        // But ActionGrid handles 'currentIndex' highlighting automatically for the selected item?
-                        // Wait, ActionGrid highlights 'currentIndex'.
-                        // We need to sync currentIndex with currentMode for modes.
-                        // But toggles are also in the grid.
-                        // If I click a toggle, currentIndex moves there. That's fine.
-                        // But toggles shouldn't be "selected" as the active *mode*.
-                        // We have mixed types: Toggles (boolean state) and Modes (mutually exclusive).
-                        // ActionGrid is designed for simple "click -> action".
-                        // Let's rely on onActionTriggered to handle logic.
+                        // Regular mode items
                     }
                     return newM;
                 })
@@ -340,14 +331,25 @@ PanelWindow {
                 iconSize: 24
                 spacing: 10
 
+                onCurrentIndexChanged: {
+                    if (currentIndex < 0 || currentIndex >= recordPopup.modes.length) return;
+                    var action = recordPopup.modes[currentIndex];
+                    if (action.type === "separator") return;
+
+                    if (action.name === "audioOutput" || action.name === "audioInput") {
+                        recordPopup.currentMode = "screen";
+                    } else {
+                        recordPopup.currentMode = action.name;
+                    }
+                }
+
                 onActionTriggered: action => {
                     if (action.name === "audioOutput") {
                         recordPopup.recordAudioOutput = !recordPopup.recordAudioOutput;
                     } else if (action.name === "audioInput") {
                         recordPopup.recordAudioInput = !recordPopup.recordAudioInput;
                     } else {
-                        // It's a mode switch
-                        recordPopup.currentMode = action.name;
+                        recordPopup.executeCapture();
                     }
                 }
             }
