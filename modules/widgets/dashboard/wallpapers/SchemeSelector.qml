@@ -10,8 +10,30 @@ import qs.config
 Item {
     id: root
     property bool schemeListExpanded: false
-    readonly property var schemeDisplayNames: ["Content", "Expressive", "Fidelity", "Fruit Salad", "Monochrome", "Neutral", "Rainbow", "Tonal Spot"]
-    readonly property var schemeInternalNames: ["scheme-content", "scheme-expressive", "scheme-fidelity", "scheme-fruit-salad", "scheme-monochrome", "scheme-neutral", "scheme-rainbow", "scheme-tonal-spot"]
+    readonly property var matugenSchemes: ["scheme-content", "scheme-expressive", "scheme-fidelity", "scheme-fruit-salad", "scheme-monochrome", "scheme-neutral", "scheme-rainbow", "scheme-tonal-spot"]
+    property var presets: GlobalStates.wallpaperManager ? GlobalStates.wallpaperManager.colorPresets : []
+    onPresetsChanged: console.log("SchemeSelector received presets:", presets)
+    
+    property var combinedModel: {
+        var currentPresets = presets; // Explicit dependency
+        var list = [];
+        for (var i=0; i<matugenSchemes.length; i++) {
+            list.push({
+                id: matugenSchemes[i],
+                label: getSchemeDisplayName(matugenSchemes[i]),
+                type: "matugen"
+            });
+        }
+        for (var j=0; j<currentPresets.length; j++) {
+            list.push({
+                id: currentPresets[j],
+                label: currentPresets[j],
+                type: "preset"
+            });
+        }
+        return list;
+    }
+
     property bool scrollBarPressed: false
     property int selectedSchemeIndex: -1
     property bool keyboardNavigationActive: false
@@ -31,7 +53,7 @@ Item {
     }
     
     function positionAtSelectedScheme() {
-        if (selectedSchemeIndex >= 0 && selectedSchemeIndex < schemeInternalNames.length) {
+        if (selectedSchemeIndex >= 0 && selectedSchemeIndex < combinedModel.length) {
             schemeListView.positionViewAtIndex(selectedSchemeIndex, ListView.Center);
         }
     }
@@ -53,16 +75,33 @@ Item {
 
     Connections {
         target: GlobalStates.wallpaperManager
-        function onCurrentMatugenSchemeChanged() {
-            // Update selected index to match current scheme
-            updateSelectedIndex();
-        }
+        function onCurrentMatugenSchemeChanged() { updateSelectedIndex(); }
+        function onActiveColorPresetChanged() { updateSelectedIndex(); }
     }
 
     function updateSelectedIndex() {
-        if (GlobalStates.wallpaperManager && GlobalStates.wallpaperManager.currentMatugenScheme) {
-            selectedSchemeIndex = schemeInternalNames.indexOf(GlobalStates.wallpaperManager.currentMatugenScheme);
+        if (!GlobalStates.wallpaperManager) return;
+        
+        var activePreset = GlobalStates.wallpaperManager.activeColorPreset;
+        var activeMatugen = GlobalStates.wallpaperManager.currentMatugenScheme;
+        
+        var index = -1;
+        
+        if (activePreset) {
+            for (var i=0; i<combinedModel.length; i++) {
+                if (combinedModel[i].type === "preset" && combinedModel[i].id === activePreset) {
+                    index = i; break;
+                }
+            }
+        } else if (activeMatugen) {
+            for (var i=0; i<combinedModel.length; i++) {
+                if (combinedModel[i].type === "matugen" && combinedModel[i].id === activeMatugen) {
+                    index = i; break;
+                }
+            }
         }
+        
+        if (index !== -1) selectedSchemeIndex = index;
     }
 
     Component.onCompleted: {
@@ -81,6 +120,20 @@ Item {
             "scheme-tonal-spot": "Tonal Spot"
         };
         return map[scheme] || scheme;
+    }
+
+    function getCurrentDisplayName() {
+        if (!GlobalStates.wallpaperManager) return "Selecciona esquema";
+        
+        if (GlobalStates.wallpaperManager.activeColorPreset) {
+            return GlobalStates.wallpaperManager.activeColorPreset;
+        }
+        
+        if (GlobalStates.wallpaperManager.currentMatugenScheme) {
+            return getSchemeDisplayName(GlobalStates.wallpaperManager.currentMatugenScheme);
+        }
+        
+        return "Selecciona esquema";
     }
 
     // Layout properties (can be overridden by parent)
@@ -115,7 +168,7 @@ Item {
                     id: schemeButton
                     Layout.fillWidth: true
                     Layout.preferredHeight: 40
-                    text: GlobalStates.wallpaperManager && GlobalStates.wallpaperManager.currentMatugenScheme ? getSchemeDisplayName(GlobalStates.wallpaperManager.currentMatugenScheme) : "Selecciona esquema"
+                    text: getCurrentDisplayName()
                     focus: true
                     
                     onActiveFocusChanged: {
@@ -166,7 +219,7 @@ Item {
                         } else if (!schemeListExpanded) {
                             return;
                         } else if (event.key === Qt.Key_Down) {
-                            if (selectedSchemeIndex < schemeInternalNames.length - 1) {
+                            if (selectedSchemeIndex < combinedModel.length - 1) {
                                 selectedSchemeIndex++;
                                 schemeListView.currentIndex = selectedSchemeIndex;
                             }
@@ -179,7 +232,13 @@ Item {
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                             if (selectedSchemeIndex >= 0 && GlobalStates.wallpaperManager) {
-                                GlobalStates.wallpaperManager.setMatugenScheme(schemeInternalNames[selectedSchemeIndex]);
+                                var item = combinedModel[selectedSchemeIndex];
+                                if (item.type === "preset") {
+                                    GlobalStates.wallpaperManager.setColorPreset(item.id);
+                                } else {
+                                    GlobalStates.wallpaperManager.setColorPreset(""); // Clear preset
+                                    GlobalStates.wallpaperManager.setMatugenScheme(item.id);
+                                }
                             }
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Escape) {
@@ -283,7 +342,7 @@ Item {
                         id: schemeListView
                         anchors.fill: parent
                         clip: true
-                        model: schemeInternalNames
+                        model: combinedModel
                         currentIndex: selectedSchemeIndex
                         interactive: true
                         boundsBehavior: Flickable.StopAtBounds
@@ -302,16 +361,21 @@ Item {
                         }
 
                         delegate: Button {
-                            required property string modelData
+                            required property var modelData
                             required property int index
 
                             width: schemeListView.width
                             height: 40
-                            text: schemeDisplayNames[index]
+                            text: modelData.label
 
                             onClicked: {
                                 if (GlobalStates.wallpaperManager) {
-                                    GlobalStates.wallpaperManager.setMatugenScheme(modelData);
+                                    if (modelData.type === "preset") {
+                                        GlobalStates.wallpaperManager.setColorPreset(modelData.id);
+                                    } else {
+                                        GlobalStates.wallpaperManager.setColorPreset(""); // Clear preset
+                                        GlobalStates.wallpaperManager.setMatugenScheme(modelData.id);
+                                    }
                                     schemeListExpanded = false;
                                 }
                             }
@@ -349,7 +413,12 @@ Item {
                                 onClicked: {
                                     if (schemeListView.isScrolling) return;
                                     if (GlobalStates.wallpaperManager) {
-                                        GlobalStates.wallpaperManager.setMatugenScheme(modelData);
+                                        if (modelData.type === "preset") {
+                                            GlobalStates.wallpaperManager.setColorPreset(modelData.id);
+                                        } else {
+                                            GlobalStates.wallpaperManager.setColorPreset(""); // Clear preset
+                                            GlobalStates.wallpaperManager.setMatugenScheme(modelData.id);
+                                        }
                                         schemeListExpanded = false;
                                     }
                                 }

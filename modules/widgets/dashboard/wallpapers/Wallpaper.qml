@@ -30,10 +30,50 @@ PanelWindow {
     property bool initialLoadCompleted: false
     property bool usingFallback: false
     property string currentMatugenScheme: wallpaperConfig.adapter.matugenScheme
+    property string colorPresetsDir: "/home/adriano/.config/Ambxst/colors"
+    onColorPresetsDirChanged: console.log("Color Presets Directory:", colorPresetsDir)
+    property list<string> colorPresets: []
+    onColorPresetsChanged: console.log("Color Presets Updated:", colorPresets)
+    property string activeColorPreset: wallpaperConfig.adapter.activeColorPreset || ""
 
-    onCurrentMatugenSchemeChanged:
-    // Optional: Add any logic if needed when scheme changes
-    {}
+    // React to light/dark mode changes
+    property bool isLightMode: Config.theme.lightMode
+    onIsLightModeChanged: {
+        if (activeColorPreset) {
+            applyColorPreset();
+        } else {
+            runMatugenForCurrentWallpaper();
+        }
+    }
+
+    onActiveColorPresetChanged: {
+        if (activeColorPreset) {
+            applyColorPreset();
+        } else {
+            runMatugenForCurrentWallpaper();
+        }
+    }
+
+    function scanColorPresets() {
+        scanPresetsProcess.running = true;
+    }
+
+    function applyColorPreset() {
+        if (!activeColorPreset) return;
+        
+        var mode = Config.theme.lightMode ? "light.json" : "dark.json";
+        var source = colorPresetsDir + "/" + activeColorPreset + "/" + mode;
+        var dest = Quickshell.dataPath("colors.json");
+        
+        console.log("Applying color preset:", activeColorPreset, "Source:", source, "Dest:", dest);
+        applyPresetProcess.command = ["cp", source, dest];
+        applyPresetProcess.running = true;
+    }
+
+    function setColorPreset(name) {
+        wallpaperConfig.adapter.activeColorPreset = name;
+        // activeColorPreset property will update automatically via binding to adapter
+    }
 
     // Funciones utilitarias para tipos de archivo
     function getFileType(path) {
@@ -214,6 +254,11 @@ PanelWindow {
     }
 
     function runMatugenForCurrentWallpaper() {
+        if (activeColorPreset) {
+            console.log("Skipping Matugen because color preset is active:", activeColorPreset);
+            return;
+        }
+
         if (currentWallpaper && initialLoadCompleted) {
             console.log("Running Matugen for current wallpaper:", currentWallpaper);
 
@@ -252,6 +297,7 @@ PanelWindow {
         // Initial scans
         scanWallpapers.running = true;
         scanSubfolders();
+        scanColorPresets();
         // Start directory monitoring
         directoryWatcher.reload();
         // Load initial wallpaper config
@@ -287,6 +333,13 @@ PanelWindow {
             property string currentWall: ""
             property string wallPath: ""
             property string matugenScheme: "scheme-tonal-spot"
+            property string activeColorPreset: ""
+
+            onActiveColorPresetChanged: {
+                if (wallpaperConfig.adapter.activeColorPreset !== wallpaper.activeColorPreset) {
+                    wallpaper.activeColorPreset = wallpaperConfig.adapter.activeColorPreset || "";
+                }
+            }
 
             onCurrentWallChanged: {
                 console.log("DEBUG: currentWall changed to:", currentWall);
@@ -611,6 +664,38 @@ PanelWindow {
                     }
                 }
             }
+        }
+    }
+
+    Process {
+        id: scanPresetsProcess
+        running: false
+        command: ["find", colorPresetsDir, "-mindepth", "1", "-maxdepth", "1", "-type", "d"]
+        
+        stdout: StdioCollector {
+            onStreamFinished: {
+                console.log("Scan Presets Output:", text);
+                var presets = text.trim().split("\n").filter(p => p.length > 0).map(p => p.split('/').pop()).sort();
+                console.log("Found color presets:", presets);
+                colorPresets = presets;
+            }
+        }
+        
+        stderr: StdioCollector {
+            onStreamFinished: {
+                console.warn("Scan Presets Error:", text);
+            }
+        }
+    }
+
+    Process {
+        id: applyPresetProcess
+        running: false
+        command: []
+        
+        onExited: code => {
+            if (code === 0) console.log("Color preset applied successfully");
+            else console.warn("Failed to apply color preset, code:", code);
         }
     }
 
