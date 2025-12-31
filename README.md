@@ -1,44 +1,121 @@
 # Ambxst
-A reimplementation of Ax-Shell in Quickshell.
+
+<img src="./assets/ambxst/ambxst-banner.png" alt="Ambxst Logo" style="max-width: 500px; width: 100%;" align="center" />
+
+<p align="center">
+An ***Ax**tremely* customizable shell.
+</p>
+
+---
+
+## Screenshots
+
+<img src="./assets/screenshots/1.png" />
+<img src="./assets/screenshots/2.png" />
+<img src="./assets/screenshots/3.png" />
+<img src="./assets/screenshots/4.png" />
+<img src="./assets/screenshots/5.png" />
+<img src="./assets/screenshots/6.png" />
+<img src="./assets/screenshots/7.png" />
+
+---
 
 ## Installation
 
-### Quick Install
-
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Axenide/Ambxst/main/install.sh | bash
-```
+curl -L get.axeni.de/ambxst | sh
+````
 
-### NixOS
+> **⚠️ WARNING**
+> Ambxst is currently in early development.
 
-Add to your `configuration.nix`:
+👉 **Check the code:**
+[https://github.com/Axenide/Ambxst](https://github.com/Axenide/Ambxst)
+*(Mmm... Spaghetti. 🍝)*
 
-```nix
-{
-  inputs.ambxst.url = "github:Axenide/Ambxst";
-  
-  imports = [ inputs.ambxst.nixosModules.default ];
-}
-```
+---
 
-This automatically configures NetworkManager if not already enabled.
+### What does the installation do?
 
-Then install Ambxst:
+On **non-NixOS** distros, the installation script does the following:
 
-```bash
-nix profile add github:Axenide/Ambxst --impure
-```
+* Installs [Nix](https://en.wikipedia.org/wiki/Nix_%28package_manager%29) if it's not already installed.
+* Installs some necessary system dependencies (only a few that Nix cannot handle by itself).
+* Installs Ambxst as a Nix flake. (*Dependency hell*? No, thanks. 😎)
+* Creates an alias to launch `ambxst` from anywhere
+  (for example: `exec-once = ambxst` in your `hyprland.conf`).
+* Gives you a kiss on the cheek. 😘 (Optional, of course.)
 
-### Non-NixOS Systems
+On **NixOS**:
 
-The `install.sh` script will:
-1. Install system dependencies (ddcutil, NetworkManager, power-profiles-daemon)
-2. Install Nix if not present
-3. Build `ambxst-auth` locally to `~/.local/bin/`
-4. Install Ambxst environment via Nix flake
+* Installs Ambxst via:
 
-The lockscreen works out-of-the-box since PAM handles authentication through its own privileged helpers (`unix_chkpwd`).
+  ```bash
+  nix profile add github:Axenide/Ambxst
+  ```
 
-## Secure Lockscreen
+> **ℹ️ NOTE**
+> The installation script doesn't do anything else on NixOS, so you can declare it however you like in your system.
 
-Ambxst uses Wayland Session Lock protocol for a truly secure lockscreen that persists even if the shell process crashes. See [SECURE_LOCKSCREEN.md](modules/lockscreen/SECURE_LOCKSCREEN.md) for details.
+---
+
+## Features
+
+* [x] Customizable components
+* [x] Themes
+* [x] System integration
+* [x] App launcher
+* [x] Clipboard manager
+* [x] Quick notes (and not so quick ones)
+* [x] Wallpaper manager
+* [x] Emoji picker
+* [x] [tmux](https://github.com/tmux/tmux) session manager
+* [x] System monitor
+* [x] Media control
+* [x] Notification system
+* [x] Wi-Fi manager
+* [x] Bluetooth manager
+* [x] Audio mixer
+* [x] [EasyEffects](https://github.com/wwmm/easyeffects) integration
+* [x] Screen capture
+* [x] Screen recording
+* [x] Color picker
+* [x] OCR
+* [x] QR and barcode scanner
+* [x] Webcam mirror
+* [x] Game mode
+* [x] Night mode
+* [x] Power profile manager
+* [x] AI Assistant
+* [x] Weather
+* [x] Calendar
+* [x] Power menu
+* [x] Workspace management
+* [x] Support for different layouts (dwindle, master, scrolling, etc.)
+* [x] Multi-monitor support
+* [x] Customizable keybindings
+* [ ] Plugin and extension system
+* [ ] Compatibility with other Wayland compositors
+
+---
+
+## What about the *docs*?
+
+I want to release this before the end of the year, so you'll have to wait a bit for the full documentation. u_u
+
+For now, the most important things to know are:
+
+* The main configuration is located at `~/.config/Ambxst`
+* Removing Ambxst is as simple as:
+
+  ```bash
+  nix profile remove Ambxst
+  ```
+* You can ask anything on the:
+
+  * [Axenide Discord server](https://discord.com/invite/gHG9WHyNvH)
+  * [GitHub discussions](https://github.com/Axenide/Ambxst/discussions)
+
+> **⚠️ CAUTION**
+> Packages installed via Nix will take priority over system ones.
+> Keep this in mind if you run into version conflicts.
