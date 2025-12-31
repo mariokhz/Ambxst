@@ -199,12 +199,7 @@ PanelWindow {
                     // Clamp the x position so it never leaves the container (preventing overlap)
                     x: Math.max(0, Math.min(parent.width - width, targetX))
                     
-                    // Calculate max width that keeps the dock centered without hitting boundaries
-                    property real availableLeft: (bar.width / 2) - parent.x
-                    property real availableRight: (parent.x + parent.width) - (bar.width / 2)
-                    property real maxCenteredWidth: Math.max(0, Math.min(availableLeft, availableRight) * 2)
-                    
-                    width: Math.min(implicitWidth, maxCenteredWidth)
+                    width: Math.min(implicitWidth, parent.width)
                     height: implicitHeight
                 }
             }
@@ -287,12 +282,7 @@ PanelWindow {
                     // Clamp y position
                     y: Math.max(0, Math.min(parent.height - height, targetY))
                     
-                    // Calculate max height
-                    property real availableTop: (bar.height / 2) - parent.y
-                    property real availableBottom: (parent.y + parent.height) - (bar.height / 2)
-                    property real maxCenteredHeight: Math.max(0, Math.min(availableTop, availableBottom) * 2)
-
-                    height: Math.min(parent.height, Math.min(implicitHeight, maxCenteredHeight))
+                    height: Math.min(parent.height, implicitHeight)
                     width: parent.width
                     spacing: 4
 
