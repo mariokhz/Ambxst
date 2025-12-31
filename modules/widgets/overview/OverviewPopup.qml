@@ -125,7 +125,7 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             width: Math.min(400, overviewContainer.width)
             height: 80
-            radius: height / 2
+            radius: Styling.radius(24)
 
             layer.enabled: true
             layer.effect: Shadow {}
