@@ -177,9 +177,8 @@ WlSessionLockSurface {
             Text {
                 id: hoursText
                 text: Qt.formatTime(new Date(), "hh")
-                font.family: "Universal Accreditation"
+                font.family: "League Gothic"
                 font.pixelSize: 240
-                font.weight: Font.Bold
                 color: Styling.styledRectItem("overprimary")
                 antialiasing: true
                 opacity: startAnim ? 1 : 0
@@ -213,9 +212,8 @@ WlSessionLockSurface {
             Text {
                 id: minutesText
                 text: Qt.formatTime(new Date(), "mm")
-                font.family: "Universal Accreditation"
+                font.family: "League Gothic"
                 font.pixelSize: 240
-                font.weight: Font.Bold
                 color: Colors.overBackground
                 antialiasing: true
                 anchors.verticalCenter: undefined

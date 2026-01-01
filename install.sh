@@ -82,6 +82,7 @@ install_dependencies() {
 			pipewire wireplumber pavucontrol easyeffects ffmpeg x264 playerctl
 			# Qt6 & KDE deps
 			qt6-base qt6-declarative qt6-wayland qt6-svg qt6-tools qt6-imageformats qt6-multimedia qt6-shadertools
+			libwebp libavif # Image formats support
 			syntax-highlighting breeze-icons hicolor-icon-theme
 			# Tools
 			brightnessctl ddcutil fontconfig grim slurp imagemagick jq sqlite upower
