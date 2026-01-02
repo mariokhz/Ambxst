@@ -79,16 +79,16 @@ install_dependencies() {
 			# Apps
 			kitty tmux fuzzel network-manager-applet blueman
 			# Audio/Video
-			pipewire wireplumber pavucontrol easyeffects ffmpeg x264 playerctl
+			pipewire wireplumber pwvucontrol easyeffects ffmpeg x264 playerctl
 			# Qt6 & KDE deps
 			qt6-base qt6-declarative qt6-wayland qt6-svg qt6-tools qt6-imageformats qt6-multimedia qt6-shadertools
 			libwebp libavif # Image formats support
 			syntax-highlighting breeze-icons hicolor-icon-theme
 			# Tools
 			brightnessctl ddcutil fontconfig grim slurp imagemagick jq sqlite upower
-			wl-clipboard wlsunset wtype zbar unzip glib2 procps-ng python-pipx zenity inetutils
+			wl-clipboard wlsunset wtype zbar glib2 python-pipx zenity inetutils
 			# Tesseract
-			tesseract tesseract-data-eng tesseract-data-spa tesseract-data-jpn tesseract-data-chi_sim tesseract-data-kor
+			tesseract tesseract-data-eng tesseract-data-spa tesseract-data-jpn tesseract-data-chi_sim tesseract-data-chi_tra tesseract-data-kor tesseract-data-lat
 			# Fonts
 			ttf-roboto ttf-roboto-mono ttf-dejavu ttf-liberation noto-fonts noto-fonts-cjk noto-fonts-emoji
 			ttf-nerd-fonts-symbols
