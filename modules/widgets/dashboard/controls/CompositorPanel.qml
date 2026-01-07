@@ -887,6 +887,34 @@ Item {
                             }
 
                             NumberInputRow {
+                                label: "Offset X"
+                                value: parseInt((Config.hyprland.shadowOffset ?? "0 0").split(" ")[0]) || 0
+                                minValue: -50
+                                maxValue: 50
+                                suffix: "px"
+                                onValueEdited: newValue => {
+                                    GlobalStates.markCompositorChanged();
+                                    let parts = (Config.hyprland.shadowOffset ?? "0 0").split(" ");
+                                    let y = parts.length > 1 ? parts[1] : "0";
+                                    Config.hyprland.shadowOffset = newValue + " " + y;
+                                }
+                            }
+
+                            NumberInputRow {
+                                label: "Offset Y"
+                                value: parseInt((Config.hyprland.shadowOffset ?? "0 0").split(" ")[1]) || 0
+                                minValue: -50
+                                maxValue: 50
+                                suffix: "px"
+                                onValueEdited: newValue => {
+                                    GlobalStates.markCompositorChanged();
+                                    let parts = (Config.hyprland.shadowOffset ?? "0 0").split(" ");
+                                    let x = parts.length > 0 ? parts[0] : "0";
+                                    Config.hyprland.shadowOffset = x + " " + newValue;
+                                }
+                            }
+
+                            NumberInputRow {
                                 label: "Render Power"
                                 value: Config.hyprland.shadowRenderPower ?? 3
                                 minValue: 1
