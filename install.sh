@@ -73,10 +73,12 @@ install_dependencies() {
 	fedora)
 		log_info "Preparing installation for Fedora..."
 
-		# Enable Quickshell COPR
-		log_info "Enabling Quickshell COPR..."
+		# Enable COPRs
+		log_info "Enabling COPR repositories..."
 		sudo dnf install -y dnf-plugins-core
 		sudo dnf copr enable -y errornointernet/quickshell
+		sudo dnf copr enable -y solopasha/hyprland
+		sudo dnf copr enable -y pm4marcin/Hyprland
 
 		log_info "Installing dependencies..."
 
@@ -109,6 +111,9 @@ install_dependencies() {
 			# Fonts
 			google-roboto-fonts google-roboto-mono-fonts dejavu-sans-fonts liberation-fonts
 			google-noto-fonts-common google-noto-cjk-fonts google-noto-emoji-fonts
+
+			# Special Packages
+			mpvpaper matugen
 
 			# Quickshell
 			quickshell-git
