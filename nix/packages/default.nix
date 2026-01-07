@@ -48,6 +48,9 @@ let
     export QML2_IMPORT_PATH="${envAmbxst}/lib/qt-6/qml:$QML2_IMPORT_PATH"
     export QML_IMPORT_PATH="$QML2_IMPORT_PATH"
 
+    # Make fonts available to fontconfig
+    export XDG_DATA_DIRS="${envAmbxst}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
     # Delegate execution to CLI (now in the Nix store)
     exec ${shellSrc}/cli.sh "$@"
   '';
