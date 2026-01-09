@@ -39,16 +39,14 @@ PanelWindow {
     // Get the bar panel for this screen to check its state
     readonly property var barPanelRef: Visibilities.barPanels[screen.name]
 
-    // Check if bar is pinned (for synchronized auto-hide when bar is at top)
+    // Check if bar is pinned (use bar state directly)
     readonly property bool barPinned: {
-        if (barPosition !== "top")
-            return true; // Default to pinned if bar not at top
         if (barPanelRef && typeof barPanelRef.pinned !== 'undefined') {
             return barPanelRef.pinned;
         }
         return Config.bar?.pinnedOnStartup ?? true;
     }
-
+    
     // Check if bar is hovering (for synchronized reveal when bar is at top)
     readonly property bool barHoverActive: {
         if (barPosition !== "top")
@@ -67,8 +65,9 @@ PanelWindow {
         return toplevel.fullscreen === true;
     }
 
-    // Should auto-hide: when bar is at top and unpinned, OR when fullscreen
-    readonly property bool shouldAutoHide: (barPosition === "top" && !barPinned) || activeWindowFullscreen
+    // Should auto-hide: when bar is unpinned OR when fullscreen
+    // This ensures notch follows bar's auto-hide behavior regardless of position
+    readonly property bool shouldAutoHide: !barPinned || activeWindowFullscreen
 
     // Check if the bar for this screen is vertical
     readonly property bool isBarVertical: barPosition === "left" || barPosition === "right"
@@ -84,27 +83,26 @@ PanelWindow {
     readonly property bool isMouseOverNotch: notchMouseAreaHover.hovered || notchRegionHover.hovered
 
     // Reveal logic:
-    // - Show when not auto-hiding (bar at top and not fullscreen)
-    // - Show when notch is open (dashboard, powermenu, tools)
-    // - Show when there are notifications
-    // - Show when hovering over notch or bar (when bar at top)
-    // - Show when no active window
     readonly property bool reveal: {
-        // If fullscreen and bar/notch shouldn't be available, hide
-        if (activeWindowFullscreen) {
-            // Only show if explicitly available on fullscreen AND (hovering or notch open or has notifications)
-            if (!(Config.bar?.availableOnFullscreen ?? false)) {
-                // Allow notifications to still reveal the notch even in fullscreen
-                return hasActiveNotifications || screenNotchOpen;
-            }
-        }
-
-        // Normal reveal logic
-        if (!shouldAutoHide)
+        // If not auto-hiding (pinned and not fullscreen), always show
+        if (!shouldAutoHide) return true;
+        
+        // Show on interaction (hover, open, notifications)
+        // This works even in fullscreen, ensuring hover always works
+        if (screenNotchOpen || hasActiveNotifications || hoverActive || barHoverActive) {
             return true;
-
-        return screenNotchOpen || hasActiveNotifications || hoverActive || barHoverActive || !ToplevelManager.activeToplevel?.activated;
+        }
+        
+        // Show on desktop (no active window) - but NOT if fullscreen mode forced auto-hide
+        // (activeWindowFullscreen implies there IS an active window)
+        if (!activeWindowFullscreen && !ToplevelManager.activeToplevel?.activated) {
+            return true;
+        }
+        
+        return false;
     }
+
+
 
     // Timer to delay hiding the notch after mouse leaves
     Timer {
