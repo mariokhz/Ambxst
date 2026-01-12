@@ -114,6 +114,7 @@ install_dependencies() {
 			# Tools
 			brightnessctl ddcutil fontconfig grim slurp ImageMagick jq sqlite upower
 			wl-clipboard wlsunset wtype zbar glib2 pipx zenity power-profiles-daemon
+			python3.12
 
 			# Tesseract (Fedora uses langpack naming)
 			tesseract tesseract-langpack-eng tesseract-langpack-spa tesseract-langpack-jpn
@@ -204,6 +205,7 @@ install_dependencies() {
 			# Tools
 			brightnessctl ddcutil fontconfig grim slurp imagemagick jq sqlite upower
 			wl-clipboard wlsunset wtype zbar glib2 python-pipx zenity inetutils power-profiles-daemon
+			python312
 
 			# Tesseract
 			tesseract tesseract-data-eng tesseract-data-spa tesseract-data-jpn tesseract-data-chi_sim tesseract-data-chi_tra tesseract-data-kor tesseract-data-lat
@@ -294,7 +296,7 @@ install_python_tools() {
 
 	log_info "Installing Python tools..."
 	if command -v pipx >/dev/null; then
-		pipx install "litellm[proxy]"
+		pipx install "litellm[proxy]" --python 3.12
 		pipx ensurepath
 	else
 		log_warn "pipx not found. Skipping litellm[proxy] installation."
