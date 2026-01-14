@@ -319,10 +319,14 @@ Item {
                     modifiers: [],
                     key: ""
                 };
-                adapter.ambxst[section][bindName].modifiers = firstKey.modifiers || [];
-                adapter.ambxst[section][bindName].key = firstKey.key || "";
-                adapter.ambxst[section][bindName].flags = root.editActions[0].flags || "";
-                // dispatcher and argument are fixed for ambxst binds
+                
+                // Update all properties including dispatcher/argument/flags to ensure full reset works
+                const bindObj = adapter.ambxst[section][bindName];
+                bindObj.modifiers = firstKey.modifiers || [];
+                bindObj.key = firstKey.key || "";
+                bindObj.dispatcher = root.editActions[0].dispatcher || "";
+                bindObj.argument = root.editActions[0].argument || "";
+                bindObj.flags = root.editActions[0].flags || "";
             }
         } else if (root.isCreatingNew) {
             // Create new custom bind with new format
