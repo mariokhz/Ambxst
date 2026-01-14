@@ -306,7 +306,7 @@ FocusScope {
                         onClicked: triggerAction()
 
                         onHoveredChanged: {
-                            if (hovered) {
+                            if (hovered && actionButton.enabled) {
                                 root.currentIndex = index;
                             }
                         }
