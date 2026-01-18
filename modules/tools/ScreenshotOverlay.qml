@@ -105,19 +105,27 @@ PanelWindow {
         // Preview Image with Drag Support
         ClippingRectangle {
             id: imgContainer
-            width: Math.min(400, img.implicitWidth)
-            height: Math.min(400, img.implicitHeight)
-            // Preserve aspect ratio is handled by Image.PreserveAspectFit inside, 
-            // but the container needs to match the image size.
-            // Let's bind width/height to the image's painted size or adapt.
             
-            // Actually, requirements: "anchura y altura máximas de 400... adaptar su alto o ancho para caber sin afectar su relación de aspecto"
+            // Calculate scale to fit within 250x250 while preserving aspect ratio
+            property real maxWidth: 250
+            property real maxHeight: 250
+            property real imgRatio: img.sourceSize.width / img.sourceSize.height
+            property real boxRatio: maxWidth / maxHeight
             
-            property real scaleFactor: Math.min(1.0, Math.min(400 / img.sourceSize.width, 400 / img.sourceSize.height))
+            // If image is wider relative to box, width limits height
+            // If image is taller relative to box, height limits width
+            width: {
+                if (img.sourceSize.width <= 0) return 0;
+                if (imgRatio > boxRatio) return maxWidth;
+                return Math.min(maxWidth, img.sourceSize.width * (maxHeight / img.sourceSize.height));
+            }
             
-            implicitWidth: img.sourceSize.width * scaleFactor
-            implicitHeight: img.sourceSize.height * scaleFactor
-            
+            height: {
+                if (img.sourceSize.height <= 0) return 0;
+                if (imgRatio > boxRatio) return Math.min(maxHeight, img.sourceSize.height * (maxWidth / img.sourceSize.width));
+                return maxHeight;
+            }
+
             radius: Styling.radius(4)
             color: "transparent"
             border.width: 2
@@ -262,14 +270,15 @@ PanelWindow {
             ActionButton {
                 icon: Icons.edit
                 onTriggered: {
-                    // Open with drawing tool? usually swappy or just xdg-open
-                    // We'll use xdg-open for now
-                    Qt.openUrlExternally("file://" + root.imagePath);
+                    // Open with Gradia detached
+                    var proc = Qt.createQmlObject('import Quickshell; import Quickshell.Io; Process { }', root);
+                    proc.command = ["bash", "-c", "gradia \"" + root.imagePath + "\" & disown"];
+                    proc.running = true;
                     root.imagePath = "";
                 }
                 StyledToolTip {
                     show: parent.containsMouse
-                    tooltipText: "Edit"
+                    tooltipText: "Edit with Gradia"
                 }
             }
 
