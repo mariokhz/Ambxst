@@ -68,15 +68,15 @@ Rectangle {
     function scrollSidebarToSelection() {
         if (sidebarFlickable.height <= 0) return;
         
-        const tabHeight = 40;
-        const tabSpacing = 4;
+        const tabHeight = 48;
+        const tabSpacing = 0;
         const itemY = root.selectedIndex * (tabHeight + tabSpacing);
         
         // Check bounds and scroll if needed
         if (itemY < sidebarFlickable.contentY) {
             sidebarFlickable.contentY = itemY;
         } else if (itemY + tabHeight > sidebarFlickable.contentY + sidebarFlickable.height) {
-            sidebarFlickable.contentY = itemY + tabHeight - sidebarFlickable.height + 4; // +4 for bottom padding feeling
+            sidebarFlickable.contentY = itemY + tabHeight - sidebarFlickable.height;
         }
     }
 
@@ -243,12 +243,12 @@ Rectangle {
                         id: tabHighlight
                         variant: "focus"
                         width: parent.width
-                        height: 40
+                        height: 48
                         radius: Styling.radius(-6)
                         z: 0
 
-                        readonly property int tabHeight: 40
-                        readonly property int tabSpacing: 4
+                        readonly property int tabHeight: 48
+                        readonly property int tabSpacing: 0
 
                         x: 0
                         y: {
@@ -269,7 +269,7 @@ Rectangle {
                     Column {
                         id: sidebar
                         width: parent.width
-                        spacing: 4
+                        spacing: 0
                         z: 1
 
                         Repeater {
@@ -281,7 +281,7 @@ Rectangle {
                                 required property int index
 
                                 width: sidebar.width
-                                height: 40
+                                height: 48
                                 flat: true
                                 hoverEnabled: true
 
