@@ -165,78 +165,79 @@ Rectangle {
         anchors.fill: parent
         spacing: 8
 
-        // Sidebar container with background
-        StyledRect {
-            id: sidebarContainer
-            variant: "common"
+        // Sidebar area: search + list
+        ColumnLayout {
             Layout.preferredWidth: 200
             Layout.maximumWidth: 200
             Layout.fillHeight: true
-            Layout.fillWidth: false
+            spacing: 4
 
-            Column {
-                anchors.fill: parent
-                anchors.margins: 4
-                spacing: 4
+            // Search input (separate from panel list)
+            SearchInput {
+                id: searchInput
+                Layout.fillWidth: true
+                Layout.preferredHeight: 36
+                placeholderText: "Search..."
+                clearOnEscape: true
 
-                // Search input at the top
-                SearchInput {
-                    id: searchInput
-                    width: parent.width
-                    height: 36
-                    placeholderText: "Search..."
-                    clearOnEscape: true
+                onSearchTextChanged: text => {
+                    root.searchQuery = text;
+                }
+                // ESC to escape dashboard
+                onEscapePressed: {
+                    searchInput.focus = false;
+                    root.forceActiveFocus();
+                }
 
-                    onSearchTextChanged: text => {
-                        root.searchQuery = text;
-                    }
-                    // ESC to escape dashboard
-                    onEscapePressed: {
-                        searchInput.focus = false;
-                        root.forceActiveFocus();
-                    }
-
-                    onAccepted: {
-                        // If single result, select it; if multiple, select top one
-                        if (root.filteredSections.length > 0) {
-                            const item = root.filteredSections[root.selectedIndex];
-                            // Ensure section is synced (should be via binding, but force to be safe if dispatching immediately)
-                            root.currentSection = item.section;
-                            root.dispatchSubSection(item.section, item.subSection);
-                        }
-                    }
-
-                    onDownPressed: {
-                        // Navigate to next filtered section
-                        if (root.selectedIndex < root.filteredSections.length - 1) {
-                            root.selectedIndex++;
-                        } else {
-                            // Loop to top? Or stop? User said "move up down arrow key doesn't work normally".
-                            // Usually stopping at bottom is standard, or looping. 
-                            // Previous code looped to 0. Let's loop.
-                            root.selectedIndex = 0;
-                        }
-                    }
-
-                    onUpPressed: {
-                        // Navigate to previous filtered section
-                        if (root.selectedIndex > 0) {
-                            root.selectedIndex--;
-                        } else {
-                            // Loop to bottom
-                            root.selectedIndex = root.filteredSections.length - 1;
-                        }
+                onAccepted: {
+                    // If single result, select it; if multiple, select top one
+                    if (root.filteredSections.length > 0) {
+                        const item = root.filteredSections[root.selectedIndex];
+                        root.currentSection = item.section;
+                        root.dispatchSubSection(item.section, item.subSection);
                     }
                 }
 
+                onDownPressed: {
+                    if (root.selectedIndex < root.filteredSections.length - 1) {
+                        root.selectedIndex++;
+                    } else {
+                        root.selectedIndex = 0;
+                    }
+                }
+
+                onUpPressed: {
+                    if (root.selectedIndex > 0) {
+                        root.selectedIndex--;
+                    } else {
+                        root.selectedIndex = root.filteredSections.length - 1;
+                    }
+                }
+            }
+
+            // Sidebar container with background
+            StyledRect {
+                id: sidebarContainer
+                variant: "common"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
                 Flickable {
                     id: sidebarFlickable
-                    width: parent.width
-                    height: parent.height - searchInput.height - 4
+                    anchors.fill: parent
+                    anchors.margins: 4
                     contentWidth: width
                     contentHeight: sidebar.height
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
+
+                    Behavior on contentY {
+                        enabled: Config.animDuration > 0 && !sidebarFlickable.moving
+                        NumberAnimation {
+                            duration: Config.animDuration / 2
+                            easing.type: Easing.OutCubic
+                        }
+                    }
 
                     // Sliding highlight behind tabs
                     StyledRect {
