@@ -115,13 +115,20 @@ ShellRoot {
                 screen: notchLoader.modelData
             }
 
-            property bool _triggered: false
             Timer {
                 id: notchDelayTimer
                 property bool triggered: false
-                interval: 50
+                interval: 300
                 running: true
                 onTriggered: triggered = true
+            }
+
+            Connections {
+                target: Config.bar
+                function onPositionChanged() {
+                    notchDelayTimer.triggered = false;
+                    notchDelayTimer.restart();
+                }
             }
         }
     }
