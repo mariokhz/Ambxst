@@ -46,7 +46,7 @@ FocusScope {
         {
             id: "filters",
             focusFunc: function () {
-                filterBar.focusFilters();
+                wallpapersFilterBar.focusFilters();
             }
         }
     ]
@@ -193,47 +193,23 @@ FocusScope {
         return wallpapers;
     }
 
-    // Scheme Selector posicionado absolutamente para que se superponga al expandirse
-    SchemeSelector {
-        id: schemeSelector
-        anchors.right: parent.right
-        anchors.top: parent.top
-        width: 200
-        z: 1000
-
-        onSchemeSelectorClosed: {
-            wallpapersTabRoot.focusSearch();
-        }
-
-        onEscapePressedOnScheme: {
-            wallpapersTabRoot.focusSearch();
-        }
-
-        onTabPressed: {
-            wallpapersTabRoot.focusNextElement();
-        }
-
-        onShiftTabPressed: {
-            wallpapersTabRoot.focusPreviousElement();
-        }
-    }
 
     ColumnLayout {
         anchors.fill: parent
         spacing: 8
 
         // Barra superior con OLED mode, búsqueda y scheme selector
-        Item {
+        RowLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: 48
+            spacing: 8
+            z: 1000 // Asegurar que el menú desplegable se dibuje por encima del resto del contenido
 
             // OLED Mode a la izquierda
             Item {
                 id: oledCheckboxContainer
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                width: 200
-                height: 48
+                Layout.preferredWidth: 200
+                Layout.preferredHeight: 48
 
                 property bool keyboardNavigationActive: false
 
@@ -384,11 +360,14 @@ FocusScope {
                 }
             }
 
+            // Spacer
+            // Item { Layout.fillWidth: true }
+
             // Barra de búsqueda centrada
             SearchInput {
                 id: wallpaperSearchInput
-                anchors.centerIn: parent
-                width: 400
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
                 text: searchText
                 placeholderText: "Search wallpapers..."
                 iconText: ""
@@ -469,22 +448,156 @@ FocusScope {
                 }
             }
 
-            // Scheme Selector a la derecha (placeholder para el espacio)
+            // Tint Toggle a la derecha del search
             Item {
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: 200
-                height: 48
+                id: tintCheckboxContainer
+                Layout.preferredWidth: 140
+                Layout.preferredHeight: 48
+
+                property bool keyboardNavigationActive: false
+
+                StyledRect {
+                    variant: tintCheckboxContainer.keyboardNavigationActive && tintCheckbox.activeFocus ? "focus" : "pane"
+                    anchors.fill: parent
+                    radius: Styling.radius(4)
+                    opacity: 1.0
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 4
+                        spacing: 4
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            color: Colors.background
+                            radius: Styling.radius(0)
+
+                            Text {
+                                anchors.fill: parent
+                                text: "Tint"
+                                color: Colors.overSurface
+                                font.family: Config.theme.font
+                                font.pixelSize: Config.theme.fontSize
+                                font.weight: Font.Medium
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: 8
+                            }
+                        }
+
+                        Item {
+                            id: tintCheckbox
+                            Layout.preferredWidth: 40
+                            Layout.preferredHeight: 40
+
+                            property bool checked: GlobalStates.wallpaperManager ? GlobalStates.wallpaperManager.tintEnabled : false
+
+                            onActiveFocusChanged: {
+                                if (!activeFocus) {
+                                    tintCheckboxContainer.keyboardNavigationActive = false;
+                                }
+                            }
+
+                            Item {
+                                anchors.fill: parent
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: Styling.radius(0)
+                                    color: Colors.background
+                                    visible: !tintCheckbox.checked
+                                }
+
+                                StyledRect {
+                                    variant: "primary"
+                                    anchors.fill: parent
+                                    radius: Styling.radius(0)
+                                    visible: tintCheckbox.checked
+                                    opacity: tintCheckbox.checked ? 1.0 : 0.0
+
+                                    Behavior on opacity {
+                                        enabled: Config.animDuration > 0
+                                        NumberAnimation {
+                                            duration: Config.animDuration / 2
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: Icons.accept
+                                        color: Styling.srItem("primary")
+                                        font.family: Icons.font
+                                        font.pixelSize: 20
+                                        scale: tintCheckbox.checked ? 1.0 : 0.0
+
+                                        Behavior on scale {
+                                            enabled: Config.animDuration > 0
+                                            NumberAnimation {
+                                                duration: Config.animDuration / 2
+                                                easing.type: Easing.OutBack
+                                                easing.overshoot: 1.5
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (GlobalStates.wallpaperManager) {
+                                        GlobalStates.wallpaperManager.tintEnabled = !GlobalStates.wallpaperManager.tintEnabled;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Spacer
+            // Item { Layout.fillWidth: true }
+
+            // Scheme Selector a la derecha
+            Item {
+                Layout.preferredWidth: 200
+                Layout.preferredHeight: 48
+
+                SchemeSelector {
+                    id: schemeSelector
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    // No height set, allows expansion based on implicitHeight
+
+                    onSchemeSelectorClosed: {
+                        wallpapersTabRoot.focusSearch();
+                    }
+
+                    onEscapePressedOnScheme: {
+                        wallpapersTabRoot.focusSearch();
+                    }
+
+                    onTabPressed: {
+                        wallpapersTabRoot.focusNextElement();
+                    }
+
+                    onShiftTabPressed: {
+                        wallpapersTabRoot.focusPreviousElement();
+                    }
+                }
             }
         }
 
         // FilterBar centrada
         Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: filterBar.height
+            Layout.preferredHeight: wallpapersFilterBar.height
 
             FilterBar {
-                id: filterBar
+                id: wallpapersFilterBar
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Math.min(implicitWidth, parent.width)
                 activeFilters: wallpapersTabRoot.activeFilters

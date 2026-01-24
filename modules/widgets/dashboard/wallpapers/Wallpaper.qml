@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
 import qs.modules.globals
+import qs.modules.theme
 import qs.config
 
 PanelWindow {
@@ -31,6 +32,7 @@ PanelWindow {
     property bool usingFallback: false
     property bool _wallpaperDirInitialized: false
     property string currentMatugenScheme: wallpaperConfig.adapter.matugenScheme
+    property alias tintEnabled: wallpaperAdapter.tintEnabled
 
     // Sync state from the primary wallpaper manager to secondary instances
     Binding {
@@ -434,10 +436,12 @@ PanelWindow {
         }
 
         JsonAdapter {
+            id: wallpaperAdapter
             property string currentWall: ""
             property string wallPath: ""
             property string matugenScheme: "scheme-tonal-spot"
             property string activeColorPreset: ""
+            property bool tintEnabled: false
 
             onActiveColorPresetChanged: {
                 if (wallpaperConfig.adapter.activeColorPreset !== wallpaper.activeColorPreset) {
@@ -988,17 +992,35 @@ PanelWindow {
             property string sourceFile: parent.source
         }
 
-        Component {
-            id: staticImageComponent
+    Component {
+        id: staticImageComponent
+        Item {
+            width: parent.width
+            height: parent.height
+            property string sourceFile: parent.sourceFile
+            property bool tint: wallpaper.tintEnabled
+
             Image {
-                width: parent.width
-                height: parent.height
+                id: rawImage
+                anchors.fill: parent
                 source: parent.sourceFile ? "file://" + parent.sourceFile : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 smooth: true
+                layer.enabled: parent.tint
+                layer.effect: ShaderEffect {
+                    property color c1: Colors.background
+                    property color c2: Colors.surface
+                    property color c3: Colors.primary
+                    property color c4: Colors.secondary
+                    property color c5: Colors.tertiary
+                    property color c6: Colors.surfaceContainer
+
+                    fragmentShader: "palette.frag.qsb"
+                }
             }
         }
+    }
 
         Component {
             id: mpvpaperComponent
