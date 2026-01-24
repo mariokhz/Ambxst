@@ -17,50 +17,40 @@ void main() {
     vec4 tex = texture(source, qt_TexCoord0);
     vec3 color = tex.rgb;
 
-    float dMin1 = 100.0;
-    float dMin2 = 100.0;
-    vec3 cMin1 = vec3(0.0);
-    vec3 cMin2 = vec3(0.0);
-
-    // Loop through palette
+    vec3 accumulatedColor = vec3(0.0);
+    float totalWeight = 0.0;
+    
     int size = int(ubuf.paletteSize);
     
-    // Iterate over the palette texture. Max 128 colors supported.
+    // "Sharpness" factor. 
+    // Higher value = colors stick closer to the palette (more posterized).
+    // Lower value = colors blend more (more washed out/grey).
+    // 15.0 - 20.0 is a good sweet spot for keeping identity while allowing gradients.
+    float distributionSharpness = 20.0; 
+
     for (int i = 0; i < 128; i++) {
         if (i >= size) break;
         
-        // Calculate texture coordinate for the center of the i-th pixel
         float u = (float(i) + 0.5) / ubuf.paletteSize;
-        
         vec3 pColor = texture(paletteTexture, vec2(u, 0.5)).rgb;
         
         vec3 diff = color - pColor;
-        float d = dot(diff, diff);
+        // Euclidean squared distance
+        float distSq = dot(diff, diff); 
         
-        // Find the two nearest colors
-        if (d < dMin1) {
-            dMin2 = dMin1; cMin2 = cMin1;
-            dMin1 = d; cMin1 = pColor;
-        } else if (d < dMin2) {
-            dMin2 = d; cMin2 = pColor;
-        }
+        // Gaussian Weighting function: e^(-k * d^2)
+        // This creates a smooth bell curve of influence around each palette color.
+        float weight = exp(-distributionSharpness * distSq);
+        
+        accumulatedColor += pColor * weight;
+        totalWeight += weight;
     }
 
-    vec3 finalColor;
-    float totalD = dMin1 + dMin2;
+    // Normalize
+    vec3 finalColor = accumulatedColor / (totalWeight + 0.00001); // Avoid div by zero
 
-    if (totalD < 0.000001) {
-        finalColor = cMin1;
-    } else {
-        // Interpolate based on distance.
-        // Closer color (dMin1) gets more weight.
-        // weight1 = dMin2 / totalD
-        // weight2 = dMin1 / totalD
-        // Formula: mix(cMin1, cMin2, dMin1 / totalD)
-        // Check: if dMin1=0, factor=0 -> cMin1. Correct.
-        // Check: if dMin1=dMin2, factor=0.5 -> average. Correct.
-        finalColor = mix(cMin1, cMin2, dMin1 / totalD);
-    }
+    // Optional: Restore a bit of original luminance to keep texture details 
+    // if the blending is too flat. For now, pure mixing is usually cleaner.
 
     fragColor = vec4(finalColor, tex.a) * ubuf.qt_Opacity;
 }
