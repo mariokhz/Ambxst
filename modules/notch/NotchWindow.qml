@@ -289,8 +289,10 @@ PanelWindow {
                 anchors.top: notchPanel.notchPosition === "top" ? parent.top : undefined
                 anchors.bottom: notchPanel.notchPosition === "bottom" ? parent.bottom : undefined
 
-                anchors.topMargin: notchPanel.notchPosition === "top" ? (Config.notchTheme === "default" ? 0 : (Config.notchTheme === "island" ? 4 : 0)) : 0
-                anchors.bottomMargin: notchPanel.notchPosition === "bottom" ? (Config.notchTheme === "default" ? 0 : (Config.notchTheme === "island" ? 4 : 0)) : 0
+                readonly property int frameOffset: Config.bar?.frameEnabled ? (Config.bar?.frameThickness ?? 6) : 0
+
+                anchors.topMargin: (notchPanel.notchPosition === "top" ? (Config.notchTheme === "default" ? 0 : (Config.notchTheme === "island" ? 4 : 0)) : 0) + (notchPanel.notchPosition === "top" ? frameOffset : 0)
+                anchors.bottomMargin: (notchPanel.notchPosition === "bottom" ? (Config.notchTheme === "default" ? 0 : (Config.notchTheme === "island" ? 4 : 0)) : 0) + (notchPanel.notchPosition === "bottom" ? frameOffset : 0)
 
                 layer.enabled: true
                 layer.effect: Shadow {}

@@ -13,9 +13,20 @@ PanelWindow {
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "quickshell:screenCorners"
+    WlrLayershell.layer: WlrLayer.Overlay
     mask: Region {
         item: null
     }
+
+    readonly property bool frameEnabled: Config.bar?.frameEnabled ?? false
+    readonly property int thickness: {
+        const value = Config.bar?.frameThickness;
+        if (typeof value !== "number")
+            return 6;
+        return Math.max(1, Math.min(Math.round(value), 40));
+    }
+
+    readonly property int cornerSize: frameEnabled ? thickness * 3 : Styling.radius(4)
 
     anchors {
         top: true
@@ -26,7 +37,7 @@ PanelWindow {
 
     RoundCorner {
         id: topLeft
-        size: Styling.radius(4)
+        size: screenCorners.cornerSize
         anchors.left: parent.left
         anchors.top: parent.top
         corner: RoundCorner.CornerEnum.TopLeft
@@ -34,7 +45,7 @@ PanelWindow {
 
     RoundCorner {
         id: topRight
-        size: Styling.radius(4)
+        size: screenCorners.cornerSize
         anchors.right: parent.right
         anchors.top: parent.top
         corner: RoundCorner.CornerEnum.TopRight
@@ -42,7 +53,7 @@ PanelWindow {
 
     RoundCorner {
         id: bottomLeft
-        size: Styling.radius(4)
+        size: screenCorners.cornerSize
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         corner: RoundCorner.CornerEnum.BottomLeft
@@ -50,7 +61,7 @@ PanelWindow {
 
     RoundCorner {
         id: bottomRight
-        size: Styling.radius(4)
+        size: screenCorners.cornerSize
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         corner: RoundCorner.CornerEnum.BottomRight

@@ -174,6 +174,7 @@ ShellRoot {
         }
     }
 
+
     Variants {
         model: Quickshell.screens
 
