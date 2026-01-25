@@ -138,38 +138,6 @@ StyledRect {
                 Item {
                     id: rotatingWrapper
                     anchors.fill: parent
-                    
-                    RotationAnimation on rotation {
-                        id: rotateAnim
-                        from: 0
-                        to: 360
-                        duration: 8000
-                        loops: Animation.Infinite
-                        running: player.isPlaying
-                    }
-
-                    Behavior on rotation {
-                        enabled: !player.isPlaying
-                        SpringAnimation {
-                            spring: 0.8
-                            damping: 0.05
-                            epsilon: 0.25
-                        }
-                    }
-                    
-                    Connections {
-                        target: player
-                        function onIsPlayingChanged() {
-                            if (!player.isPlaying) {
-                                let currentRotation = rotatingWrapper.rotation % 360;
-                                if (currentRotation > 180) {
-                                    rotatingWrapper.rotation = 360;
-                                } else {
-                                    rotatingWrapper.rotation = 0;
-                                }
-                            }
-                        }
-                    }
 
                     ClippingRectangle {
                         anchors.fill: parent
@@ -182,6 +150,38 @@ StyledRect {
                             source: MprisController.activePlayer?.trackArtUrl ?? ""
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
+
+                            RotationAnimation on rotation {
+                                id: rotateAnim
+                                from: 0
+                                to: 360
+                                duration: 8000
+                                loops: Animation.Infinite
+                                running: player.isPlaying
+                            }
+
+                            Behavior on rotation {
+                                enabled: !player.isPlaying
+                                SpringAnimation {
+                                    spring: 0.8
+                                    damping: 0.05
+                                    epsilon: 0.25
+                                }
+                            }
+                            
+                            Connections {
+                                target: player
+                                function onIsPlayingChanged() {
+                                    if (!player.isPlaying) {
+                                        let currentRotation = coverArt.rotation % 360;
+                                        if (currentRotation > 180) {
+                                            coverArt.rotation = 360;
+                                        } else {
+                                            coverArt.rotation = 0;
+                                        }
+                                    }
+                                }
+                            }
                             
                             // Placeholder image or logic if needed
                             Rectangle {
