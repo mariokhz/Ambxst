@@ -151,9 +151,9 @@ StyledRect {
                     Behavior on rotation {
                         enabled: !player.isPlaying
                         SpringAnimation {
-                            spring: 1.0
-                            damping: 0.15
-                            epsilon: 0.5
+                            spring: 0.8
+                            damping: 0.05
+                            epsilon: 0.25
                         }
                     }
                     
