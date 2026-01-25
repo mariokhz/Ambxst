@@ -48,6 +48,10 @@ FileView {
         id: nvChadGenerator
     }
 
+    property DiscordGenerator discordGenerator: DiscordGenerator {
+        id: discordGenerator
+    }
+
     property Timer generationTimer: Timer {
         id: generationTimer
         interval: 100
@@ -58,6 +62,7 @@ FileView {
             pywalGenerator.generate(colors)
             kittyGenerator.generate(colors)
             nvChadGenerator.generate(colors)
+            discordGenerator.generate(colors)
         }
     }
 
