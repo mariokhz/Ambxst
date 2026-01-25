@@ -19,7 +19,7 @@ StyledRect {
     visible: true
     radius: playerRadius
     
-    implicitHeight: mainLayout.implicitHeight + mainLayout.anchors.margins * 2
+    implicitHeight: innerPlayer.implicitHeight + innerPlayer.anchors.margins * 2
 
     readonly property bool isDragging: seekBar.isDragging
     
@@ -72,8 +72,17 @@ StyledRect {
         }
     }
 
-    // Main Layout
-    ColumnLayout {
+    StyledRect {
+        id: innerPlayer
+        variant: "internalbg"
+        anchors.fill: parent
+        anchors.margins: 4
+        radius: player.radius - 4
+        
+        implicitHeight: mainLayout.implicitHeight + mainLayout.anchors.margins * 2
+
+        // Main Layout
+        ColumnLayout {
         id: mainLayout
         anchors.fill: parent
         anchors.margins: 16
@@ -138,12 +147,26 @@ StyledRect {
                         loops: Animation.Infinite
                         running: player.isPlaying
                     }
+
+                    Behavior on rotation {
+                        enabled: !player.isPlaying
+                        SpringAnimation {
+                            spring: 1.0
+                            damping: 0.15
+                            epsilon: 0.5
+                        }
+                    }
                     
                     Connections {
                         target: player
                         function onIsPlayingChanged() {
                             if (!player.isPlaying) {
-                                rotatingWrapper.rotation = 0;
+                                let currentRotation = rotatingWrapper.rotation % 360;
+                                if (currentRotation > 180) {
+                                    rotatingWrapper.rotation = 360;
+                                } else {
+                                    rotatingWrapper.rotation = 0;
+                                }
                             }
                         }
                     }
@@ -342,7 +365,7 @@ StyledRect {
             anchors.fill: parent
             color: "black"
             opacity: 0.4
-            radius: player.playerRadius
+            radius: innerPlayer.radius
             
             MouseArea {
                 anchors.fill: parent
@@ -359,7 +382,7 @@ StyledRect {
             anchors.margins: 4
             implicitHeight: Math.min(160, playersListView.contentHeight + 8)
             variant: "pane"
-            radius: player.playerRadius - 2
+            radius: innerPlayer.radius - 4
 
             ListView {
                 id: playersListView
@@ -412,6 +435,8 @@ StyledRect {
                 }
             }
         }
+    }
+
     }
 
     // Internal component for small buttons
