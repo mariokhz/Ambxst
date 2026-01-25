@@ -54,7 +54,7 @@ QtObject {
         repeat: true
         running: true
         onTriggered: {
-            checkProcess.running = true
+            checkProcess.running = true;
         }
     }
 
@@ -64,7 +64,7 @@ QtObject {
         onExited: exitCode => {
             var wasRecording = root.isRecording;
             root.isRecording = (exitCode === 0);
-            
+
             if (root.isRecording && !wasRecording) {
                 console.log("[ScreenRecorder] Detected running instance.");
             }
@@ -97,11 +97,12 @@ QtObject {
     }
 
     function startRecording(recordAudioOutput, recordAudioInput, mode, regionStr) {
-        if (isRecording) return;
-        
+        if (isRecording)
+            return;
+
         var outputFile = root.videosDir + "/" + new Date().toISOString().replace(/[:.]/g, "-") + ".mp4";
-        var cmd = "gpu-screen-recorder -f 60 -q ultra -ac opus -cr full";
-        
+        var cmd = "gpu-screen-recorder -f 60";
+
         // Window mode: -w based on mode
         if (mode === "portal") {
             cmd += " -w portal";
@@ -113,26 +114,28 @@ QtObject {
                 cmd += " -region " + regionStr;
             }
         }
-        
+
         // Audio
         var audioSources = [];
-        if (recordAudioOutput) audioSources.push("default_output");
-        if (recordAudioInput) audioSources.push("default_input");
+        if (recordAudioOutput)
+            audioSources.push("default_output");
+        if (recordAudioInput)
+            audioSources.push("default_input");
 
         if (audioSources.length === 1) {
             cmd += " -a " + audioSources[0];
         } else if (audioSources.length > 1) {
             cmd += " -a \"" + audioSources.join("|") + "\"";
         }
-        
+
         cmd += " -o \"" + outputFile + "\"";
-        
+
         console.log("[ScreenRecorder] Starting with command: " + cmd);
         startProcess.command = ["bash", "-c", cmd];
-        
+
         prepareProcess.running = true;
     }
-    
+
     // 1. Ensure directory exists
     property Process prepareProcess: Process {
         id: prepareProcess
@@ -153,25 +156,25 @@ QtObject {
     property Process startProcess: Process {
         id: startProcess
         command: ["bash", "-c", "echo 'Error: Command not set'"]
-        
+
         stdout: StdioCollector {
             onTextChanged: console.log("[ScreenRecorder] OUT: " + text)
         }
         stderr: StdioCollector {
             id: stderrCollector
             onTextChanged: {
-                console.warn("[ScreenRecorder] ERR: " + text)
+                console.warn("[ScreenRecorder] ERR: " + text);
                 // root.lastError = text // gpu-screen-recorder is verbose
             }
         }
-        
+
         onExited: exitCode => {
-            console.log("[ScreenRecorder] Exited with code: " + exitCode)
+            console.log("[ScreenRecorder] Exited with code: " + exitCode);
             if (exitCode !== 0 && exitCode !== 130 && exitCode !== 2) { // 2 is SIGINT sometimes
-                root.isRecording = false
-                notifyErrorProcess.running = true
+                root.isRecording = false;
+                notifyErrorProcess.running = true;
             } else {
-                notifySavedProcess.running = true
+                notifySavedProcess.running = true;
             }
         }
     }
@@ -185,7 +188,7 @@ QtObject {
         id: notifySavedProcess
         command: ["notify-send", "Screen Recorder", "Recording saved to " + root.videosDir]
     }
-    
+
     property Process openVideosProcess: Process {
         id: openVideosProcess
         command: ["xdg-open", root.videosDir]

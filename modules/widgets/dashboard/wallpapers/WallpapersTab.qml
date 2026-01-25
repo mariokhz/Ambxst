@@ -25,7 +25,7 @@ FocusScope {
     property var activeFilters: []  // Lista de tipos de archivo seleccionados para filtrar
 
     // Configuración interna del grid
-    readonly property int gridColumns: 8
+    readonly property int gridColumns: 7
     readonly property int wallpaperMargin: 4
 
     // Array de elementos focusables para navegación cíclica
@@ -192,7 +192,6 @@ FocusScope {
 
         return wallpapers;
     }
-
 
     ColumnLayout {
         anchors.fill: parent

@@ -83,6 +83,7 @@ StyledRect {
         // Main Layout
         ColumnLayout {
             id: mainLayout
+            anchors.centerIn: parent
             anchors.fill: parent
             anchors.margins: 16
             spacing: 8
@@ -98,8 +99,9 @@ StyledRect {
             Item {
                 id: discArea
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 220
-                Layout.preferredHeight: 220
+                Layout.preferredWidth: 180
+                Layout.preferredHeight: 180
+                Layout.topMargin: -8
                 Layout.bottomMargin: -24
 
                 CircularSeekBar {

@@ -26,7 +26,7 @@ Rectangle {
 
         // Player (Replaces Loader)
         FullPlayer {
-            Layout.preferredWidth: 252
+            Layout.preferredWidth: 216
             Layout.fillHeight: true
         }
 
@@ -148,19 +148,19 @@ Rectangle {
                         }
                     }
 
-                    /* 
+                    /*
                     Loader {
                         Layout.fillWidth: true
                         // Estimate height: Margins(32) + Disc(180) + Metadata(~60) + Controls(44) + Duration(~20) + Spacing(36) = ~372
                         Layout.preferredHeight: status === Loader.Ready ? -1 : (MprisController.activePlayer ? 370 : 300)
                         asynchronous: true
                         sourceComponent: Component {
-                            FullPlayer { 
-                                width: parent.width 
+                            FullPlayer {
+                                width: parent.width
                                 onIsDraggingChanged: widgetsContainer.circularControlDragging = isDragging
                             }
                         }
-                    } 
+                    }
                     */
 
                     Calendar {
