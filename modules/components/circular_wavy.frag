@@ -20,36 +20,26 @@ layout(std140, binding = 0) uniform buf {
 #define PI 3.14159265359
 
 // Calculate the target radius for a given angle
-// This defines our "ideal" wavy path in polar coordinates
 float targetRadiusAt(float angle) {
-    // We base the wave on the relative angle so it travels along the path
-    // correctly regardless of startAngle
     float relAngle = angle - ubuf.startAngle;
-    
-    // Normalize logic not strictly needed here if we assume inputs are continuous,
-    // but for the sine wave phase it helps if we want consistent frequency.
-    
     return ubuf.radius + ubuf.amplitude * sin(ubuf.frequency * relAngle + ubuf.phase);
 }
 
+// Convert Polar to Cartesian
+vec2 polarToCartesian(float r, float theta) {
+    return vec2(r * cos(theta), r * sin(theta));
+}
+
 // Robust Distance Field search in Polar Coordinates
-// This replicates the logic from wavyline.frag but adapted for r/theta
 float distanceToWave(float r, float theta) {
     // 1. Define search window in Angular space
-    // How many radians does the wave "wobble"? 
-    // This is trickier than linear X. We estimate a safe angular window.
-    // At radius R, arc length L = R * theta. 
-    // We want to search +/- a few pixels worth of arc length.
-    
-    // A safe heuristic: The wave slope is bounded. We search a small angular neighborhood.
     // 0.1 radians is usually enough for high frequency waves at typical radii.
     float searchWindow = 0.15; 
     
     float minStart = theta - searchWindow;
     float minEnd = theta + searchWindow;
     
-    const int numSteps = 24; // Lower steps than linear because polar is expensive? Or keep high?
-                             // WavyLine used 40. Let's try 30.
+    const int numSteps = 24; 
     
     float minDistanceSq = 1.0e+20;
     
@@ -57,26 +47,9 @@ float distanceToWave(float r, float theta) {
         float t = float(i) / float(numSteps);
         float sampleTheta = mix(minStart, minEnd, t);
         
-        // Calculate the ideal point on the wave at this sample angle
         float sampleR = targetRadiusAt(sampleTheta);
         
-        // Convert sample point back to Cartesian relative to center (0,0)
-        // We compare it against our current pixel's position (r, theta) -> (x,y)
-        // Actually, we can just do distance in Cartesian space.
-        
-        // Current pixel position (already known as r, theta)
-        // vec2 currentPos = vec2(r * cos(theta), r * sin(theta)); // This is just 'uv'
-        
-        // Sample position
-        // vec2 samplePos = vec2(sampleR * cos(sampleTheta), sampleR * sin(sampleTheta));
-        
-        // Optimization: We can compute distance squared directly in polar? 
-        // Law of cosines: d^2 = r1^2 + r2^2 - 2*r1*r2*cos(theta1 - theta2)
-        // This avoids expensive sin/cos inside the loop? 
-        // Actually sin/cos might be needed for the wave anyway. 
-        // Let's stick to Cartesian distance for correctness.
-        
-        // But wait, constructing vec2 inside loop is fine.
+        // Calculate Cartesian distance squared
         float dX = r * cos(theta) - sampleR * cos(sampleTheta);
         float dY = r * sin(theta) - sampleR * sin(sampleTheta);
         float distSq = dX*dX + dY*dY;
@@ -88,45 +61,63 @@ float distanceToWave(float r, float theta) {
 }
 
 void main() {
-    // UV centered at 0,0
+    // UV centered at 0,0 (Range -0.5 to 0.5)
     vec2 uv = qt_TexCoord0 - 0.5;
     
     float r = length(uv);
     float theta = atan(uv.y, uv.x); // [-PI, PI]
-    
-    // Normalize theta to [0, 2PI)
     if (theta < 0.0) theta += 2.0 * PI;
     
-    // --- Masking Logic ---
+    // --- Determine if inside Angular Mask ---
     float relAngle = theta - ubuf.startAngle;
     relAngle = mod(relAngle, 2.0 * PI);
     if (relAngle < 0.0) relAngle += 2.0 * PI;
     
-    // Strict cut
-    if (relAngle > ubuf.progressAngle) {
-        discard;
-    }
+    bool insideMask = (relAngle <= ubuf.progressAngle);
     
-    // --- Distance Calculation ---
-    // If we are too far from the base ring, discard early to save trig
-    // Max wave deviation = amplitude. Max thickness = thickness/2.
-    // Margin = amplitude + thickness.
+    // --- Distance to Curve ---
+    float d_curve = 1.0; // Assume infinite if calculation skipped
+    
+    // Optimization: Only compute precise distance if reasonably close to the ring
     float margin = ubuf.amplitude + ubuf.thickness;
-    if (abs(r - ubuf.radius) > margin) {
-        discard;
+    if (abs(r - ubuf.radius) <= margin) {
+        d_curve = distanceToWave(r, theta);
     }
     
-    // Perform robust distance search
-    float d = distanceToWave(r, theta);
+    // If outside mask, d_curve is irrelevant (infinite)
+    if (!insideMask) d_curve = 1.0;
+    
+    // --- Distance to Caps ---
+    // Start Cap
+    float startTheta = ubuf.startAngle;
+    float startR = targetRadiusAt(startTheta);
+    vec2 startPos = polarToCartesian(startR, startTheta);
+    float d_start = distance(uv, startPos);
+    
+    // End Cap
+    // Note: Use startAngle + progressAngle.
+    // Ensure we account for wrapping if needed, but simple addition works for trig.
+    float endTheta = ubuf.startAngle + ubuf.progressAngle;
+    float endR = targetRadiusAt(endTheta);
+    vec2 endPos = polarToCartesian(endR, endTheta);
+    float d_end = distance(uv, endPos);
+    
+    // --- Combine Distances ---
+    // We render the union of the masked curve and the two caps
+    float d_caps = min(d_start, d_end);
+    float d_final = min(d_curve, d_caps);
     
     // --- Rendering ---
     float halfThick = ubuf.thickness * 0.5;
     
-    // AA width: use fwidth or passed pixel size
-    float aa = fwidth(d);
-    if (aa == 0.0) aa = 0.001; // Fallback
+    // Use fixed AA width based on pixel size to avoid artifacts from fwidth() 
+    // at discontinuities (mask boundaries, optimization margins).
+    // ubuf.pixelSize is (1.0 / canvasWidth). We use 1.5 pixels for smooth edges.
+    float aa = ubuf.pixelSize * 1.5;
     
-    float alpha = 1.0 - smoothstep(halfThick - aa, halfThick + aa, d);
+    float alpha = 1.0 - smoothstep(halfThick - aa, halfThick + aa, d_final);
+    
+    if (alpha <= 0.0) discard;
     
     fragColor = ubuf.color * alpha * ubuf.qt_Opacity;
 }
