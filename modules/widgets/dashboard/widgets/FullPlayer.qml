@@ -291,10 +291,32 @@ StyledRect {
                 Layout.preferredWidth: 44
                 Layout.preferredHeight: 44
                 variant: "primary"
-                radius: player.isPlaying ? Styling.radius(0) : Styling.radius(16)
                 
-                Behavior on radius {
+                animateRadius: false
+                radius: Styling.radius(16) // Default/Paused state
+                
+                states: [
+                    State {
+                        name: "playing"
+                        when: player.isPlaying
+                        PropertyChanges {
+                            target: playPauseBtn
+                            radius: Styling.radius(0)
+                        }
+                    },
+                    State {
+                        name: "paused"
+                        when: !player.isPlaying
+                        PropertyChanges {
+                            target: playPauseBtn
+                            radius: Styling.radius(16)
+                        }
+                    }
+                ]
+                
+                transitions: Transition {
                     NumberAnimation {
+                        properties: "radius"
                         duration: 300
                         easing.type: Easing.OutBack
                     }
