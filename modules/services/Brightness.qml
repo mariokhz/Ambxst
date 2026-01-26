@@ -24,6 +24,14 @@ Singleton {
 
     property bool syncBrightness: StateService.get("syncBrightness", false)
 
+    property var suspendConnections: Connections {
+        target: SuspendManager
+        function onWakingUp() {
+            // Re-initialize monitors on wake with a delay
+            ddcDetectTimer.restart();
+        }
+    }
+
     onSyncBrightnessChanged: {
         if (StateService.initialized) {
             StateService.set("syncBrightness", syncBrightness);
@@ -66,7 +74,19 @@ Singleton {
 
     onMonitorsChanged: {
         ddcMonitors = [];
-        ddcProc.running = true;
+        // Debounce detection to avoid multiple processes during wake/screen changes
+        ddcDetectTimer.restart();
+    }
+
+    Timer {
+        id: ddcDetectTimer
+        interval: 1000
+        repeat: false
+        onTriggered: {
+            if (!SuspendManager.isSuspending) {
+                ddcProc.running = true;
+            }
+        }
     }
 
     Process {

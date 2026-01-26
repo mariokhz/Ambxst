@@ -52,7 +52,7 @@ QtObject {
     property Timer statusTimer: Timer {
         interval: 1000
         repeat: true
-        running: true
+        running: !SuspendManager.isSuspending
         onTriggered: {
             checkProcess.running = true;
         }

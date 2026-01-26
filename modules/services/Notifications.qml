@@ -98,35 +98,35 @@ Singleton {
         property bool isPaused: false
         property real startTime: Date.now()
 
+        property var suspendConnections: Connections {
+            target: SuspendManager
+            function onWakingUp() {
+                if (!isPaused) {
+                    // Small delay after wake to prevent popups appearing while screen is still transitioning
+                    wakeStartTimer.restart();
+                }
+            }
+        }
+        
+        property var wakeStartTimer: Timer {
+            id: wakeStartTimer
+            interval: 1000
+            repeat: false
+            onTriggered: if (!isPaused) parent.start()
+        }
+
         interval: originalInterval
-        running: !isPaused
+        running: !isPaused && !SuspendManager.isSuspending
 
         function pause() {
-            if (!isPaused) {
-                isPaused = true;
-                stop();
-            }
+            isPaused = true;
+            stop();
         }
 
         function resume() {
-            if (isPaused) {
-                isPaused = false;
-                interval = originalInterval;
-                startTime = Date.now();
+            isPaused = false;
+            if (!SuspendManager.isSuspending) {
                 start();
-            }
-        }
-
-        function triggerTimeout() {
-            root.timeoutNotification(id);
-            destroy();
-        }
-
-        onTriggered: triggerTimeout()
-
-        onRunningChanged: {
-            if (running) {
-                startTime = Date.now();
             }
         }
     }

@@ -22,6 +22,33 @@ Singleton {
     property var pendingInfoUpdates: []
     property bool isProcessingInfoQueue: false
 
+    property var suspendConnections: Connections {
+        target: SuspendManager
+        function onPreparingForSleep() {
+            if (discovering) {
+                root.stopDiscovery();
+            }
+            scanTimer.stop();
+            infoQueueTimer.stop();
+        }
+        function onWakingUp() {
+            // Re-sync status after wake
+            wakeSyncTimer.restart();
+        }
+    }
+
+    property var wakeSyncTimer: Timer {
+        id: wakeSyncTimer
+        interval: 3000
+        repeat: false
+        onTriggered: {
+            root.updateStatus();
+            if (root.enabled) {
+                root.updateDevices();
+            }
+        }
+    }
+
     function updateFriendlyList() {
         friendlyDeviceList = [...devices].sort((a, b) => {
             // Connected devices first
@@ -66,7 +93,11 @@ Singleton {
         interval: 50  // 50ms between each info request
         running: false
         repeat: false
-        onTriggered: root.processNextInfoUpdate()
+        onTriggered: {
+            if (!SuspendManager.isSuspending) {
+                root.processNextInfoUpdate();
+            }
+        }
     }
 
     // Control functions
@@ -75,12 +106,13 @@ Singleton {
     }
 
     function setEnabled(value: bool) {
+        if (SuspendManager.isSuspending) return;
         toggleProcess.command = ["bluetoothctl", "power", value ? "on" : "off"];
         toggleProcess.running = true;
     }
 
     function startDiscovery() {
-        if (enabled) {
+        if (enabled && !SuspendManager.isSuspending) {
             discovering = true;
             scanProcess.command = ["bluetoothctl", "scan", "on"];
             scanProcess.running = true;
@@ -129,7 +161,7 @@ Singleton {
     Timer {
         id: updateTimer
         interval: 5000
-        running: root.enabled
+        running: root.enabled && !SuspendManager.isSuspending
         repeat: true
         onTriggered: root.updateDevices()
     }

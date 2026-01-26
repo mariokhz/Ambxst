@@ -118,6 +118,16 @@ PanelWindow {
         }
     }
 
+    property var suspendConnections: Connections {
+        target: SuspendManager
+        function onPreparingForSleep() {
+            hideDelayTimer.stop();
+            notchPanel.hoverActive = false;
+            // Force close any open modules to ensure a clean state on wake
+            Visibilities.setActiveModule("");
+        }
+    }
+
     // Watch for mouse state changes
     onIsMouseOverNotchChanged: {
         if (isMouseOverNotch) {

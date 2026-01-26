@@ -3,6 +3,7 @@ import Quickshell
 import qs.modules.widgets.dashboard.controls
 import qs.modules.components
 import qs.modules.globals
+import qs.modules.theme
 import qs.config
 
 FloatingWindow {

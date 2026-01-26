@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 
-QtObject {
+Singleton {
     id: root
 
     // Current weather data
@@ -36,6 +36,53 @@ QtObject {
 
     // Script path
     readonly property string scriptPath: Quickshell.shellDir + "/scripts/weather.sh"
+
+    // Retry logic
+    property int retryCount: 0
+    readonly property int maxRetries: 3
+    property bool wasCancelled: false
+
+    property var suspendConnections: Connections {
+        target: SuspendManager
+        function onPreparingForSleep() {
+            if (weatherProcess.running) {
+                root.wasCancelled = true;
+                weatherProcess.running = false;
+            }
+            if (retryTimer) retryTimer.stop();
+        }
+        function onWakingUp() {
+            // Delay refresh on wake to allow network to stabilize
+            if (wakeRefreshTimer) wakeRefreshTimer.restart();
+        }
+    }
+
+    property var wakeRefreshTimer: Timer {
+        id: wakeRefreshTimer
+        interval: 5000
+        repeat: false
+        onTriggered: root.updateWeather()
+    }
+
+    property Timer refreshTimer: Timer {
+        interval: 600000  // 10 minutes
+        running: !SuspendManager.isSuspending
+        repeat: true
+        onTriggered: root.updateWeather()
+    }
+
+    property Timer sunPositionTimer: Timer {
+        interval: 60000  // 1 minute
+        running: !SuspendManager.isSuspending
+        repeat: true
+        onTriggered: root.calculateSunPosition()
+    }
+
+    property Timer retryTimer: Timer {
+        interval: 3000
+        repeat: false
+        onTriggered: root.updateWeather()
+    }
 
     // Parse "HH:MM" to hours as decimal (e.g., "14:30" -> 14.5)
     function parseTime(timeStr) {
@@ -321,13 +368,6 @@ QtObject {
         return temp;
     }
 
-    // Retry logic
-    property int retryCount: 0
-    readonly property int maxRetries: 3
-    property bool wasCancelled: false
-
-
-
     function handleError() {
         if (retryCount < maxRetries) {
             retryCount++;
@@ -337,12 +377,6 @@ QtObject {
             root.hasFailed = true;
             retryCount = 0;
         }
-    }
-
-    property Timer retryTimer: Timer {
-        interval: 3000
-        repeat: false
-        onTriggered: root.updateWeather()
     }
 
     property Process weatherProcess: Process {
@@ -451,20 +485,6 @@ QtObject {
             // Reset cancelled flag after process fully exits
             root.wasCancelled = false;
         }
-    }
-
-    property Timer refreshTimer: Timer {
-        interval: 600000  // 10 minutes
-        running: true
-        repeat: true
-        onTriggered: root.updateWeather()
-    }
-
-    property Timer sunPositionTimer: Timer {
-        interval: 60000  // 1 minute
-        running: true
-        repeat: true
-        onTriggered: root.calculateSunPosition()
     }
 
     // Watch for config changes

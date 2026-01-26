@@ -23,11 +23,31 @@ QtObject {
 
     property bool _initialized: false
 
+    property var suspendConnections: Connections {
+        target: SuspendManager
+        function onWakingUp() {
+            // Small delay to allow wl-paste to work again after wake
+            wakeRestartTimer.restart();
+        }
+    }
+
+    property var wakeRestartTimer: Timer {
+        id: wakeRestartTimer
+        interval: 2000
+        repeat: false
+        onTriggered: {
+            if (root._initialized) {
+                root.list();
+                clipboardWatcher.running = true;
+            }
+        }
+    }
+
     signal listCompleted()
 
     // Clipboard watcher using custom script that monitors changes
     property Process clipboardWatcher: Process {
-        running: root._initialized
+        running: root._initialized && !SuspendManager.isSuspending
         command: [watchScriptPath, checkScriptPath, dbPath, insertScriptPath, binaryDataDir]
         
         stdout: StdioCollector {
@@ -51,11 +71,11 @@ QtObject {
         }
         
         onExited: function(code) {
-            // Watcher should keep running, restart if it exits
-            if (root._initialized) {
+            // Watcher should keep running, restart if it exits (unless suspending)
+            if (root._initialized && !SuspendManager.isSuspending) {
                 console.warn("ClipboardService: watcher exited with code:", code, "- restarting...");
                 Qt.callLater(function() {
-                    if (root._initialized) {
+                    if (root._initialized && !SuspendManager.isSuspending) {
                         clipboardWatcher.running = true;
                     }
                 });

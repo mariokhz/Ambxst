@@ -222,6 +222,7 @@ PanelWindow {
     }
 
     function scanSubfolders() {
+        if (!wallpaperDir) return;
         // Explicitly update command with current wallpaperDir
         var cmd = ["find", wallpaperDir, "-type", "d", "-mindepth", "1", "-maxdepth", "1"];
         scanSubfoldersProcess.command = cmd;
@@ -482,11 +483,11 @@ PanelWindow {
                         wallpaper._wallpaperDirInitialized = true;
                         
                         // Set up directory watcher
-                        directoryWatcher.path = wallpaper.wallpaperDir;
+                        directoryWatcher.path = wallPath;
                         directoryWatcher.reload();
                         
                         // Perform initial wallpaper scan
-                        var cmd = ["find", wallpaper.wallpaperDir, "-type", "f", "(", "-name", "*.jpg", "-o", "-name", "*.jpeg", "-o", "-name", "*.png", "-o", "-name", "*.webp", "-o", "-name", "*.tif", "-o", "-name", "*.tiff", "-o", "-name", "*.gif", "-o", "-name", "*.mp4", "-o", "-name", "*.webm", "-o", "-name", "*.mov", "-o", "-name", "*.avi", "-o", "-name", "*.mkv", ")"];
+                        var cmd = ["find", wallPath, "-type", "f", "(", "-name", "*.jpg", "-o", "-name", "*.jpeg", "-o", "-name", "*.png", "-o", "-name", "*.webp", "-o", "-name", "*.tif", "-o", "-name", "*.tiff", "-o", "-name", "*.gif", "-o", "-name", "*.mp4", "-o", "-name", "*.webm", "-o", "-name", "*.mov", "-o", "-name", "*.avi", "-o", "-name", "*.mkv", ")"];
                         scanWallpapers.command = cmd;
                         scanWallpapers.running = true;
                         wallpaper.scanSubfolders();
@@ -638,7 +639,7 @@ PanelWindow {
     Process {
         id: scanSubfoldersProcess
         running: false
-        command: ["find", wallpaperDir, "-type", "d", "-mindepth", "1", "-maxdepth", "1"]
+        command: wallpaperDir ? ["find", wallpaperDir, "-type", "d", "-mindepth", "1", "-maxdepth", "1"] : []
 
         stdout: StdioCollector {
             onStreamFinished: {

@@ -111,7 +111,7 @@ Singleton {
     }
 
     // Delay timer for refresh after preset load
-    Timer {
+    property var refreshDelayTimer: Timer {
         id: refreshDelayTimer
         interval: 100
         repeat: false
@@ -207,9 +207,9 @@ Singleton {
     }
 
     // Poll for state changes periodically
-    Timer {
+    property var pollTimer: Timer {
         interval: 5000
-        running: root.available
+        running: root.available && !SuspendManager.isSuspending
         repeat: true
         onTriggered: {
             bypassStateProcess.running = true;

@@ -51,7 +51,7 @@ ShellRoot {
 
         Loader {
             id: desktopLoader
-            active: Config.desktop.enabled
+            active: Config.desktop.enabled && SuspendManager.wakeReady
             required property ShellScreen modelData
             sourceComponent: Desktop {
                 screen: desktopLoader.modelData
@@ -73,7 +73,7 @@ ShellRoot {
             
             // Force reload when position changes to prevent artifacts
             property bool _active: true
-            active: _active
+            active: _active && !SuspendManager.isSuspending
 
             Connections {
                 target: Config.bar
@@ -145,7 +145,7 @@ ShellRoot {
 
         Loader {
             id: overviewLoader
-            active: Config.overview?.enabled ?? true
+            active: (Config.overview?.enabled ?? true) && SuspendManager.wakeReady
             required property ShellScreen modelData
             sourceComponent: OverviewPopup {
                 screen: overviewLoader.modelData
@@ -165,7 +165,7 @@ ShellRoot {
 
         Loader {
             id: presetsLoader
-            active: true
+            active: SuspendManager.wakeReady
             required property ShellScreen modelData
             sourceComponent: PresetsPopup {
                 screen: presetsLoader.modelData
@@ -195,12 +195,12 @@ ShellRoot {
         Timer {
             id: dockDelayTimer
             interval: 300
-            running: true
+            running: SuspendManager.wakeReady
             repeat: false
             onTriggered: dockLoader._ready = true
         }
 
-        active: _ready && (Config.dock?.enabled ?? false) && (Config.dock?.theme ?? "default") !== "integrated"
+        active: _ready && (Config.dock?.enabled ?? false) && (Config.dock?.theme ?? "default") !== "integrated" && SuspendManager.wakeReady
         sourceComponent: Dock {}
     }
 
@@ -248,7 +248,7 @@ ShellRoot {
 
         Loader {
             id: screenshotOverlayLoader
-            active: true
+            active: SuspendManager.wakeReady
             required property ShellScreen modelData
             sourceComponent: ScreenshotOverlay {
                 targetScreen: screenshotOverlayLoader.modelData
@@ -260,7 +260,7 @@ ShellRoot {
     // Screen Record Tool
     Loader {
         id: screenRecordLoader
-        active: true
+        active: SuspendManager.wakeReady
         source: "modules/tools/ScreenrecordTool.qml"
         
         Connections {
@@ -290,14 +290,14 @@ ShellRoot {
     // Mirror Tool
     Loader {
         id: mirrorLoader
-        active: true
+        active: SuspendManager.wakeReady
         source: "modules/tools/MirrorWindow.qml"
     }
 
     // Settings Window
     Loader {
         id: settingsWindowLoader
-        active: true
+        active: SuspendManager.wakeReady
         source: "modules/widgets/config/SettingsWindow.qml"
     }
 

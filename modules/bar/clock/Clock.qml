@@ -28,7 +28,6 @@ Item {
     // Popup visibility state
     property bool popupOpen: clockPopup.isOpen
 
-    // Weather availability
     readonly property bool weatherAvailable: WeatherService.dataAvailable
 
     Layout.preferredWidth: vertical ? 36 : buttonBg.implicitWidth
@@ -203,7 +202,7 @@ Item {
                 // Update date every minute
                 Timer {
                     interval: 60000
-                    running: true
+                    running: !SuspendManager.isSuspending
                     repeat: true
                     onTriggered: calendarWrapper.currentDate = new Date()
                 }
@@ -622,7 +621,7 @@ Item {
 
     Timer {
         interval: 1000
-        running: true
+        running: !SuspendManager.isSuspending
         repeat: true
         onTriggered: {
             var now = new Date();
