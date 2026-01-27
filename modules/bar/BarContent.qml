@@ -557,6 +557,10 @@ Item {
                         property real targetY: {
                             if (!parent || !bar)
                                 return 0;
+
+                            // Force re-evaluation when parent moves
+                            var _trigger = parent.y;
+
                             var parentPos = parent.mapToItem(bar, 0, 0);
                             return (bar.height - height) / 2 - parentPos.y;
                         }
