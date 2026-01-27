@@ -1,7 +1,9 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
 import qs.config
+import qs.modules.bar.workspaces
 
 Item {
     id: root
@@ -9,20 +11,26 @@ Item {
     required property ShellScreen targetScreen
 
     readonly property alias frameEnabled: frameContent.frameEnabled
-    readonly property alias thickness: frameContent.thickness
+    readonly property alias baseThickness: frameContent.thickness
+    readonly property bool hasFullscreenWindow: {
+        const toplevel = ToplevelManager.activeToplevel;
+        if (!toplevel || !toplevel.activated)
+            return false;
+        return toplevel.fullscreen === true;
+    }
     readonly property alias actualFrameSize: frameContent.actualFrameSize
+    readonly property int thickness: hasFullscreenWindow ? 0 : baseThickness
+
     readonly property alias innerRadius: frameContent.innerRadius
-
     readonly property bool containBar: Config.bar?.containBar ?? false
-    readonly property string barPos: Config.bar?.position ?? "top"
 
-    // Centralize thickness logic here to ensure windows update reliably
+    readonly property string barPos: Config.bar?.position ?? "top"
     // Bar height is 44. Total size = Thickness (Outer) + Bar (44) + Thickness (Inner)
     readonly property int barExpansion: 44 + thickness
-    readonly property int topThickness: thickness + ((containBar && barPos === "top") ? barExpansion : 0)
-    readonly property int bottomThickness: thickness + ((containBar && barPos === "bottom") ? barExpansion : 0)
-    readonly property int leftThickness: thickness + ((containBar && barPos === "left") ? barExpansion : 0)
-    readonly property int rightThickness: thickness + ((containBar && barPos === "right") ? barExpansion : 0)
+    readonly property int topThickness: hasFullscreenWindow ? 0 : (thickness + ((containBar && barPos === "top") ? barExpansion : 0))
+    readonly property int bottomThickness: hasFullscreenWindow ? 0 : (thickness + ((containBar && barPos === "bottom") ? barExpansion : 0))
+    readonly property int leftThickness: hasFullscreenWindow ? 0 : (thickness + ((containBar && barPos === "left") ? barExpansion : 0))
+    readonly property int rightThickness: hasFullscreenWindow ? 0 : (thickness + ((containBar && barPos === "right") ? barExpansion : 0))
 
     Item {
         id: noInputRegion
@@ -46,8 +54,8 @@ Item {
         WlrLayershell.namespace: "quickshell:screenFrame:top"
         
         // Always Normal mode, control zone size directly
-        exclusionMode: (root.containBar && root.barPos === "top") ? ExclusionMode.Normal : ExclusionMode.Ignore
-        exclusiveZone: (root.containBar && root.barPos === "top") ? root.topThickness : 0
+        exclusionMode: (root.containBar && root.barPos === "top" && !root.hasFullscreenWindow) ? ExclusionMode.Normal : ExclusionMode.Ignore
+        exclusiveZone: (root.containBar && root.barPos === "top" && !root.hasFullscreenWindow) ? root.topThickness : 0
 
         mask: Region { item: noInputRegion }
     }
@@ -68,8 +76,8 @@ Item {
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         WlrLayershell.namespace: "quickshell:screenFrame:bottom"
         
-        exclusionMode: (root.containBar && root.barPos === "bottom") ? ExclusionMode.Normal : ExclusionMode.Ignore
-        exclusiveZone: (root.containBar && root.barPos === "bottom") ? root.bottomThickness : 0
+        exclusionMode: (root.containBar && root.barPos === "bottom" && !root.hasFullscreenWindow) ? ExclusionMode.Normal : ExclusionMode.Ignore
+        exclusiveZone: (root.containBar && root.barPos === "bottom" && !root.hasFullscreenWindow) ? root.bottomThickness : 0
 
         mask: Region { item: noInputRegion }
     }
@@ -90,8 +98,8 @@ Item {
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         WlrLayershell.namespace: "quickshell:screenFrame:left"
         
-        exclusionMode: (root.containBar && root.barPos === "left") ? ExclusionMode.Normal : ExclusionMode.Ignore
-        exclusiveZone: (root.containBar && root.barPos === "left") ? root.leftThickness : 0
+        exclusionMode: (root.containBar && root.barPos === "left" && !root.hasFullscreenWindow) ? ExclusionMode.Normal : ExclusionMode.Ignore
+        exclusiveZone: (root.containBar && root.barPos === "left" && !root.hasFullscreenWindow) ? root.leftThickness : 0
 
         mask: Region { item: noInputRegion }
     }
@@ -112,8 +120,8 @@ Item {
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         WlrLayershell.namespace: "quickshell:screenFrame:right"
         
-        exclusionMode: (root.containBar && root.barPos === "right") ? ExclusionMode.Normal : ExclusionMode.Ignore
-        exclusiveZone: (root.containBar && root.barPos === "right") ? root.rightThickness : 0
+        exclusionMode: (root.containBar && root.barPos === "right" && !root.hasFullscreenWindow) ? ExclusionMode.Normal : ExclusionMode.Ignore
+        exclusiveZone: (root.containBar && root.barPos === "right" && !root.hasFullscreenWindow) ? root.rightThickness : 0
 
         mask: Region { item: noInputRegion }
     }

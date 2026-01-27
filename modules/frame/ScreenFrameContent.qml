@@ -12,6 +12,7 @@ Item {
     id: root
 
     required property ShellScreen targetScreen
+    property bool hasFullscreenWindow: false
 
     // These properties are now handled by parent ScreenFrame
     // but we can expose aliases or simple properties for drawing
@@ -35,6 +36,7 @@ Item {
     
     // Use the same thickness logic as ScreenFrame to ensure consistency
     readonly property int thickness: {
+        if (hasFullscreenWindow) return 0;
         const value = Config.bar?.frameThickness;
         if (typeof value !== "number")
             return 6;

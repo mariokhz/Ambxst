@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.modules.bar
+import qs.modules.bar.workspaces
 import qs.modules.notch
 import qs.modules.dock
 import qs.modules.frame
@@ -53,6 +54,27 @@ PanelWindow {
     readonly property alias reveal: barContent.reveal
     readonly property alias hoverActive: barContent.hoverActive // Default hoverActive points to bar
     readonly property alias notch_hoverActive: notchContent.hoverActive // Used by bar to check notch
+
+    readonly property var hyprlandMonitor: Hyprland.monitorFor(targetScreen)
+    readonly property bool hasFullscreenWindow: {
+        if (!hyprlandMonitor) return false;
+        
+        // Check active toplevel first (fast path)
+        const toplevel = ToplevelManager.activeToplevel;
+        if (toplevel && toplevel.fullscreen && Hyprland.focusedMonitor.id === hyprlandMonitor.id) {
+             return true;
+        }
+
+        // Check all windows on this monitor (robust path)
+        const wins = HyprlandData.windowList;
+        const monId = hyprlandMonitor.id;
+        for (let i = 0; i < wins.length; i++) {
+            if (wins[i].monitor === monId && wins[i].fullscreen) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     // Proxy properties for Bar/Notch synchronization
     // Note: BarContent and NotchContent already handle their internal sync using Visibilities.
@@ -120,6 +142,7 @@ PanelWindow {
             id: frameContent
             anchors.fill: parent
             targetScreen: unifiedPanel.targetScreen
+            hasFullscreenWindow: unifiedPanel.hasFullscreenWindow
             z: 1
         }
 
@@ -169,6 +192,7 @@ PanelWindow {
         ScreenCornersContent {
             id: cornersContent
             anchors.fill: parent
+            hasFullscreenWindow: unifiedPanel.hasFullscreenWindow
             z: 5
             visible: Config.theme.enableCorners && Config.roundness > 0
         }
