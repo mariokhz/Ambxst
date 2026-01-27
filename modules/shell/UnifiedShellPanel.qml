@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
@@ -118,6 +119,16 @@ PanelWindow {
         anchors.fill: parent
         screen: unifiedPanel.targetScreen
         z: 2
+
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskInverted: true
+            maskSource: ShaderEffectSource {
+                sourceItem: notchContent
+                hideSource: false
+            }
+        }
     }
 
     DockContent {
