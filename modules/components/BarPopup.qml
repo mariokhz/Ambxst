@@ -60,8 +60,9 @@ PopupWindow {
 
     // Frame detection
     readonly property bool frameEnabled: Config.bar?.frameEnabled ?? false
+    readonly property bool containBar: Config.bar?.containBar ?? false
     readonly property int frameThickness: Config.bar?.frameThickness ?? 0
-    readonly property int effectiveFrameOffset: frameEnabled ? frameThickness : 0
+    readonly property int effectiveFrameOffset: (frameEnabled && containBar) ? frameThickness : 0
 
     // Anchor positioning
     // The anchor.rect defines where the popup window's top-left corner will be placed
