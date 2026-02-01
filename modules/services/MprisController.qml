@@ -113,7 +113,7 @@ Singleton {
             }
 
             Component.onDestruction: {
-                if (root.trackedPlayer == null || !root.trackedPlayer.isPlaying) {
+                if (root.trackedPlayer === modelData) {
                     for (const player of root.filteredPlayers) {
                         if (player.playbackState.isPlaying) {
                             root.trackedPlayer = player;
@@ -121,8 +121,8 @@ Singleton {
                         }
                     }
 
-                    if (root.trackedPlayer == null && root.filteredPlayers.length != 0) {
-                        root.trackedPlayer = root.filteredPlayers[0];
+                    if (root.trackedPlayer === modelData) {
+                        root.trackedPlayer = root.filteredPlayers.length > 0 ? root.filteredPlayers[0] : null;
                     }
                 }
             }

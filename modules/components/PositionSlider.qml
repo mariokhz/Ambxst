@@ -12,6 +12,12 @@ Item {
 
     required property var player
 
+    onPlayerChanged: {
+        if (!player) {
+            value = 0;
+        }
+    }
+
     property bool isPlaying: player?.playbackState === MprisPlaybackState.Playing
     property real position: player?.position ?? 0.0
     property real length: player?.length ?? 1.0

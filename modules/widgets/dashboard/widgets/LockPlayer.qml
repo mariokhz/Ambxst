@@ -16,10 +16,63 @@ StyledRect {
     property real position: MprisController.activePlayer?.position ?? 0.0
     property real length: MprisController.activePlayer?.length ?? 1.0
     property bool hasArtwork: (MprisController.activePlayer?.trackArtUrl ?? "") !== ""
+    property string wallpaperPath: {
+        if (!GlobalStates.wallpaperManager) return "";
+        let path = GlobalStates.wallpaperManager.currentWallpaper;
+        let frame = GlobalStates.wallpaperManager.getLockscreenFramePath(path);
+        return frame ? "file://" + frame : "";
+    }
 
-    visible: MprisController.activePlayer !== null
     height: 96
     radius: Config.roundness > 0 ? (height / 2) * (Config.roundness / 16) : 0
+    backgroundOpacity: (MprisController.activePlayer || wallpaperPath !== "") ? 0.0 : 1.0
+
+    Behavior on backgroundOpacity {
+        enabled: Config.animDuration > 0
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutQuart
+        }
+    }
+
+    // Blurred wallpaper background fallback
+    ClippingRectangle {
+        anchors.fill: parent
+        radius: lockPlayer.radius
+        color: "transparent"
+
+        Image {
+            id: lockPlayerBgArt
+            anchors.fill: parent
+            source: (MprisController.activePlayer?.trackArtUrl ?? "") !== "" ? MprisController.activePlayer.trackArtUrl : lockPlayer.wallpaperPath
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            visible: false
+        }
+
+        MultiEffect {
+            anchors.fill: parent
+            source: lockPlayerBgArt
+            blurEnabled: true
+            blurMax: 32
+            blur: 0.75
+            opacity: (MprisController.activePlayer || wallpaperPath !== "") ? 1.0 : 0.0
+            Behavior on opacity {
+                enabled: Config.animDuration > 0
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
+            }
+        }
+
+        StyledRect {
+            anchors.fill: parent
+            variant: "internalbg"
+            opacity: (MprisController.activePlayer || wallpaperPath !== "") ? 0.5 : 0.0
+            radius: lockPlayer.radius
+        }
+    }
 
     Timer {
         running: lockPlayer.isPlaying
@@ -46,7 +99,7 @@ StyledRect {
         id: noPlayerContainer
         anchors.fill: parent
         anchors.margins: 16
-        visible: !MprisController.activePlayer
+        visible: !MprisController.activePlayer && wallpaperPath === ""
 
         WavyLine {
             id: noPlayerWavyLine
@@ -82,10 +135,20 @@ StyledRect {
         anchors.margins: 16
         anchors.rightMargin: 28
         spacing: 16
-        visible: MprisController.activePlayer
+        visible: MprisController.activePlayer || wallpaperPath !== ""
 
         // Album artwork con botón de play/pause superpuesto
-        Item {
+    Connections {
+        target: MprisController
+        function onActivePlayerChanged() {
+            if (!MprisController.activePlayer) {
+                positionSlider.value = 0;
+            }
+        }
+    }
+
+    Item {
+
             Layout.preferredWidth: 64
             Layout.preferredHeight: 64
             Layout.alignment: Qt.AlignVCenter
@@ -99,7 +162,7 @@ StyledRect {
                 Image {
                     id: albumArt
                     anchors.fill: parent
-                    source: MprisController.activePlayer?.trackArtUrl ?? ""
+                    source: (MprisController.activePlayer?.trackArtUrl ?? "") !== "" ? MprisController.activePlayer.trackArtUrl : lockPlayer.wallpaperPath
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     visible: false

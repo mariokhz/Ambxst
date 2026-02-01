@@ -28,6 +28,12 @@ StyledRect {
     property real position: MprisController.activePlayer?.position ?? 0.0
     property real length: MprisController.activePlayer?.length ?? 1.0
     property bool hasArtwork: (MprisController.activePlayer?.trackArtUrl ?? "") !== ""
+    property string wallpaperPath: {
+        if (!GlobalStates.wallpaperManager) return "";
+        let path = GlobalStates.wallpaperManager.currentWallpaper;
+        let frame = GlobalStates.wallpaperManager.getLockscreenFramePath(path);
+        return frame ? "file://" + frame : "";
+    }
     property bool hasActivePlayer: MprisController.activePlayer !== null
     property bool isSeeking: false
 
@@ -53,8 +59,12 @@ StyledRect {
 
     // Function to sync seekBar with current media position
     function syncSeekBarPosition() {
-        if (!seekBar.isDragging && !player.isSeeking && player.hasActivePlayer) {
-            seekBar.value = player.length > 0 ? player.position / player.length : 0;
+        if (!seekBar.isDragging && !player.isSeeking) {
+            if (player.hasActivePlayer) {
+                seekBar.value = player.length > 0 ? player.position / player.length : 0;
+            } else {
+                seekBar.value = 0;
+            }
         }
     }
 
@@ -103,7 +113,7 @@ StyledRect {
     Image {
         id: backgroundArtBlurred
         anchors.fill: parent
-        source: MprisController.activePlayer?.trackArtUrl ?? ""
+        source: (MprisController.activePlayer?.trackArtUrl ?? "") !== "" ? MprisController.activePlayer.trackArtUrl : player.wallpaperPath
         fillMode: Image.PreserveAspectCrop
         visible: false
         asynchronous: true
@@ -116,8 +126,8 @@ StyledRect {
         blurEnabled: true
         blurMax: 32
         blur: 1.0
-        opacity: player.hasArtwork ? 0.25 : 0.0
-        visible: player.hasArtwork
+        opacity: (player.hasArtwork || player.wallpaperPath !== "") ? 0.25 : 0.0
+        visible: player.hasArtwork || player.wallpaperPath !== ""
         Behavior on opacity {
             enabled: Config.animDuration > 0
             NumberAnimation {
@@ -130,7 +140,7 @@ StyledRect {
     Image {
         id: backgroundArtFull
         anchors.fill: parent
-        source: MprisController.activePlayer?.trackArtUrl ?? ""
+        source: (MprisController.activePlayer?.trackArtUrl ?? "") !== "" ? MprisController.activePlayer.trackArtUrl : player.wallpaperPath
         fillMode: Image.PreserveAspectCrop
         visible: false
         asynchronous: true
@@ -145,8 +155,8 @@ StyledRect {
         maskInverted: true
         maskThresholdMin: 0.5
         maskSpreadAtMin: 1.0
-        opacity: player.hasArtwork ? 1.0 : 0.0
-        visible: player.hasArtwork
+        opacity: (player.hasArtwork || player.wallpaperPath !== "") ? 1.0 : 0.0
+        visible: player.hasArtwork || player.wallpaperPath !== ""
         Behavior on opacity {
             enabled: Config.animDuration > 0
             NumberAnimation {
@@ -259,7 +269,7 @@ StyledRect {
                             Image {
                                 id: coverArt
                                 anchors.fill: parent
-                                source: MprisController.activePlayer?.trackArtUrl ?? ""
+                                source: (MprisController.activePlayer?.trackArtUrl ?? "") !== "" ? MprisController.activePlayer.trackArtUrl : player.wallpaperPath
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
 
@@ -299,7 +309,7 @@ StyledRect {
                                 Rectangle {
                                     anchors.fill: parent
                                     color: Colors.surface
-                                    visible: !player.hasArtwork
+                                    visible: !player.hasArtwork && player.wallpaperPath === ""
 
                                     WavyLine {
                                         anchors.centerIn: parent
@@ -374,11 +384,12 @@ StyledRect {
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 8
-                visible: player.hasActivePlayer
+                visible: true
 
                 // Player Selector
                 MediaIconButton {
                     icon: player.getPlayerIcon(MprisController.activePlayer)
+                    opacity: player.hasActivePlayer ? 1.0 : 0.5
                     onClicked: mouse => {
                         if (mouse.button === Qt.LeftButton) {
                             MprisController.cyclePlayer(1);
@@ -392,7 +403,7 @@ StyledRect {
                 MediaIconButton {
                     icon: Icons.previous
                     enabled: MprisController.canGoPrevious
-                    opacity: enabled ? 1.0 : 0.3
+                    opacity: player.hasActivePlayer ? (enabled ? 1.0 : 0.3) : 0.5
                     onClicked: MprisController.previous()
                 }
 
@@ -402,6 +413,7 @@ StyledRect {
                     Layout.preferredWidth: 44
                     Layout.preferredHeight: 44
                     variant: "primary"
+                    opacity: player.hasActivePlayer ? 1.0 : 0.5
 
                     animateRadius: false
                     radius: Styling.radius(16) // Default/Paused state
@@ -409,7 +421,7 @@ StyledRect {
                     states: [
                         State {
                             name: "playing"
-                            when: player.isPlaying
+                            when: player.isPlaying && player.hasActivePlayer
                             PropertyChanges {
                                 target: playPauseBtn
                                 radius: Styling.radius(0)
@@ -417,7 +429,7 @@ StyledRect {
                         },
                         State {
                             name: "paused"
-                            when: !player.isPlaying
+                            when: (!player.isPlaying || !player.hasActivePlayer)
                             PropertyChanges {
                                 target: playPauseBtn
                                 radius: Styling.radius(16)
@@ -435,7 +447,7 @@ StyledRect {
 
                     Text {
                         anchors.centerIn: parent
-                        text: player.isPlaying ? Icons.pause : Icons.play
+                        text: !player.hasActivePlayer ? Icons.stop : (player.isPlaying ? Icons.pause : Icons.play)
                         font.family: Icons.font
                         font.pixelSize: 22
                         color: playPauseBtn.item
@@ -444,6 +456,7 @@ StyledRect {
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
+                        enabled: player.hasActivePlayer
                         onClicked: MprisController.togglePlaying()
                     }
                 }
@@ -452,7 +465,7 @@ StyledRect {
                 MediaIconButton {
                     icon: Icons.next
                     enabled: MprisController.canGoNext
-                    opacity: enabled ? 1.0 : 0.3
+                    opacity: player.hasActivePlayer ? (enabled ? 1.0 : 0.3) : 0.5
                     onClicked: MprisController.next()
                 }
 
@@ -467,7 +480,7 @@ StyledRect {
                             return Icons.repeat;
                         return Icons.shuffle;
                     }
-                    opacity: (MprisController.shuffleSupported || MprisController.loopSupported) ? 1.0 : 0.3
+                    opacity: player.hasActivePlayer ? ((MprisController.shuffleSupported || MprisController.loopSupported) ? 1.0 : 0.3) : 0.5
                     onClicked: {
                         if (MprisController.hasShuffle) {
                             MprisController.setShuffle(false);
