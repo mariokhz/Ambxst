@@ -116,7 +116,7 @@ StyledRect {
         blurEnabled: true
         blurMax: 32
         blur: 0.75
-        opacity: player.hasArtwork ? 0.5 : 0.0
+        opacity: player.hasArtwork ? 0.25 : 0.0
         visible: player.hasArtwork
         Behavior on opacity {
             enabled: Config.animDuration > 0
