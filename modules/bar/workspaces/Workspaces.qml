@@ -158,11 +158,13 @@ Item {
     implicitWidth: orientation === "vertical" ? baseSize : workspaceButtonSize * effectiveWorkspaceCount + widgetPadding * 2
     implicitHeight: orientation === "vertical" ? workspaceButtonSize * effectiveWorkspaceCount + widgetPadding * 2 : baseSize
 
+    readonly property bool effectiveContainBar: Config.bar.containBar && (Config.bar.frameEnabled ?? false)
+
     StyledRect {
         id: bgRect
         variant: "bg"
         anchors.fill: parent
-        enableShadow: Config.showBackground && (!Config.bar.containBar || Config.bar.keepBarShadow)
+        enableShadow: Config.showBackground && (!effectiveContainBar || Config.bar.keepBarShadow)
         
         topLeftRadius: orientation === "vertical" ? workspacesWidget.startRadius : workspacesWidget.startRadius
         topRightRadius: orientation === "vertical" ? workspacesWidget.startRadius : workspacesWidget.endRadius

@@ -15,8 +15,10 @@ Item {
     // even if background is hidden.
     visible: true
 
+    readonly property bool effectiveContainBar: Config.bar.containBar && (Config.bar.frameEnabled ?? false)
+
     // Corner size logic: only when at the very edge (no margins)
-    readonly property int cornerSize: (Config.theme.enableCorners && !Config.bar.containBar && root.outerMargin === 0) ? Styling.radius(4) : 0
+    readonly property int cornerSize: (Config.theme.enableCorners && !effectiveContainBar && root.outerMargin === 0) ? Styling.radius(4) : 0
     readonly property bool isHorizontal: position === "top" || position === "bottom"
     readonly property bool cornersVisible: Config.theme.enableCorners && cornerSize > 0
 
@@ -24,21 +26,21 @@ Item {
     readonly property real bgOpacity: Config.theme.srBarBg.opacity
     readonly property int padding: bgOpacity < 0.01 ? 0 : 4
 
-    // Displacement logic: only when !containBar
+    // Displacement logic: only when !effectiveContainBar
     // Uses Config.theme.srBg.border[1] as requested
     readonly property int borderWidth: Config.theme.srBg.border[1]
-    readonly property int displacement: !Config.bar.containBar ? borderWidth : 0
+    readonly property int displacement: !effectiveContainBar ? borderWidth : 0
 
     // Combined outer margin for screen/frame edges
-    // This margin (4px) should only exist when bar is floating (!containBar)
-    readonly property int outerMargin: !Config.bar.containBar ? (4 + displacement) : 0
+    // This margin (4px) should only exist when bar is floating (!effectiveContainBar)
+    readonly property int outerMargin: !effectiveContainBar ? (4 + displacement) : 0
 
     // StyledRect expanded that covers bar + corners
     StyledRect {
         id: barBackground
         variant: "barbg"
         visible: Config.showBackground
-        radius: Styling.radius(Config.bar.frameEnabled && !Config.bar.containBar ? 0 : 4)
+        radius: Styling.radius(effectiveContainBar ? 0 : 4)
         enableBorder: true
 
         // Position and size expanded to cover corners

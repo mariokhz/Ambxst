@@ -153,7 +153,7 @@ Item {
     readonly property bool dockAtStart: integratedDockEnabled && integratedDockPosition === "start"
     readonly property bool dockAtEnd: integratedDockEnabled && integratedDockPosition === "end"
 
-    readonly property int frameOffset: Config.bar?.frameEnabled ? (Config.bar?.frameThickness ?? 6) : 0
+    readonly property int frameOffset: (Config.bar?.frameEnabled ?? false) ? (Config.bar?.frameThickness ?? 6) : 0
 
     // Size derived from barBg properties
     readonly property int barPadding: barBg.padding
@@ -168,6 +168,7 @@ Item {
     readonly property int barTargetWidth: orientation === "vertical" ? (contentImplicitWidth + 2 * barPadding) : 0
     readonly property int barTargetHeight: orientation === "horizontal" ? (contentImplicitHeight + 2 * barPadding) : 0
 
+    readonly property bool actualContainBar: Config.bar?.containBar && (Config.bar?.frameEnabled ?? false)
     readonly property int totalBarWidth: barTargetWidth + 
         ((root.barPosition === "left" || root.orientation === "horizontal") ? (root.frameOffset + root.leftOuterMargin) : 0) +
         ((root.barPosition === "right" || root.orientation === "horizontal") ? (root.frameOffset + root.rightOuterMargin) : 0)
@@ -180,7 +181,7 @@ Item {
     readonly property int baseOuterMargin: barBg.outerMargin
 
     // Shadow logic for bar components
-    readonly property bool shadowsEnabled: Config.showBackground && (!Config.bar.containBar || Config.bar.keepBarShadow)
+    readonly property bool shadowsEnabled: Config.showBackground && (!actualContainBar || Config.bar.keepBarShadow)
 
     // The hitbox for the mask
     property alias barHitbox: barMouseArea

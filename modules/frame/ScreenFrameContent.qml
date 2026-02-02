@@ -14,18 +14,21 @@ Item {
     required property ShellScreen targetScreen
     property bool hasFullscreenWindow: false
 
+    // State source: Singletons and Registry
     readonly property bool frameEnabled: Config.bar?.frameEnabled ?? false
+    readonly property bool configContainBar: Config.bar?.containBar ?? false
+    readonly property string barPos: Config.bar?.position ?? "top"
+    readonly property string notchPos: Config.notchPosition ?? "top"
     
-    // Reference the bar/dock content to get states
     readonly property var barPanel: Visibilities.barPanels[targetScreen.name]
     readonly property var dockPanel: Visibilities.dockPanels[targetScreen.name]
     
-    // Independent reveal states for each component
+    // Effective Reveal States
     readonly property bool barReveal: barPanel ? barPanel.reveal : true
     readonly property bool dockReveal: dockPanel ? dockPanel.reveal : true
     readonly property bool notchReveal: barPanel ? barPanel.notchReveal : true
 
-    // Hover states for thickness restoration logic
+    // Hover States for Restoration Logic
     readonly property bool barHovered: barPanel ? (barPanel.barHoverActive || barPanel.notchHoverActive || barPanel.notchOpen) : false
     readonly property bool dockHovered: dockPanel ? (dockPanel.reveal && (dockPanel.activeWindowFullscreen || dockPanel.keepHidden || !dockPanel.pinned)) : false
 
@@ -34,119 +37,64 @@ Item {
         return Math.max(1, Math.min(Math.round(base), 40));
     }
 
-    readonly property bool containBar: Config.bar?.containBar ?? false
-    readonly property string barPos: Config.bar?.position ?? "top"
-    readonly property string notchPos: Config.notchPosition ?? "top"
-
     readonly property int barSize: {
-        if (!barPanel) return 44; // Fallback
+        if (!barPanel) return 44;
         const isHoriz = barPos === "top" || barPos === "bottom";
         return isHoriz ? barPanel.barTargetHeight : barPanel.barTargetWidth;
     }
 
-    // Animation progress for each component to sync thickness with reveal
+    // --- Animation Synchronization ---
+    
     property real _barAnimProgress: barReveal ? 1.0 : 0.0
     Behavior on _barAnimProgress {
         enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration / 2
-            easing.type: Easing.OutCubic
-        }
+        NumberAnimation { duration: Config.animDuration / 2; easing.type: Easing.OutCubic }
     }
 
     property real _dockAnimProgress: dockReveal ? 1.0 : 0.0
     Behavior on _dockAnimProgress {
         enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration / 2
-            easing.type: Easing.OutCubic
-        }
+        NumberAnimation { duration: Config.animDuration / 2; easing.type: Easing.OutCubic }
     }
 
     property real _notchAnimProgress: notchReveal ? 1.0 : 0.0
     Behavior on _notchAnimProgress {
         enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration / 2
-            easing.type: Easing.OutCubic
-        }
+        NumberAnimation { duration: Config.animDuration / 2; easing.type: Easing.OutCubic }
     }
 
-    // Bar expansion logic (synchronized with bar reveal animation)
-    readonly property int barExpansion: Math.round((barSize + baseThickness) * _barAnimProgress)
+    // Bar expansion logic (synchronized with bar reveal)
+    // Only expand if frame is enabled and bar is being contained
+    // We add +1 to baseThickness to ensure full coverage when containBar is enabled.
+    readonly property int barExpansion: (frameEnabled && configContainBar) ? Math.round((barSize + baseThickness + 1) * _barAnimProgress) : 0
 
-    // Selective thickness restoration per side
-    readonly property int topThickness: {
+    // --- Side-Specific Thickness Restoration ---
+
+    readonly property int topThickness: calculateSideThickness("top")
+    readonly property int bottomThickness: calculateSideThickness("bottom")
+    readonly property int leftThickness: calculateSideThickness("left")
+    readonly property int rightThickness: calculateSideThickness("right")
+
+    function calculateSideThickness(side) {
         let t = baseThickness;
         if (hasFullscreenWindow) {
-            let restoreTop = false;
-            if (barPos === "top" && barHovered) restoreTop = true;
-            if (notchPos === "top" && barHovered) restoreTop = true; // Notch and bar usually sync hover
-            if (dockPanel && dockPanel.position === "top" && dockHovered) restoreTop = true;
-            
-            // Apply animation progress to thickness restoration
+            let restore = false;
             let progress = 0.0;
-            if (barPos === "top" || notchPos === "top") progress = Math.max(_barAnimProgress, _notchAnimProgress);
-            if (dockPanel && dockPanel.position === "top") progress = Math.max(progress, _dockAnimProgress);
+
+            if (barPos === side && barHovered) { restore = true; progress = Math.max(progress, _barAnimProgress); }
+            if (notchPos === side && barHovered) { restore = true; progress = Math.max(progress, _notchAnimProgress); }
+            if (dockPanel && dockPanel.position === side && dockHovered) { restore = true; progress = Math.max(progress, _dockAnimProgress); }
             
-            t = restoreTop ? (baseThickness * progress) : 0;
+            t = restore ? (baseThickness * progress) : 0;
         }
-        return Math.round(t) + ((containBar && barPos === "top") ? barExpansion : 0);
+        
+        let expansion = (configContainBar && barPos === side) ? barExpansion : 0;
+        return Math.round(t) + expansion;
     }
 
-    readonly property int bottomThickness: {
-        let t = baseThickness;
-        if (hasFullscreenWindow) {
-            let restoreBottom = false;
-            if (barPos === "bottom" && barHovered) restoreBottom = true;
-            if (notchPos === "bottom" && barHovered) restoreBottom = true;
-            if (dockPanel && dockPanel.position === "bottom" && dockHovered) restoreBottom = true;
-            
-            let progress = 0.0;
-            if (barPos === "bottom" || notchPos === "bottom") progress = Math.max(_barAnimProgress, _notchAnimProgress);
-            if (dockPanel && dockPanel.position === "bottom") progress = Math.max(progress, _dockAnimProgress);
-            
-            t = restoreBottom ? (baseThickness * progress) : 0;
-        }
-        return Math.round(t) + ((containBar && barPos === "bottom") ? barExpansion : 0);
-    }
-
-    readonly property int leftThickness: {
-        let t = baseThickness;
-        if (hasFullscreenWindow) {
-            let restoreLeft = false;
-            if (barPos === "left" && barHovered) restoreLeft = true;
-            if (dockPanel && dockPanel.position === "left" && dockHovered) restoreLeft = true;
-            
-            let progress = 0.0;
-            if (barPos === "left") progress = _barAnimProgress;
-            if (dockPanel && dockPanel.position === "left") progress = Math.max(progress, _dockAnimProgress);
-            
-            t = restoreLeft ? (baseThickness * progress) : 0;
-        }
-        return Math.round(t) + ((containBar && barPos === "left") ? barExpansion : 0);
-    }
-
-    readonly property int rightThickness: {
-        let t = baseThickness;
-        if (hasFullscreenWindow) {
-            let restoreRight = false;
-            if (barPos === "right" && barHovered) restoreRight = true;
-            if (dockPanel && dockPanel.position === "right" && dockHovered) restoreRight = true;
-            
-            let progress = 0.0;
-            if (barPos === "right") progress = _barAnimProgress;
-            if (dockPanel && dockPanel.position === "right") progress = Math.max(progress, _dockAnimProgress);
-            
-            t = restoreRight ? (baseThickness * progress) : 0;
-        }
-        return Math.round(t) + ((containBar && barPos === "right") ? barExpansion : 0);
-    }
-
-    readonly property int actualFrameSize: frameEnabled ? baseThickness : 0
-    readonly property int borderWidth: Config.theme.srBg.border[1]
+    // --- Corner Logic ---
     
-    // innerRadius restoration logic - synchronized with highest progress
+    readonly property int borderWidth: Config.theme.srBg.border[1]
     readonly property real targetInnerRadius: {
         if (!root.hasFullscreenWindow) return Styling.radius(4 + borderWidth);
         if (!barHovered && !dockHovered) return 0;
@@ -157,7 +105,8 @@ Item {
     
     property real innerRadius: targetInnerRadius
 
-    // Visual part
+    // --- Visuals ---
+
     StyledRect {
         id: frameFill
         anchors.fill: parent
