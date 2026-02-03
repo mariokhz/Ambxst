@@ -29,7 +29,7 @@ Item {
     // Displacement logic: only when !effectiveContainBar
     // Uses Config.theme.srBg.border[1] as requested
     readonly property int borderWidth: Config.theme.srBg.border[1]
-    readonly property int displacement: !effectiveContainBar ? borderWidth : 0
+    readonly property int displacement: !effectiveContainBar ? borderWidth * (Config.bar.frameEnabled ? 2 : 1) : 0
 
     // Combined outer margin for screen/frame edges
     // This margin (4px) should only exist when bar is floating (!effectiveContainBar)
@@ -40,7 +40,7 @@ Item {
         id: barBackground
         variant: "barbg"
         visible: Config.showBackground
-        radius: Styling.radius(effectiveContainBar ? 0 : 4)
+        radius: Styling.radius(effectiveContainBar ? 4 : 0)
         enableBorder: true
 
         // Position and size expanded to cover corners
