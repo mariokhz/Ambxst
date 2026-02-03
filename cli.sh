@@ -37,6 +37,7 @@ Commands:
     brightness -r [monitor]           Restore saved brightness
     brightness -l                     List monitors and their brightness
     help                              Show this help message
+    goodbye                           Uninstall Ambxst :(
 
 Examples:
     ambxst brightness 75              Set all monitors to 75%
@@ -420,6 +421,46 @@ brightness)
 		}
 		echo "Set brightness to ${VALUE}% for $MONITOR"
 	fi
+	;;
+goodbye)
+	echo "Uninstalling Ambxst..."
+
+	read -p "Are you sure? (y/N): " -n 1 -r
+	echo
+	if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+		echo "Uninstall aborted."
+		exit 0
+	fi
+
+	if [ -f /etc/NIXOS ]; then
+		if nix profile list 2>/dev/null | grep -q "Ambxst"; then
+			echo "Removing from nix profile..."
+			nix profile remove Ambxst
+		elif command -v ambxst >/dev/null 2>&1; then
+			echo "Ambxst was declared in this system. Please remove it from your configuration in order to uninstall."
+		else
+			echo "Ambxst is not installed."
+		fi
+		exit 0
+	fi
+
+	read -p "Remove configuration files? (y/N): " -n 1 -r
+	echo
+	REMOVE_CONFIG=false
+	if [[ $REPLY =~ ^[Yy]$ ]]; then
+		REMOVE_CONFIG=true
+	fi
+
+	rm -rf "$HOME/Ambxst"
+	rm -rf "$HOME/.local/share/Ambxst"
+	rm -rf "$HOME/.local/state/Ambxst"
+
+	if [ "$REMOVE_CONFIG" = true ]; then
+		rm -rf "$HOME/.config/Ambxst"
+		echo "Configuration files removed."
+	fi
+
+	echo "Ambxst uninstalled. :("
 	;;
 help | --help | -h)
 	show_help
