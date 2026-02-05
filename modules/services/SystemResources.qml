@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.config
+import qs.modules.globals
 pragma ComponentBehavior: Bound
 
 /**
@@ -66,7 +67,8 @@ Singleton {
     // Unified System Monitor Process
     property Process monitorProcess: Process {
         id: monitorProcess
-        running: false
+        // Only run when dashboard is open to save power
+        running: GlobalStates.dashboardOpen && root.validDisks.length > 0
         // Arguments will be updated when validDisks changes
         command: ["python3", Quickshell.shellDir + "/scripts/system_monitor.py"]
         
@@ -153,7 +155,8 @@ Singleton {
         }
         
         monitorProcess.command = cmd;
-        monitorProcess.running = true;
+        // Running state is managed by binding to GlobalStates.dashboardOpen
+        // monitorProcess.running = true; 
     }
 
     // Detect GPU vendor and availability
