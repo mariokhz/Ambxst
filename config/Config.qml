@@ -1009,6 +1009,7 @@ Singleton {
             property string tmux: "tt"
             property string wallpapers: "ww"
             property string notes: "nn"
+            property string calculator: "qq"
         }
     }
 
