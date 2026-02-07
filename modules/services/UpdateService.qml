@@ -49,7 +49,7 @@ Singleton {
 
     Timer {
         id: checkTimer
-        interval: 60000 // Every minute check if it's time
+        interval: 300000 // Every 5 minutes check if it's time
         running: true
         repeat: true
         triggeredOnStart: true

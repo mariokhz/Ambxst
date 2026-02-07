@@ -47,13 +47,16 @@ ClippingRectangle {
 
     readonly property var borderData: variantConfig.border
 
+    readonly property color solidColor: Config.resolveColor(variantConfig.color)
+    readonly property bool hasSolidColor: variantConfig.color !== undefined && variantConfig.color !== ""
+
     readonly property color itemColor: Config.resolveColor(variantConfig.itemColor)
     property color item: itemColor
 
     readonly property real rectOpacity: backgroundOpacity >= 0 ? backgroundOpacity : variantConfig.opacity
 
     radius: variantConfig.radius !== undefined ? variantConfig.radius : Styling.radius(0)
-    color: "transparent"
+    color: (hasSolidColor && gradientType !== "linear" && gradientType !== "radial" && gradientType !== "halftone") ? solidColor : "transparent"
 
     Behavior on radius {
         enabled: root.animateRadius && Config.animDuration > 0
