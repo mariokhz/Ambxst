@@ -147,32 +147,7 @@ PanelWindow {
     // VISUAL CONTENT (Unified Shadow & Border Wrapper)
     // ═══════════════════════════════════════════════════════════════
 
-    Item {
-        id: shadowMask
-        anchors.fill: parent
-        visible: false
 
-        Rectangle {
-            id: barCutout
-            visible: unifiedPanel.containBar && !unifiedPanel.keepBarShadow
-            color: "black" // Opaque for mask
-
-            // Bind to barHitbox geometry
-            x: barContent.barHitbox.x
-            y: barContent.barHitbox.y
-            width: barContent.barHitbox.width
-            height: barContent.barHitbox.height
-        }
-    }
-
-    UnifiedPanelEffect {
-        id: unifiedEffect
-        anchors.fill: parent
-        sourceItem: visualContent
-        maskEnabled: barCutout.visible
-        maskSource: shadowMask
-        maskInverted: true
-    }
 
     Item {
         id: visualContent
@@ -192,18 +167,7 @@ PanelWindow {
             screen: unifiedPanel.targetScreen
             z: 2
 
-            // Keep the masking logic to cut out the notch area from the bar
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                maskEnabled: true
-                maskInverted: true
-                maskThresholdMin: 0.3
-                maskSpreadAtMin: 0.5
-                maskSource: ShaderEffectSource {
-                    sourceItem: notchContent
-                    hideSource: false
-                }
-            }
+
         }
 
         DockContent {
