@@ -1,15 +1,20 @@
 import QtQuick
+import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Services.Mpris
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.notch
 import qs.modules.components
+import qs.modules.globals
 import qs.config
 
 Item {
     id: root
     anchors.top: parent.top
     focus: false
+
+    property var screen // Passed from NotchContent
 
     // Layout constants
     readonly property int notificationPadding: 16
@@ -205,6 +210,58 @@ Item {
                     }
                 }
             }
+        }
+    }
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.NoButton // Passthrough clicks
+        
+        onWheel: wheel => {
+            // Determine side: Left (< 50%) = Brightness, Right (>= 50%) = Volume
+            const isLeft = wheel.x < width / 2;
+            // Determine delta: Scroll Up (+) = Increase, Scroll Down (-) = Decrease
+            // Use 2% step for gestures
+            const step = 0.02;
+            const delta = wheel.angleDelta.y > 0 ? step : -step;
+            
+            if (isLeft) {
+                // Brightness
+                GlobalStates.osdIndicator = "brightness";
+                
+                // Try direct lookup
+                let mon = Brightness.getMonitorForScreen(root.screen);
+                
+                // Fallback: lookup by name if direct lookup fails
+                if (!mon || !mon.ready) {
+                    let screenName = (root.screen && root.screen.name) ? root.screen.name : "";
+                    
+                    if (!screenName && Hyprland.focusedMonitor) {
+                        screenName = Hyprland.focusedMonitor.name;
+                    }
+
+                    if (screenName) {
+                        for (let i = 0; i < Brightness.monitors.length; i++) {
+                            if (Brightness.monitors[i].screen.name === screenName) {
+                                mon = Brightness.monitors[i];
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (mon && mon.ready) {
+                     let newVal = Math.max(0, Math.min(1, mon.brightness + delta));
+                     mon.setBrightness(newVal);
+                }
+            } else {
+                // Volume
+                GlobalStates.osdIndicator = "volume";
+                if (Audio.ready && Audio.sink && Audio.sink.audio) {
+                    let newVal = Math.max(0, Math.min(1, Audio.sink.audio.volume + delta));
+                    Audio.setVolume(newVal);
+                }
+            }
+            GlobalStates.osdVisible = true;
         }
     }
 }
