@@ -27,7 +27,7 @@ Rectangle {
 
         // Player column
         ClippingRectangle {
-            Layout.preferredWidth: 216
+            Layout.preferredWidth: 260
             Layout.fillHeight: true
             radius: Styling.radius(4)
             color: "transparent"

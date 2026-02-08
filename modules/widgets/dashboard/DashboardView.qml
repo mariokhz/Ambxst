@@ -3,7 +3,7 @@ import qs.modules.widgets.dashboard
 import qs.modules.services
 
 Item {
-    implicitWidth: 900
+    implicitWidth: 1000
     implicitHeight: 56 + 48 * 6
 
     readonly property int leftPanelWidth: 270
