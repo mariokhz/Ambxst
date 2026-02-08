@@ -222,7 +222,7 @@ Item {
             // Determine delta: Scroll Up (+) = Increase, Scroll Down (-) = Decrease
             // Use 2% step for gestures
             const step = 0.02;
-            const delta = wheel.angleDelta.y > 0 ? step : -step;
+            const delta = wheel.angleDelta.y > 0 ? -step : step;
             
             if (isLeft) {
                 // Brightness
