@@ -64,7 +64,7 @@ QtObject {
         lua += "}\n\n"
 
         lua += "M.base_16 = {\n"
-        lua += `\tbase00 = "${background}",\n`
+        lua += `\tbase00 = "NONE",\n`
         lua += `\tbase01 = lighten("${surfaceVariant}", 0),\n`
         lua += `\tbase02 = lighten("${surfaceVariant}", 3),\n`
         lua += `\tbase03 = lighten("${outline}", 0),\n`
