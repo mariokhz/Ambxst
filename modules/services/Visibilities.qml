@@ -36,10 +36,18 @@ Singleton {
     }
 
     function getForActive() {
-        if (!Hyprland.focusedMonitor) {
-            return null;
+        if (Hyprland.focusedMonitor) {
+            return getForScreen(Hyprland.focusedMonitor.name);
         }
-        return getForScreen(Hyprland.focusedMonitor.name);
+        
+        // Fallback: use first available screen if Hyprland is not managing focus
+        // or if running on another compositor
+        const screenList = Quickshell.screens;
+        if (screenList.length > 0) {
+            return getForScreen(screenList[0].name);
+        }
+        
+        return null;
     }
 
     // Helper to clone map and trigger update
@@ -137,30 +145,38 @@ Singleton {
     }
 
     function setActiveModule(moduleName) {
-        const focusedMonitor = Hyprland.focusedMonitor;
-        if (!focusedMonitor)
-            return;
-
-        const focusedScreenName = focusedMonitor.name;
-
-        clearAll();
-
-        if (moduleName) {
-            currentActiveModule = moduleName;
-            applyActiveModuleToScreen(focusedScreenName);
+        if (Hyprland.focusedMonitor) {
+            const focusedScreenName = Hyprland.focusedMonitor.name;
+            clearAll();
+            if (moduleName) {
+                currentActiveModule = moduleName;
+                applyActiveModuleToScreen(focusedScreenName);
+            } else {
+                currentActiveModule = "";
+            }
+            lastFocusedScreen = focusedScreenName;
         } else {
-            currentActiveModule = "";
+            // Fallback for non-Hyprland
+            const screenList = Quickshell.screens;
+            if (screenList.length > 0) {
+                const fallbackScreenName = screenList[0].name;
+                clearAll(); 
+                if (moduleName) {
+                    currentActiveModule = moduleName;
+                    applyActiveModuleToScreen(fallbackScreenName);
+                } else {
+                    currentActiveModule = "";
+                }
+                lastFocusedScreen = fallbackScreenName;
+            }
         }
-
-        lastFocusedScreen = focusedScreenName;
     }
 
     function moveActiveModuleToFocusedScreen() {
-        const focusedMonitor = Hyprland.focusedMonitor;
-        if (!focusedMonitor || !currentActiveModule)
+        if (!Hyprland.focusedMonitor || !currentActiveModule)
             return;
 
-        const newFocusedScreen = focusedMonitor.name;
+        const newFocusedScreen = Hyprland.focusedMonitor.name;
         if (newFocusedScreen === lastFocusedScreen)
             return;
 
