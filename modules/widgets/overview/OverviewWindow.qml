@@ -175,7 +175,7 @@ Item {
         source: Quickshell.iconPath(root.iconPath, "image-missing")
         sourceSize: Qt.size(iconSize, iconSize)
         asynchronous: true
-        visible: !windowPreview.hasContent || !Config.performance.windowPreview
+        visible: true
         z: 10
     }
 
