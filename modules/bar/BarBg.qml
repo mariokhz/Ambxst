@@ -8,6 +8,7 @@ import qs.config
 Item {
     id: root
     required property string position
+    property int displacement: 0
 
     default property alias content: contentContainer.data
 
