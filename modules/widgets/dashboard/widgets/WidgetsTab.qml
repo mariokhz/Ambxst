@@ -12,6 +12,7 @@ import qs.modules.globals
 import qs.modules.services
 import qs.config
 import "calendar"
+import "../controls"
 
 Rectangle {
     color: "transparent"
@@ -24,10 +25,52 @@ Rectangle {
         anchors.fill: parent
         spacing: 8
 
-        FullPlayer {
+        // Player column
+        ClippingRectangle {
             Layout.preferredWidth: 216
-            Layout.fillHeight: false
-            anchors.top: parent.top
+            Layout.fillHeight: true
+            radius: Styling.radius(4)
+            color: "transparent"
+
+            Flickable {
+                anchors.fill: parent
+                contentWidth: width
+                contentHeight: playerColumn.implicitHeight
+                clip: true
+
+                ColumnLayout {
+                    id: playerColumn
+                    width: parent.width
+                    spacing: 8
+
+                    FullPlayer {
+                        Layout.fillWidth: true
+                    }
+
+                    AudioDeviceSwitcher {
+                        isOutput: true
+                    }
+
+                    AudioDeviceSwitcher {
+                        isOutput: false
+                    }
+                    
+                    // Application Volume Faders
+                    Repeater {
+                        model: Audio.outputAppNodes
+                        delegate: AudioVolumeEntry {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            node: modelData
+                            isMainDevice: false
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
+            }
         }
 
         // Widgets column
