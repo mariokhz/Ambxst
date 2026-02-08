@@ -32,8 +32,7 @@ PanelWindow {
     WlrLayershell.namespace: "ambxst"
     WlrLayershell.layer: WlrLayer.Overlay
     exclusionMode: ExclusionMode.Ignore
-    
-    // Compatibility properties for Visibilities and other components
+
     readonly property alias barPosition: barContent.barPosition
     readonly property alias barPinned: barContent.pinned
     readonly property alias barHoverActive: barContent.hoverActive
@@ -59,19 +58,20 @@ PanelWindow {
     readonly property alias hoverActive: barContent.hoverActive // Default hoverActive points to bar
     readonly property alias notch_hoverActive: notchContent.hoverActive // Used by bar to check notch
 
-    readonly property bool unifiedEffectActive: true // Flag to notify children to disable internal borders
+    readonly property bool unifiedEffectActive: false // Flag to notify children to disable internal borders
 
     readonly property var hyprlandMonitor: Hyprland.monitorFor(targetScreen)
     readonly property bool hasFullscreenWindow: {
-        if (!hyprlandMonitor) return false;
-        
+        if (!hyprlandMonitor)
+            return false;
+
         const activeWorkspaceId = hyprlandMonitor.activeWorkspace.id;
         const monId = hyprlandMonitor.id;
-        
+
         // Check active toplevel first (fast path)
         const toplevel = ToplevelManager.activeToplevel;
         if (toplevel && toplevel.fullscreen && Hyprland.focusedMonitor.id === monId) {
-             return true;
+            return true;
         }
 
         // Check all windows on this monitor (robust path)
@@ -86,7 +86,7 @@ PanelWindow {
 
     // Proxy properties for Bar/Notch synchronization
     // Note: BarContent and NotchContent already handle their internal sync using Visibilities.
-    
+
     // Helper properties for shadow logic
     readonly property bool keepBarShadow: Config.bar.keepBarShadow ?? false
     readonly property bool keepBarBorder: Config.bar.keepBarBorder ?? false
@@ -144,15 +144,16 @@ PanelWindow {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // VISUAL CONTENT (Unified Shadow & Border Wrapper)
+    // VISUAL CONTENT
     // ═══════════════════════════════════════════════════════════════
-
-
 
     Item {
         id: visualContent
         anchors.fill: parent
-        
+
+        layer.enabled: true
+        layer.effect: Shadow {}
+
         ScreenFrameContent {
             id: frameContent
             anchors.fill: parent
@@ -166,8 +167,6 @@ PanelWindow {
             anchors.fill: parent
             screen: unifiedPanel.targetScreen
             z: 2
-
-
         }
 
         DockContent {
@@ -179,7 +178,7 @@ PanelWindow {
             visible: {
                 if (!(Config.dock?.enabled ?? false) || (Config.dock?.theme ?? "default") === "integrated")
                     return false;
-                
+
                 const list = Config.dock?.screenList ?? [];
                 if (!list || list.length === 0)
                     return true;

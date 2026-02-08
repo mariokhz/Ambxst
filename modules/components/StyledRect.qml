@@ -21,6 +21,15 @@ ClippingRectangle {
     property bool animateRadius: true
     property real backgroundOpacity: -1  // -1 means use config value
 
+    // Static mode: caches the rendered content to a texture, reducing GPU work.
+    // Use for StyledRects that don't animate or change frequently.
+    // Automatically disabled during theme changes to allow repaint.
+    property bool cacheContent: false
+    readonly property bool _effectiveCacheEnabled: cacheContent && !_isInvalidating
+
+    // Track when we're invalidating due to theme change
+    property bool _isInvalidating: false
+
     readonly property var variantConfig: Styling.getStyledRectConfig(variant) || {}
 
     readonly property var gradientStops: variantConfig.gradient
@@ -55,6 +64,9 @@ ClippingRectangle {
 
     readonly property real rectOpacity: backgroundOpacity >= 0 ? backgroundOpacity : variantConfig.opacity
 
+    // Check if this variant needs a gradient texture
+    readonly property bool needsGradientTexture: gradientType === "linear" || gradientType === "radial"
+
     radius: variantConfig.radius !== undefined ? variantConfig.radius : Styling.radius(0)
     color: (hasSolidColor && gradientType !== "linear" && gradientType !== "radial" && gradientType !== "halftone") ? solidColor : "transparent"
 
@@ -65,116 +77,158 @@ ClippingRectangle {
         }
     }
 
-    // Linear gradient texture generator
-    Canvas {
-        id: linearGradientCanvas
-        width: 256
-        height: 32 // Increase height to avoid interpolation artifacts at non-integer scales
+    // Local gradient texture - only created when needed (lazy loading)
+    Loader {
+        id: gradientTextureLoader
+        active: root.needsGradientTexture
         visible: false
 
-        onPaint: {
-            var ctx = getContext("2d");
-            ctx.clearRect(0, 0, width, height);
+        sourceComponent: Item {
+            id: textureContainer
 
-            var stops = root.gradientStops;
-            if (!stops || stops.length === 0)
-                return;
+            // Track cache version to know when to repaint
+            property int cacheVersion: GradientCache.version
 
-            var grad = ctx.createLinearGradient(0, 0, width, 0);
-            for (var i = 0; i < stops.length; i++) {
-                var s = stops[i];
-                grad.addColorStop(s[1], Config.resolveColor(s[0]));
+            Canvas {
+                id: gradientCanvas
+                width: 256
+                height: 32
+                visible: false
+
+                onPaint: {
+                    const ctx = getContext("2d");
+                    ctx.clearRect(0, 0, width, height);
+
+                    const stops = GradientCache.getResolvedStops(root.gradientStops);
+                    if (!stops || stops.length === 0)
+                        return;
+
+                    const grad = ctx.createLinearGradient(0, 0, width, 0);
+                    for (let i = 0; i < stops.length; i++) {
+                        const s = stops[i];
+                        grad.addColorStop(s[1], s[0]);
+                    }
+
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, width, height);
+                }
+
+                Component.onCompleted: requestPaint()
             }
 
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, width, height);
-        }
+            ShaderEffectSource {
+                id: gradientSource
+                sourceItem: gradientCanvas
+                hideSource: true
+                smooth: true
+                wrapMode: ShaderEffectSource.ClampToEdge
+                visible: false
+            }
 
-        Connections {
-            target: root
-            function onGradientStopsChanged() {
-                linearGradientCanvas.requestPaint();
+            // Repaint when cache version changes (theme colors changed)
+            onCacheVersionChanged: gradientCanvas.requestPaint()
+
+            // Repaint when gradient stops change (variant changed)
+            Connections {
+                target: root
+                function onGradientStopsChanged() {
+                    gradientCanvas.requestPaint();
+                }
+            }
+
+            // Expose the source for shaders
+            property alias source: gradientSource
+        }
+    }
+
+    // Linear gradient shader
+    Loader {
+        anchors.fill: parent
+        active: root.gradientType === "linear" && gradientTextureLoader.item !== null
+
+        sourceComponent: ShaderEffect {
+            opacity: root.rectOpacity
+
+            property real angle: root.gradientAngle
+            property real canvasWidth: width
+            property real canvasHeight: height
+            property var gradTex: gradientTextureLoader.item?.source ?? null
+
+            vertexShader: "linear_gradient.vert.qsb"
+            fragmentShader: "linear_gradient.frag.qsb"
+        }
+    }
+
+    // Radial gradient shader
+    Loader {
+        anchors.fill: parent
+        active: root.gradientType === "radial" && gradientTextureLoader.item !== null
+
+        sourceComponent: ShaderEffect {
+            opacity: root.rectOpacity
+
+            property real centerX: root.gradientCenterX
+            property real centerY: root.gradientCenterY
+            property real canvasWidth: width
+            property real canvasHeight: height
+            property var gradTex: gradientTextureLoader.item?.source ?? null
+
+            vertexShader: "radial_gradient.vert.qsb"
+            fragmentShader: "radial_gradient.frag.qsb"
+        }
+    }
+
+    // Halftone gradient - no texture needed, purely procedural
+    Loader {
+        anchors.fill: parent
+        active: root.gradientType === "halftone"
+
+        sourceComponent: ShaderEffect {
+            opacity: root.rectOpacity
+
+            property real angle: root.gradientAngle
+            property real dotMinSize: root.halftoneDotMin
+            property real dotMaxSize: root.halftoneDotMax
+            property real gradientStart: root.halftoneStart
+            property real gradientEnd: root.halftoneEnd
+            property vector4d dotColor: {
+                const c = root.halftoneDotColor || Qt.rgba(1, 1, 1, 1);
+                return Qt.vector4d(c.r, c.g, c.b, c.a);
+            }
+            property vector4d backgroundColor: {
+                const c = root.halftoneBackgroundColor || Qt.rgba(0, 0.5, 1, 1);
+                return Qt.vector4d(c.r, c.g, c.b, c.a);
+            }
+            property real canvasWidth: width
+            property real canvasHeight: height
+
+            vertexShader: "halftone.vert.qsb"
+            fragmentShader: "halftone.frag.qsb"
+        }
+    }
+
+    // Shadow effect and/or content caching
+    // When cacheContent is true, renders to texture once (reduces GPU redraw)
+    // When enableShadow is true, applies shadow effect
+    layer.enabled: enableShadow || _effectiveCacheEnabled
+    layer.effect: enableShadow ? shadowEffect : null
+
+    Component {
+        id: shadowEffect
+        Shadow {}
+    }
+
+    // Temporarily disable cache when theme changes to allow repaint
+    Connections {
+        target: GradientCache
+        function onVersionChanged() {
+            if (root.cacheContent) {
+                root._isInvalidating = true;
+                // Re-enable cache after a frame to capture the new render
+                Qt.callLater(() => { root._isInvalidating = false; });
             }
         }
-        Connections {
-            target: Colors
-            function onLoaded() {
-                linearGradientCanvas.requestPaint();
-            }
-        }
-        Component.onCompleted: requestPaint()
     }
-
-    // Shared gradient texture source
-    ShaderEffectSource {
-        id: gradientTextureSource
-        sourceItem: linearGradientCanvas
-        hideSource: true
-        smooth: true
-        wrapMode: ShaderEffectSource.ClampToEdge
-        visible: false
-    }
-
-    // Linear gradient
-    ShaderEffect {
-        anchors.fill: parent
-        opacity: rectOpacity
-        visible: gradientType === "linear"
-
-        property real angle: gradientAngle
-        property real canvasWidth: width
-        property real canvasHeight: height
-        property var gradTex: gradientTextureSource
-
-        vertexShader: "linear_gradient.vert.qsb"
-        fragmentShader: "linear_gradient.frag.qsb"
-    }
-
-    // Radial gradient
-    ShaderEffect {
-        anchors.fill: parent
-        opacity: rectOpacity
-        visible: gradientType === "radial"
-
-        property real centerX: gradientCenterX
-        property real centerY: gradientCenterY
-        property real canvasWidth: width
-        property real canvasHeight: height
-        property var gradTex: gradientTextureSource
-
-        vertexShader: "radial_gradient.vert.qsb"
-        fragmentShader: "radial_gradient.frag.qsb"
-    }
-
-    // Halftone gradient
-    ShaderEffect {
-        anchors.fill: parent
-        opacity: rectOpacity
-        visible: gradientType === "halftone"
-
-        property real angle: gradientAngle
-        property real dotMinSize: halftoneDotMin
-        property real dotMaxSize: halftoneDotMax
-        property real gradientStart: halftoneStart
-        property real gradientEnd: halftoneEnd
-        property vector4d dotColor: {
-            const c = halftoneDotColor || Qt.rgba(1, 1, 1, 1);
-            return Qt.vector4d(c.r, c.g, c.b, c.a);
-        }
-        property vector4d backgroundColor: {
-            const c = halftoneBackgroundColor || Qt.rgba(0, 0.5, 1, 1);
-            return Qt.vector4d(c.r, c.g, c.b, c.a);
-        }
-        property real canvasWidth: width
-        property real canvasHeight: height
-
-        vertexShader: "halftone.vert.qsb"
-        fragmentShader: "halftone.frag.qsb"
-    }
-
-    // Shadow effect
-    layer.enabled: enableShadow
-    layer.effect: Shadow {}
 
     // Border overlay to avoid ClippingRectangle artifacts
     ClippingRectangle {
@@ -187,6 +241,6 @@ ClippingRectangle {
         color: "transparent"
         border.color: Config.resolveColor(borderData[0])
         border.width: borderData[1]
-        visible: root.enableBorder && (root.variant !== "bg" || Config.bar.keepBarBorder)
+        visible: root.enableBorder
     }
 }
