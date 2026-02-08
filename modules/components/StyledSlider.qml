@@ -32,6 +32,7 @@ Item {
     property color progressColor: Styling.srItem("overprimary")
     property color backgroundColor: Colors.surfaceBright
     property bool wavy: false
+    property bool playing: false // Nuevo estado para controlar la animación
     property real wavyAmplitude: 0.8
     property real wavyFrequency: 8
     property real heightMultiplier: 8
@@ -160,7 +161,7 @@ Item {
                 z: 0
             }
 
-            WavyLine {
+            CarouselProgress {
                 id: hWavyFill
                 anchors.left: parent.left
                 anchors.right: hDragHandle.left
@@ -173,10 +174,9 @@ Item {
                 lineWidth: root.thickness
                 fullLength: parent.width
                 visible: root.wavy
+                active: root.playing
                 z: 1
-                FrameAnimation {
-                    running: visible
-                }
+                // CarouselProgress manages its own animation internally
             }
             Rectangle {
                 anchors.left: parent.left
@@ -266,7 +266,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width * heightMultiplier
                 visible: root.wavy
-                WavyLine {
+                CarouselProgress {
                     id: vWavyFill
                     anchors.centerIn: parent
                     rotation: -90
@@ -278,9 +278,8 @@ Item {
                     lineWidth: root.thickness
                     fullLength: vSliderItem.height
                     z: 1
-                    FrameAnimation {
-                        running: visible
-                    }
+                    active: root.playing
+                    // CarouselProgress manages its own animation internally
                 }
             }
             Rectangle {

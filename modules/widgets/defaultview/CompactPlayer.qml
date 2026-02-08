@@ -49,7 +49,7 @@ Item {
     }
 
     Timer {
-        running: compactPlayer.isPlaying
+        running: compactPlayer.isPlaying && compactPlayer.visible
         interval: 1000
         repeat: true
         onTriggered: {
@@ -74,8 +74,8 @@ Item {
         anchors.fill: parent
         radius: Styling.radius(-4)
 
-        WavyLine {
-            id: noPlayerWavyLine
+        CarouselProgress {
+            id: noPlayerDots
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
@@ -88,15 +88,15 @@ Item {
             fullLength: width
             visible: compactPlayer.player === null
             opacity: 1.0
+            // Enable animations for carousel effect
+            animationsEnabled: true
+            active: true
             Behavior on color {
                 enabled: Config.animDuration > 0
                 ColorAnimation {
                     duration: Config.animDuration
                     easing.type: Easing.OutQuart
                 }
-            }
-            FrameAnimation {
-                running: noPlayerWavyLine.visible
             }
         }
 
@@ -109,6 +109,7 @@ Item {
                 id: backgroundArt
                 anchors.fill: parent
                 source: (compactPlayer.player?.trackArtUrl ?? "") !== "" ? compactPlayer.player.trackArtUrl : compactPlayer.wallpaperPath
+                sourceSize: Qt.size(64, 64)
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 visible: false
@@ -117,7 +118,8 @@ Item {
             MultiEffect {
                 anchors.fill: backgroundArt
                 source: backgroundArt
-                blurEnabled: true
+                // Only enable blur when there's content to blur (saves GPU)
+                blurEnabled: hasArtwork || wallpaperPath !== ""
                 blurMax: 32
                 blur: 0.75
                 autoPaddingEnabled: false
@@ -174,6 +176,7 @@ Item {
                         id: artworkImage
                         anchors.fill: parent
                         source: (compactPlayer.player?.trackArtUrl ?? "") !== "" ? compactPlayer.player.trackArtUrl : compactPlayer.wallpaperPath
+                        sourceSize: Qt.size(48, 48)
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         visible: false
@@ -181,6 +184,8 @@ Item {
                     MultiEffect {
                         anchors.fill: parent
                         source: artworkImage
+                        // Only enable blur when there's content to blur (saves GPU)
+                        blurEnabled: hasArtwork || wallpaperPath !== ""
                         blurMax: 32
                         blur: 0.75
                         opacity: (hasArtwork || wallpaperPath !== "") ? 1.0 : 0.0 // Simplificado

@@ -1,7 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Effects
-import QtQuick.Shapes
 import Quickshell.Widgets
 import qs.config
 import qs.modules.theme
@@ -20,15 +18,6 @@ ClippingRectangle {
     property bool enableBorder: true
     property bool animateRadius: true
     property real backgroundOpacity: -1  // -1 means use config value
-
-    // Static mode: caches the rendered content to a texture, reducing GPU work.
-    // Use for StyledRects that don't animate or change frequently.
-    // Automatically disabled during theme changes to allow repaint.
-    property bool cacheContent: false
-    readonly property bool _effectiveCacheEnabled: cacheContent && !_isInvalidating
-
-    // Track when we're invalidating due to theme change
-    property bool _isInvalidating: false
 
     readonly property var variantConfig: Styling.getStyledRectConfig(variant) || {}
 
@@ -64,11 +53,33 @@ ClippingRectangle {
 
     readonly property real rectOpacity: backgroundOpacity >= 0 ? backgroundOpacity : variantConfig.opacity
 
-    // Check if this variant needs a gradient texture
-    readonly property bool needsGradientTexture: gradientType === "linear" || gradientType === "radial"
+    // Check if gradient is actually a single color (optimization: treat as solid)
+    // A gradient with 1 stop is effectively a solid color - no shader needed
+    readonly property bool isSingleColorGradient: gradientStops && gradientStops.length === 1
+    readonly property color singleGradientColor: isSingleColorGradient ? Config.resolveColor(gradientStops[0][0]) : "transparent"
+
+    // Use cached gradient texture only for real gradients (2+ stops)
+    readonly property bool needsGradientTexture: (gradientType === "linear" || gradientType === "radial") && !isSingleColorGradient
+    readonly property var cachedGradientTexture: needsGradientTexture ? GradientCache.getTexture(gradientStops) : null
 
     radius: variantConfig.radius !== undefined ? variantConfig.radius : Styling.radius(0)
-    color: (hasSolidColor && gradientType !== "linear" && gradientType !== "radial" && gradientType !== "halftone") ? solidColor : "transparent"
+
+    // Helper to apply opacity to a color via alpha channel
+    function applyOpacity(baseColor, opacityValue) {
+        return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, baseColor.a * opacityValue);
+    }
+
+    // Color priority: single-color gradient > explicit solid color > transparent (for real gradients)
+    // Apply rectOpacity via alpha channel to avoid affecting children
+    color: {
+        if (isSingleColorGradient && (gradientType === "linear" || gradientType === "radial")) {
+            return applyOpacity(singleGradientColor, rectOpacity);
+        }
+        if (hasSolidColor && gradientType !== "linear" && gradientType !== "radial" && gradientType !== "halftone") {
+            return applyOpacity(solidColor, rectOpacity);
+        }
+        return "transparent";
+    }
 
     Behavior on radius {
         enabled: root.animateRadius && Config.animDuration > 0
@@ -77,74 +88,10 @@ ClippingRectangle {
         }
     }
 
-    // Local gradient texture - only created when needed (lazy loading)
-    Loader {
-        id: gradientTextureLoader
-        active: root.needsGradientTexture
-        visible: false
-
-        sourceComponent: Item {
-            id: textureContainer
-
-            // Track cache version to know when to repaint
-            property int cacheVersion: GradientCache.version
-
-            Canvas {
-                id: gradientCanvas
-                width: 256
-                height: 32
-                visible: false
-
-                onPaint: {
-                    const ctx = getContext("2d");
-                    ctx.clearRect(0, 0, width, height);
-
-                    const stops = GradientCache.getResolvedStops(root.gradientStops);
-                    if (!stops || stops.length === 0)
-                        return;
-
-                    const grad = ctx.createLinearGradient(0, 0, width, 0);
-                    for (let i = 0; i < stops.length; i++) {
-                        const s = stops[i];
-                        grad.addColorStop(s[1], s[0]);
-                    }
-
-                    ctx.fillStyle = grad;
-                    ctx.fillRect(0, 0, width, height);
-                }
-
-                Component.onCompleted: requestPaint()
-            }
-
-            ShaderEffectSource {
-                id: gradientSource
-                sourceItem: gradientCanvas
-                hideSource: true
-                smooth: true
-                wrapMode: ShaderEffectSource.ClampToEdge
-                visible: false
-            }
-
-            // Repaint when cache version changes (theme colors changed)
-            onCacheVersionChanged: gradientCanvas.requestPaint()
-
-            // Repaint when gradient stops change (variant changed)
-            Connections {
-                target: root
-                function onGradientStopsChanged() {
-                    gradientCanvas.requestPaint();
-                }
-            }
-
-            // Expose the source for shaders
-            property alias source: gradientSource
-        }
-    }
-
-    // Linear gradient shader
+    // Linear gradient - uses cached texture
     Loader {
         anchors.fill: parent
-        active: root.gradientType === "linear" && gradientTextureLoader.item !== null
+        active: root.gradientType === "linear" && root.cachedGradientTexture !== null
 
         sourceComponent: ShaderEffect {
             opacity: root.rectOpacity
@@ -152,17 +99,17 @@ ClippingRectangle {
             property real angle: root.gradientAngle
             property real canvasWidth: width
             property real canvasHeight: height
-            property var gradTex: gradientTextureLoader.item?.source ?? null
+            property var gradTex: root.cachedGradientTexture
 
             vertexShader: "linear_gradient.vert.qsb"
             fragmentShader: "linear_gradient.frag.qsb"
         }
     }
 
-    // Radial gradient shader
+    // Radial gradient - uses cached texture
     Loader {
         anchors.fill: parent
-        active: root.gradientType === "radial" && gradientTextureLoader.item !== null
+        active: root.gradientType === "radial" && root.cachedGradientTexture !== null
 
         sourceComponent: ShaderEffect {
             opacity: root.rectOpacity
@@ -171,7 +118,7 @@ ClippingRectangle {
             property real centerY: root.gradientCenterY
             property real canvasWidth: width
             property real canvasHeight: height
-            property var gradTex: gradientTextureLoader.item?.source ?? null
+            property var gradTex: root.cachedGradientTexture
 
             vertexShader: "radial_gradient.vert.qsb"
             fragmentShader: "radial_gradient.frag.qsb"
@@ -207,28 +154,9 @@ ClippingRectangle {
         }
     }
 
-    // Shadow effect and/or content caching
-    // When cacheContent is true, renders to texture once (reduces GPU redraw)
-    // When enableShadow is true, applies shadow effect
-    layer.enabled: enableShadow || _effectiveCacheEnabled
-    layer.effect: enableShadow ? shadowEffect : null
-
-    Component {
-        id: shadowEffect
-        Shadow {}
-    }
-
-    // Temporarily disable cache when theme changes to allow repaint
-    Connections {
-        target: GradientCache
-        function onVersionChanged() {
-            if (root.cacheContent) {
-                root._isInvalidating = true;
-                // Re-enable cache after a frame to capture the new render
-                Qt.callLater(() => { root._isInvalidating = false; });
-            }
-        }
-    }
+    // Shadow effect
+    layer.enabled: enableShadow
+    layer.effect: Shadow {}
 
     // Border overlay to avoid ClippingRectangle artifacts
     ClippingRectangle {

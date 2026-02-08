@@ -11,6 +11,9 @@ Item {
     property bool maskEnabled: false
     property bool maskInverted: false
     
+    // GPU optimization: set to true only during animations
+    property bool liveUpdate: false
+    
     // Shadow parameters from Config
     property color shadowColor: Config.resolveColor(Config.theme.shadowColor)
     property real shadowOpacity: Config.theme.shadowOpacity
@@ -29,7 +32,7 @@ Item {
         id: maskEffectSource
         sourceItem: root.maskSource
         hideSource: true
-        live: true
+        live: root.liveUpdate
         smooth: true
         visible: false
         enabled: root.maskEnabled && root.maskSource
@@ -41,7 +44,7 @@ Item {
         id: sourceEffectSource
         sourceItem: root.sourceItem
         hideSource: true
-        live: true
+        live: root.liveUpdate
         smooth: true
         recursive: false // Proxy is used, recursion not needed
         // textureSize removed to restore precision
@@ -64,7 +67,7 @@ Item {
     ShaderEffectSource {
         id: intermediateSource
         sourceItem: pass1
-        live: true
+        live: root.liveUpdate
         hideSource: false
         smooth: true
         // textureSize removed

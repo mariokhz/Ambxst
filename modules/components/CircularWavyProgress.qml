@@ -16,8 +16,11 @@ Item {
     property real thickness: 0.02
     property color color: "white"
     
+    // GPU optimization: only enable layer when animating
+    property bool animating: amplitude > 0
+    
     // -- Internal --
-    readonly property real supersample: 2.0 // 2x is usually sufficient for high DPI, 4x if needed
+    readonly property real supersample: 1.0 // 2x is usually sufficient for high DPI, 4x if needed
     
     Item {
         anchors.fill: parent
@@ -43,10 +46,10 @@ Item {
             fragmentShader: "circular_wavy.frag.qsb"
             vertexShader: "circular_wavy.vert.qsb"
             
-            // Layering for smooth downscaling
-            layer.enabled: true
+            // Layering for smooth downscaling - conditional for GPU optimization
+            layer.enabled: root.animating
             layer.smooth: true
-            layer.mipmap: true
+            layer.mipmap: root.animating
             layer.textureSize: Qt.size(width, height)
         }
     }

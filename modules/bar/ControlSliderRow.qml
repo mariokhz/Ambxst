@@ -133,7 +133,7 @@ Item {
             }
 
             // Progress fill (wavy or solid)
-            WavyLine {
+            CarouselProgress {
                 anchors.left: parent.left
                 anchors.right: dragHandle.left
                 anchors.rightMargin: 4
@@ -145,10 +145,9 @@ Item {
                 lineWidth: 4
                 fullLength: sliderContainer.width
                 visible: root.wavy
+                active: true // Always active for now
                 z: 1
-                FrameAnimation {
-                    running: visible
-                }
+                // CarouselProgress manages its own animation internally
             }
 
             Rectangle {
