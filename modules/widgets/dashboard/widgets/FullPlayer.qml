@@ -7,42 +7,29 @@ import Quickshell.Services.Mpris
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
-import qs.modules.globals
 import qs.config
 
 StyledRect {
     id: player
-    variant: "transparent"
+    variant: "pane"
 
     property real playerRadius: Config.roundness > 0 ? Config.roundness + 4 : 0
     property bool playersListExpanded: false
 
-    visible: true
+    visible: MprisController.activePlayer !== null
     radius: playerRadius
 
-    implicitHeight: 400
+    implicitHeight: {
+        const baseHeight = MprisController.activePlayer ? layout.implicitHeight + layout.anchors.margins * 2 : 40;
+        return playersListExpanded ? baseHeight + 4 + (40 * Math.min(3, MprisController.filteredPlayers.length)) : baseHeight;
+    }
 
-    readonly property bool isDragging: realSeekBar.isDragging
+    Layout.preferredHeight: implicitHeight
 
     property bool isPlaying: MprisController.activePlayer?.playbackState === MprisPlaybackState.Playing
     property real position: MprisController.activePlayer?.position ?? 0.0
     property real length: MprisController.activePlayer?.length ?? 1.0
     property bool hasArtwork: (MprisController.activePlayer?.trackArtUrl ?? "") !== ""
-    property string wallpaperPath: {
-        if (!GlobalStates.wallpaperManager) return "";
-        let path = GlobalStates.wallpaperManager.currentWallpaper;
-        let frame = GlobalStates.wallpaperManager.getLockscreenFramePath(path);
-        return frame ? "file://" + frame : "";
-    }
-    property bool hasActivePlayer: MprisController.activePlayer !== null
-    property bool isSeeking: false
-
-    Timer {
-        id: seekUnlockTimer
-        interval: 1000
-        repeat: false
-        onTriggered: player.isSeeking = false
-    }
 
     function formatTime(seconds) {
         const totalSeconds = Math.floor(seconds);
@@ -57,23 +44,14 @@ StyledRect {
         }
     }
 
-    // Function to sync seekBar with current media position
-    function syncSeekBarPosition() {
-        if (!realSeekBar.isDragging && !player.isSeeking) {
-            if (player.hasActivePlayer) {
-                realSeekBar.value = player.length > 0 ? player.position / player.length : 0;
-            } else {
-                realSeekBar.value = 0;
-            }
-        }
-    }
-
     Timer {
-        running: player.isPlaying && player.visible
+        running: player.isPlaying
         interval: 1000
         repeat: true
         onTriggered: {
-            syncSeekBarPosition();
+            if (!positionSlider.isDragging) {
+                positionSlider.value = player.length > 0 ? Math.min(1.0, player.position / player.length) : 0;
+            }
             MprisController.activePlayer?.positionChanged();
         }
     }
@@ -81,497 +59,597 @@ StyledRect {
     Connections {
         target: MprisController.activePlayer
         function onPositionChanged() {
-            syncSeekBarPosition();
-        }
-    }
-
-    Component.onCompleted: {
-        syncSeekBarPosition();
-    }
-
-    Connections {
-        target: MprisController
-        function onActivePlayerChanged() {
-            Qt.callLater(syncSeekBarPosition);
-        }
-    }
-
-    Connections {
-        target: GlobalStates
-        function onDashboardOpenChanged() {
-            if (GlobalStates.dashboardOpen) {
-                Qt.callLater(syncSeekBarPosition);
+            if (!positionSlider.isDragging && MprisController.activePlayer) {
+                positionSlider.value = player.length > 0 ? Math.min(1.0, player.position / player.length) : 0;
             }
         }
     }
 
-    // Background with blur effect
-
-    Image {
-        id: backgroundArtBlurred
+    ClippingRectangle {
         anchors.fill: parent
-        source: (MprisController.activePlayer?.trackArtUrl ?? "") !== "" ? MprisController.activePlayer.trackArtUrl : player.wallpaperPath
-        sourceSize: Qt.size(64, 64)
-        fillMode: Image.PreserveAspectCrop
-        visible: false
-        asynchronous: true
-    }
+        radius: player.playerRadius
+        color: "transparent"
 
-    MultiEffect {
-        id: blurredEffect
-        anchors.fill: parent
-        source: backgroundArtBlurred
-        blurEnabled: true
-        blurMax: 32
-        blur: 1.0
-        opacity: (player.hasArtwork || player.wallpaperPath !== "") ? 0.25 : 0.0
-        visible: player.hasArtwork || player.wallpaperPath !== ""
-        Behavior on opacity {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Config.animDuration
-                easing.type: Easing.OutQuart
+        // Background artwork for entire component
+        Image {
+            id: backgroundArt
+            anchors.fill: parent
+            source: MprisController.activePlayer?.trackArtUrl ?? ""
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            visible: false
+        }
+
+        MultiEffect {
+            id: backgroundEffect
+            anchors.fill: parent
+            source: backgroundArt
+            blurMax: 32
+            blur: 0.75
+            opacity: (MprisController.activePlayer?.trackArtUrl ?? "") !== "" ? 1.0 : 0.0
+
+            Behavior on opacity {
+                enabled: Config.animDuration > 0
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
             }
         }
-    }
 
-    Image {
-        id: backgroundArtFull
-        anchors.fill: parent
-        source: (MprisController.activePlayer?.trackArtUrl ?? "") !== "" ? MprisController.activePlayer.trackArtUrl : player.wallpaperPath
-        fillMode: Image.PreserveAspectCrop
-        visible: false
-        asynchronous: true
-    }
+        StyledRect {
+            anchors.fill: parent
+            variant: "internalbg"
+            opacity: (MprisController.activePlayer?.trackArtUrl ?? "") !== "" ? 0.5 : 0.0
 
-    MultiEffect {
-        id: fullArtEffect
-        anchors.fill: parent
-        source: backgroundArtFull
-        maskEnabled: true
-        maskSource: innerAreaMask
-        maskInverted: true
-        maskThresholdMin: 0.5
-        maskSpreadAtMin: 1.0
-        opacity: (player.hasArtwork || player.wallpaperPath !== "") ? 1.0 : 0.0
-        visible: player.hasArtwork || player.wallpaperPath !== ""
-        Behavior on opacity {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Config.animDuration
-                easing.type: Easing.OutQuart
+            Behavior on opacity {
+                enabled: Config.animDuration > 0
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
             }
         }
-    }
 
-    Item {
-        id: innerAreaMask
-        anchors.fill: parent
-        visible: false
-        layer.enabled: true
-        Rectangle {
-            x: 4
-            y: 4
-            width: parent.width - 8
-            height: parent.height - 8
-            radius: player.radius - 4
-            color: "white"
-        }
-    }
+        ClippingRectangle {
+            anchors.fill: parent
+            radius: player.playerRadius > 0 ? player.playerRadius - 4 : 0
+            color: player.hasArtwork ? "transparent" : Colors.surface
 
-    // Playback Controls
+            Behavior on color {
+                enabled: Config.animDuration > 0
+                ColorAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
+            }
 
-    ColumnLayout {
-        anchors.centerIn: parent
-        spacing: 8
-
-        // Disc Area (SeekBar + Cover Art)
-
-        Item {
-            id: discArea
-            Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: 180
-            Layout.preferredHeight: 180
-            Layout.topMargin: -8
-            Layout.bottomMargin: -24
-
-            CircularSeekBar {
-                id: realSeekBar
+            Item {
+                id: noPlayerContainer
                 anchors.fill: parent
-                accentColor: Colors.primary
-                trackColor: Colors.outline
-                lineWidth: 6
-                wavy: true
-                waveAmplitude: player.isPlaying ? 3 : 0
-                waveFrequency: 24
+                anchors.margins: 4
+                visible: !MprisController.activePlayer
 
-                startAngleDeg: 180
-                spanAngleDeg: 180
+                WavyLine {
+                    id: noPlayerWavyLine
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.margins: -4
+                    frequency: 4
+                    color: Colors.surfaceBright
+                    amplitudeMultiplier: 4
+                    height: 24
+                    lineWidth: 2
+                    fullLength: width
+                    visible: true
+                    opacity: 1.0
 
-                enabled: player.hasActivePlayer && (MprisController.activePlayer?.canSeek ?? false)
+                    Behavior on color {
+                        enabled: Config.animDuration > 0
+                        ColorAnimation {
+                            duration: Config.animDuration
+                            easing.type: Easing.OutQuart
+                        }
+                    }
 
-                onValueEdited: newValue => {
-                    if (MprisController.activePlayer && MprisController.activePlayer.canSeek) {
-                        player.isSeeking = true;
-                        seekUnlockTimer.restart();
-                        realSeekBar.value = newValue;
-                        MprisController.activePlayer.position = newValue * player.length;
+                    FrameAnimation {
+                        running: noPlayerWavyLine.visible
                     }
                 }
             }
 
-            // Cover Art Disc - with layer caching for GPU efficiency
-            Item {
-                id: coverDiscContainer
-                anchors.centerIn: parent
-                width: parent.width - 52
-                height: parent.height - 52
-
-                // Layer caches the circular clip, rotation happens on cached texture
+            ColumnLayout {
+                id: layout
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: 16
+                spacing: 8
+                visible: MprisController.activePlayer
                 layer.enabled: true
-                layer.smooth: true
+                layer.effect: Shadow {
+                    shadowBlur: 0.5
+                    shadowOpacity: 1
+                    shadowVerticalOffset: 2
+                }
 
-                ClippingRectangle {
-                    id: clippedDisc
-                    anchors.fill: parent
-                    radius: width / 2
-                    color: Colors.surface
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 52
+                    spacing: 8
 
-                    Image {
-                        id: coverArt
-                        anchors.fill: parent
-                        source: (MprisController.activePlayer?.trackArtUrl ?? "") !== "" ? MprisController.activePlayer.trackArtUrl : player.wallpaperPath
-                        sourceSize: Qt.size(256, 256)
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        spacing: 0
 
-                        // Placeholder (sin WavyLine)
-                        Rectangle {
+                        Text {
+                            Layout.fillWidth: true
+                            text: MprisController.activePlayer?.trackTitle ?? "No hay reproducción activa"
+                            textFormat: Text.PlainText
+                            color: player.hasArtwork ? Colors.overBackground : Colors.overBackground
+                            font.pixelSize: Config.theme.fontSize
+                            font.weight: Font.Bold
+                            font.family: Config.theme.font
+                            elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                            maximumLineCount: 1
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: MprisController.activePlayer?.trackArtist ?? ""
+                            textFormat: Text.PlainText
+                            color: player.hasArtwork ? Colors.overBackground : Colors.overBackground
+                            font.pixelSize: Config.theme.fontSize
+                            font.family: Config.theme.font
+                            elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                            maximumLineCount: 1
+                            visible: text !== ""
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+
+                            Text {
+                                text: player.formatTime(player.position)
+                                textFormat: Text.PlainText
+                                color: player.hasArtwork ? Colors.overBackground : Colors.overBackground
+                                font.pixelSize: Config.theme.fontSize
+                                font.family: Config.theme.font
+                                visible: MprisController.activePlayer !== null
+                            }
+
+                            Text {
+                                text: "/ " + player.formatTime(player.length)
+                                textFormat: Text.PlainText
+                                color: player.hasArtwork ? Colors.overBackground : Colors.overBackground
+                                font.pixelSize: Config.theme.fontSize
+                                font.family: Config.theme.font
+                                opacity: 0.5
+                                visible: MprisController.activePlayer !== null
+                            }
+                        }
+                    }
+
+                    StyledRect {
+                        id: playPauseButton
+                        Layout.preferredWidth: 40
+                        Layout.preferredHeight: 40
+                        variant: playPauseHover.hovered ? "primaryfocus" : "primary"
+                        radius: player.isPlaying ? Styling.radius(-4) : Styling.radius(4)
+                        opacity: MprisController.canTogglePlaying ? 1.0 : 0.3
+
+                        Text {
+                            id: playPauseBtn
+                            anchors.centerIn: parent
+                            text: player.isPlaying ? Icons.pause : Icons.play
+                            textFormat: Text.RichText
+                            color: playPauseButton.item
+                            font.pixelSize: 20
+                            font.family: Icons.font
+                        }
+
+                        HoverHandler {
+                            id: playPauseHover
+                        }
+
+                        MouseArea {
                             anchors.fill: parent
-                            color: Colors.surface
-                            visible: !player.hasArtwork && player.wallpaperPath === ""
+                            cursorShape: Qt.PointingHandCursor
+                            enabled: MprisController.canTogglePlaying
+                            onClicked: MprisController.togglePlaying()
                         }
                     }
                 }
 
-                // RotationAnimator runs on render thread - much more GPU efficient
-                RotationAnimator on rotation {
-                    id: rotateAnim
-                    from: 0
-                    to: 360
-                    duration: 8000
-                    loops: Animation.Infinite
-                    running: player.isPlaying && player.visible
-                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    // Layout.preferredHeight: 40
+                    spacing: 8
 
-                Behavior on rotation {
-                    enabled: !player.isPlaying
-                    SpringAnimation {
-                        spring: 0.8
-                        damping: 0.05
-                        epsilon: 0.25
+                    Text {
+                        id: previousBtn
+                        text: Icons.previous
+                        textFormat: Text.RichText
+                        color: previousHover.hovered ? (player.hasArtwork ? Styling.srItem("overprimary") : Styling.srItem("overprimary")) : Colors.overBackground
+                        font.pixelSize: 20
+                        font.family: Icons.font
+                        opacity: MprisController.canGoPrevious ? 1.0 : 0.3
+
+                        Behavior on color {
+                            enabled: Config.animDuration > 0
+                            ColorAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+                        }
+
+                        HoverHandler {
+                            id: previousHover
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            enabled: MprisController.canGoPrevious
+                            onClicked: MprisController.previous()
+                        }
                     }
-                }
 
-                Connections {
-                    target: player
-                    function onIsPlayingChanged() {
-                        if (!player.isPlaying) {
-                            let currentRotation = coverDiscContainer.rotation % 360;
-                            if (currentRotation > 180) {
-                                coverDiscContainer.rotation = 360;
-                            } else {
-                                coverDiscContainer.rotation = 0;
+                    PositionSlider {
+                        id: positionSlider
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 4
+
+                        player: MprisController.activePlayer
+                    }
+
+                    Text {
+                        id: nextBtn
+                        text: Icons.next
+                        textFormat: Text.RichText
+                        color: nextHover.hovered ? (player.hasArtwork ? Styling.srItem("overprimary") : Styling.srItem("overprimary")) : Colors.overBackground
+                        font.pixelSize: 20
+                        font.family: Icons.font
+                        opacity: MprisController.canGoNext ? 1.0 : 0.3
+
+                        Behavior on color {
+                            enabled: Config.animDuration > 0
+                            ColorAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+                        }
+
+                        HoverHandler {
+                            id: nextHover
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            enabled: MprisController.canGoNext
+                            onClicked: MprisController.next()
+                        }
+                    }
+
+                    Text {
+                        id: modeBtn
+                        text: {
+                            if (MprisController.hasShuffle)
+                                return Icons.shuffle;
+                            switch (MprisController.loopState) {
+                            case MprisLoopState.Track:
+                                return Icons.repeatOnce;
+                            case MprisLoopState.Playlist:
+                                return Icons.repeat;
+                            default:
+                                return Icons.shuffle;
+                            }
+                        }
+                        textFormat: Text.RichText
+                        color: modeHover.hovered ? (player.hasArtwork ? Styling.srItem("overprimary") : Styling.srItem("overprimary")) : Colors.overBackground
+                        font.pixelSize: 20
+                        font.family: Icons.font
+                        opacity: {
+                            if (!(MprisController.shuffleSupported || MprisController.loopSupported))
+                                return 0.3;
+                            if (!MprisController.hasShuffle && MprisController.loopState === MprisLoopState.None)
+                                return 0.3;
+                            return 1.0;
+                        }
+
+                        Behavior on color {
+                            enabled: Config.animDuration > 0
+                            ColorAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+                        }
+
+                        HoverHandler {
+                            id: modeHover
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            enabled: MprisController.shuffleSupported || MprisController.loopSupported
+                            onClicked: {
+                                if (MprisController.hasShuffle) {
+                                    MprisController.setShuffle(false);
+                                    MprisController.setLoopState(MprisLoopState.Playlist);
+                                } else if (MprisController.loopState === MprisLoopState.Playlist) {
+                                    MprisController.setLoopState(MprisLoopState.Track);
+                                } else if (MprisController.loopState === MprisLoopState.Track) {
+                                    MprisController.setLoopState(MprisLoopState.None);
+                                } else {
+                                    MprisController.setShuffle(true);
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        id: playerIcon
+                        text: {
+                            if (!MprisController.activePlayer)
+                                return Icons.player;
+                            return player.getPlayerIcon(MprisController.activePlayer);
+                        }
+                        textFormat: Text.RichText
+                        color: playerIconHover.hovered ? (player.hasArtwork ? Styling.srItem("overprimary") : Styling.srItem("overprimary")) : Colors.overBackground
+                        font.pixelSize: 20
+                        font.family: Icons.font
+                        opacity: MprisController.activePlayer ? 1.0 : 0.3
+
+                        Behavior on color {
+                            enabled: Config.animDuration > 0
+                            ColorAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+                        }
+
+                        HoverHandler {
+                            id: playerIconHover
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onClicked: mouse => {
+                                if (mouse.button === Qt.LeftButton) {
+                                    MprisController.cyclePlayer(1);
+                                } else if (mouse.button === Qt.RightButton) {
+                                    player.playersListExpanded = !player.playersListExpanded;
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        // Metadata
+            // Players list - similar to SchemeSelector
+            RowLayout {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.leftMargin: 4
+                anchors.rightMargin: 4
+                anchors.bottomMargin: 4
+                spacing: 4
+                visible: MprisController.filteredPlayers.length > 0
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignHCenter
-            spacing: 2
+                ClippingRectangle {
+                    id: playersListContainer
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: player.playersListExpanded ? (40 * Math.min(3, MprisController.filteredPlayers.length)) : 0
+                    color: Colors.background
+                    radius: Styling.radius(0)
+                    opacity: player.playersListExpanded ? 1 : 0
 
-            Text {
-                Layout.fillWidth: true
-                Layout.preferredHeight: visible ? implicitHeight : 0
-                text: player.hasActivePlayer ? (MprisController.activePlayer?.trackTitle ?? "") : "Nothing Playing"
-                color: Colors.overBackground
-                font.pixelSize: Config.theme.fontSize + 2
-                font.weight: Font.Bold
-                font.family: Config.theme.font
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                maximumLineCount: 1
-                visible: text !== ""
-            }
-
-            Text {
-                Layout.fillWidth: true
-                Layout.preferredHeight: visible ? implicitHeight : 0
-                text: player.hasActivePlayer ? (MprisController.activePlayer?.trackAlbum ?? "") : "Enjoy the silence"
-                color: Colors.overBackground
-                font.pixelSize: Config.theme.fontSize
-                font.family: Config.theme.font
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                maximumLineCount: 1
-                opacity: 0.7
-                visible: text !== ""
-            }
-
-            Text {
-                Layout.fillWidth: true
-                Layout.preferredHeight: visible ? implicitHeight : 0
-                text: player.hasActivePlayer ? (MprisController.activePlayer?.trackArtist ?? "") : "¯\\_(ツ)_/¯"
-                color: Colors.overBackground
-                font.pixelSize: Config.theme.fontSize
-                font.family: Config.theme.font
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                maximumLineCount: 1
-                opacity: 0.7
-                visible: text !== ""
-            }
-        }
-
-        RowLayout {
-            Layout.alignment: Qt.AlignHCenter
-            spacing: 8
-
-        // Player Selector
-        MediaIconButton {
-            icon: player.getPlayerIcon(MprisController.activePlayer)
-            opacity: player.hasActivePlayer ? 1.0 : 0.5
-            onClicked: mouse => {
-                if (mouse.button === Qt.LeftButton) {
-                    MprisController.cyclePlayer(1);
-                } else if (mouse.button === Qt.RightButton) {
-                    player.playersListExpanded = !player.playersListExpanded;
-                }
-            }
-        }
-
-        // Previous
-        MediaIconButton {
-            icon: Icons.previous
-            enabled: MprisController.canGoPrevious
-            opacity: player.hasActivePlayer ? (enabled ? 1.0 : 0.3) : 0.5
-            onClicked: MprisController.previous()
-        }
-
-        // Play/Pause
-        StyledRect {
-            id: playPauseBtn
-            Layout.preferredWidth: 44
-            Layout.preferredHeight: 44
-            variant: "primary"
-            opacity: player.hasActivePlayer ? 1.0 : 0.5
-
-            animateRadius: false
-            radius: Styling.radius(16)
-
-            states: [
-                State {
-                    name: "playing"
-                    when: player.isPlaying && player.hasActivePlayer
-                    PropertyChanges {
-                        target: playPauseBtn
-                        radius: Styling.radius(0)
+                    Behavior on Layout.preferredHeight {
+                        enabled: Config.animDuration > 0
+                        NumberAnimation {
+                            duration: Config.animDuration
+                            easing.type: Easing.OutQuart
+                        }
                     }
-                },
-                State {
-                    name: "paused"
-                    when: (!player.isPlaying || !player.hasActivePlayer)
-                    PropertyChanges {
-                        target: playPauseBtn
-                        radius: Styling.radius(16)
+
+                    Behavior on opacity {
+                        enabled: Config.animDuration > 0
+                        NumberAnimation {
+                            duration: Config.animDuration
+                            easing.type: Easing.OutQuart
+                        }
                     }
-                }
-            ]
 
-            transitions: Transition {
-                NumberAnimation {
-                    properties: "radius"
-                    duration: 300
-                    easing.type: Easing.OutBack
-                }
-            }
-
-            Text {
-                anchors.centerIn: parent
-                text: !player.hasActivePlayer ? Icons.stop : (player.isPlaying ? Icons.pause : Icons.play)
-                font.family: Icons.font
-                font.pixelSize: 22
-                color: playPauseBtn.item
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                enabled: player.hasActivePlayer
-                onClicked: MprisController.togglePlaying()
-            }
-        }
-
-        // Next
-        MediaIconButton {
-            icon: Icons.next
-            enabled: MprisController.canGoNext
-            opacity: player.hasActivePlayer ? (enabled ? 1.0 : 0.3) : 0.5
-            onClicked: MprisController.next()
-        }
-
-        // Mode
-        MediaIconButton {
-            icon: {
-                if (MprisController.hasShuffle)
-                    return Icons.shuffle;
-                if (MprisController.loopState === MprisLoopState.Track)
-                    return Icons.repeatOnce;
-                if (MprisController.loopState === MprisLoopState.Playlist)
-                    return Icons.repeat;
-                return Icons.shuffle;
-            }
-            opacity: player.hasActivePlayer ? ((MprisController.shuffleSupported || MprisController.loopSupported) ? 1.0 : 0.3) : 0.5
-            onClicked: {
-                if (MprisController.hasShuffle) {
-                    MprisController.setShuffle(false);
-                    MprisController.setLoopState(MprisLoopState.Playlist);
-                } else if (MprisController.loopState === MprisLoopState.Playlist) {
-                    MprisController.setLoopState(MprisLoopState.Track);
-                } else if (MprisController.loopState === MprisLoopState.Track) {
-                    MprisController.setLoopState(MprisLoopState.None);
-                } else {
-                    MprisController.setShuffle(true);
-                }
-            }
-            }
-        }
-
-        // Duration Area
-        Text {
-            Layout.alignment: Qt.AlignHCenter
-            text: player.hasActivePlayer ? (player.formatTime(player.position) + " / " + player.formatTime(player.length)) : "--:-- / --:--"
-            color: Colors.overBackground
-            font.pixelSize: Config.theme.fontSize - 2
-            font.family: Config.theme.font
-            opacity: 0.5
-        }
-    }
-
-    // Players List Overlay
-    Item {
-        id: overlayLayer
-        anchors.fill: parent
-        visible: player.playersListExpanded
-        z: 100
-
-        // Scrim
-        Rectangle {
-            anchors.fill: parent
-            color: "black"
-            opacity: 0.4
-            radius: player.radius
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: player.playersListExpanded = false
-            }
-        }
-
-        // List Container
-        StyledRect {
-            id: playersListContainer
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.margins: 4
-            implicitHeight: Math.min(160, playersListView.contentHeight + 8)
-            variant: "pane"
-            radius: player.radius - 4
-
-            ListView {
-                id: playersListView
-                anchors.fill: parent
-                anchors.margins: 4
-                clip: true
-                model: MprisController.filteredPlayers
-
-                delegate: StyledRect {
-                    id: playerItem
-                    required property var modelData
-                    required property int index
-
-                    width: playersListView.width
-                    height: 40
-                    variant: delegateMouseArea.containsMouse ? "focus" : "transparent"
-                    radius: 4
-
-                    RowLayout {
+                    ListView {
+                        id: playersListView
                         anchors.fill: parent
-                        anchors.margins: 8
-                        spacing: 8
+                        clip: true
+                        model: MprisController.filteredPlayers
+                        interactive: true
+                        boundsBehavior: Flickable.StopAtBounds
+                        highlightFollowsCurrentItem: !isScrolling
+                        highlightRangeMode: ListView.ApplyRange
+                        preferredHighlightBegin: 0
+                        preferredHighlightEnd: height
+                        currentIndex: -1
 
-                        Text {
-                            text: player.getPlayerIcon(modelData)
-                            font.family: Icons.font
-                            font.pixelSize: 18
-                            color: Colors.overBackground
+                        // Propiedad para detectar si está en movimiento
+                        property bool isScrolling: dragging || flicking
+
+                        function getPlayerIcon(player) {
+                            if (!player)
+                                return Icons.player;
+                            const dbusName = (player.dbusName || "").toLowerCase();
+                            const desktopEntry = (player.desktopEntry || "").toLowerCase();
+                            const identity = (player.identity || "").toLowerCase();
+
+                            if (dbusName.includes("spotify") || desktopEntry.includes("spotify") || identity.includes("spotify"))
+                                return Icons.spotify;
+                            if (dbusName.includes("chromium") || dbusName.includes("chrome") || desktopEntry.includes("chromium") || desktopEntry.includes("chrome"))
+                                return Icons.chromium;
+                            if (dbusName.includes("firefox") || desktopEntry.includes("firefox"))
+                                return Icons.firefox;
+                            if (dbusName.includes("telegram") || desktopEntry.includes("telegram") || identity.includes("telegram"))
+                                return Icons.telegram;
+                            return Icons.player;
                         }
 
-                        Text {
-                            Layout.fillWidth: true
-                            text: (modelData?.trackTitle || modelData?.identity || "Unknown Player")
-                            color: Colors.overBackground
-                            font.family: Config.theme.font
-                            elide: Text.ElideRight
+                        highlight: Rectangle {
+                            color: Styling.srItem("overprimary")
+                            radius: Styling.radius(0)
+                            visible: playersListView.currentIndex >= 0
+                            z: -1
+                        }
+
+                        highlightMoveDuration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                        highlightMoveVelocity: -1
+                        highlightResizeDuration: Config.animDuration / 2
+                        highlightResizeVelocity: -1
+
+                        delegate: Item {
+                            required property var modelData
+                            required property int index
+
+                            width: playersListView.width
+                            height: 40
+
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.leftMargin: 4
+                                anchors.rightMargin: 4
+                                anchors.topMargin: 2
+                                anchors.bottomMargin: 2
+                                color: "transparent"
+                                radius: Styling.radius(0)
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 6
+                                    spacing: 8
+
+                                    Text {
+                                        text: playersListView.getPlayerIcon(modelData)
+                                        textFormat: Text.RichText
+                                        color: playersListView.currentIndex === index ? Colors.overPrimary : Colors.overSurface
+                                        font.pixelSize: 20
+                                        font.family: Icons.font
+
+                                        Behavior on color {
+                                            enabled: Config.animDuration > 0
+                                            ColorAnimation {
+                                                duration: Config.animDuration / 2
+                                                easing.type: Easing.OutQuart
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: modelData.trackTitle || modelData.identity || "Unknown Player"
+                                        textFormat: Text.PlainText
+                                        color: playersListView.currentIndex === index ? Colors.overPrimary : Colors.overSurface
+                                        font.pixelSize: Config.theme.fontSize
+                                        font.weight: playersListView.currentIndex === index ? Font.Bold : Font.Normal
+                                        font.family: Config.theme.font
+                                        elide: Text.ElideRight
+                                        wrapMode: Text.NoWrap
+                                        maximumLineCount: 1
+
+                                        Behavior on color {
+                                            enabled: Config.animDuration > 0
+                                            ColorAnimation {
+                                                duration: Config.animDuration / 2
+                                                easing.type: Easing.OutQuart
+                                            }
+                                        }
+                                    }
+                                }
+
+                                HoverHandler {
+                                    id: playerItemHover
+                                    enabled: !playersListView.isScrolling
+                                    onHoveredChanged: {
+                                        if (hovered && !playersListView.isScrolling) {
+                                            playersListView.currentIndex = index;
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    hoverEnabled: !playersListView.isScrolling
+                                    onClicked: {
+                                        if (playersListView.isScrolling)
+                                            return;
+                                        MprisController.setActivePlayer(modelData);
+                                        player.playersListExpanded = false;
+                                    }
+                                }
+                            }
                         }
                     }
 
                     MouseArea {
-                        id: delegateMouseArea
                         anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            MprisController.setActivePlayer(modelData);
-                            player.playersListExpanded = false;
+                        propagateComposedEvents: true
+                        acceptedButtons: Qt.NoButton
+
+                        onWheel: wheel => {
+                            if (player.playersListExpanded && playersListView.contentHeight > playersListView.height) {
+                                const delta = wheel.angleDelta.y;
+                                playersListView.contentY = Math.max(0, Math.min(playersListView.contentHeight - playersListView.height, playersListView.contentY - delta));
+                                wheel.accepted = true;
+                            } else {
+                                wheel.accepted = false;
+                            }
+                        }
+                    }
+                }
+
+                ScrollBar {
+                    Layout.preferredWidth: 8
+                    Layout.preferredHeight: player.playersListExpanded ? (40 * Math.min(3, MprisController.filteredPlayers.length)) - 32 : 0
+                    Layout.alignment: Qt.AlignVCenter
+                    orientation: Qt.Vertical
+                    visible: MprisController.filteredPlayers.length > 3
+
+                    position: playersListView.contentY / playersListView.contentHeight
+                    size: playersListView.height / playersListView.contentHeight
+
+                    background: Rectangle {
+                        color: Colors.background
+                        radius: Styling.radius(0)
+                    }
+
+                    contentItem: Rectangle {
+                        color: Styling.srItem("overprimary")
+                        radius: Styling.radius(0)
+                    }
+
+                    property bool scrollBarPressed: false
+
+                    onPressedChanged: {
+                        scrollBarPressed = pressed;
+                    }
+
+                    onPositionChanged: {
+                        if (scrollBarPressed && playersListView.contentHeight > playersListView.height) {
+                            playersListView.contentY = position * playersListView.contentHeight;
                         }
                     }
                 }
             }
-        }
-    }
-
-    // Internal component for small buttons
-    component MediaIconButton: Text {
-        property string icon: ""
-        signal clicked(var mouse)
-
-        text: icon
-        font.family: Icons.font
-        font.pixelSize: 20
-        color: mouseArea.containsMouse ? Colors.primary : Colors.overBackground
-
-        Behavior on color {
-            ColorAnimation {
-                duration: 150
-            }
-        }
-
-        MouseArea {
-            id: mouseArea
-            anchors.fill: parent
-            anchors.margins: -4
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onClicked: mouse => parent.clicked(mouse)
         }
     }
 
@@ -591,5 +669,13 @@ StyledRect {
         if (dbusName.includes("telegram") || desktopEntry.includes("telegram") || identity.includes("telegram"))
             return Icons.telegram;
         return Icons.player;
+    }
+
+    Behavior on Layout.preferredHeight {
+        enabled: Config.animDuration > 0
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutQuart
+        }
     }
 }

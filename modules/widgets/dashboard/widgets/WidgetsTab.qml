@@ -26,7 +26,8 @@ Rectangle {
 
         FullPlayer {
             Layout.preferredWidth: 216
-            Layout.fillHeight: true
+            Layout.fillHeight: false
+            anchors.top: parent.top
         }
 
         // Widgets column
