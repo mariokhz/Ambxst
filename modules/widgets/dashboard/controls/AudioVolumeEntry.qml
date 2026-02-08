@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Services.Pipewire
 import qs.modules.theme
 import qs.modules.components
@@ -41,9 +42,9 @@ Item {
                 id: muteButton
                 flat: true
                 implicitWidth: 32
-                implicitHeight: 32
-                Layout.preferredWidth: 32
-                Layout.maximumWidth: 32
+                implicitHeight: 40
+                Layout.preferredWidth: 40
+                Layout.maximumWidth: 40
                 Layout.fillWidth: false
 
                 background: StyledRect {
@@ -52,8 +53,34 @@ Item {
                 }
 
                 contentItem: Item {
+                    Image {
+                        anchors.centerIn: parent
+                        width: 28
+                        height: 28
+                        mipmap: true
+                        antialiasing: true
+                        visible: source != "" && !root.isMuted && !root.isMainDevice
+                        source: {
+                            if (root.isMuted || root.isMainDevice) return "";
+                            
+                            let iconName;
+                            // Try application icon name first
+                            iconName = AppSearch.guessIcon(root.node?.properties["application.icon-name"] ?? "");
+                            if (AppSearch.iconExists(iconName))
+                                return Quickshell.iconPath(iconName);
+                                
+                            // Try node name as fallback
+                            iconName = AppSearch.guessIcon(root.node?.properties["node.name"] ?? "");
+                            if (AppSearch.iconExists(iconName))
+                                return Quickshell.iconPath(iconName);
+
+                            return "";
+                        }
+                    }
+
                     Text {
                         anchors.centerIn: parent
+                        visible: !parent.children[0].visible
                         text: {
                             if (root.isMuted)
                                 return Icons.speakerSlash;
@@ -62,7 +89,7 @@ Item {
                             return Icons.speakerHigh;
                         }
                         font.family: Icons.font
-                        font.pixelSize: 16
+                        font.pixelSize: 18
                         color: root.isMuted ? Colors.error : Colors.overBackground
 
                         Behavior on color {
@@ -123,7 +150,18 @@ Item {
 
             // Source name
             Text {
-                text: root.isMainDevice ? Audio.friendlyDeviceName(root.node) : Audio.appNodeDisplayName(root.node)
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                text: {
+                    if (root.isMainDevice) {
+                        return Audio.friendlyDeviceName(root.node);
+                    }
+                    
+                    const app = Audio.appNodeDisplayName(root.node);
+                    const media = root.node.properties["media.name"];
+                    // If media name exists and is different from app name, show both
+                    return (media && media !== app) ? `${app} • ${media}` : app;
+                }
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(-2)
                 color: Colors.overSurfaceVariant
