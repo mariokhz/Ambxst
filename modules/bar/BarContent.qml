@@ -100,7 +100,7 @@ Item {
 
         // Show if: hovering, notch hovering (when at top), notch open
         // IMPORTANT: notchHoverActive must be checked to synchronize with notch
-        return isMouseOverBar || hoverActive || notchHoverActive || notchOpen;
+        return isMouseOverBar || hoverActive || notchHoverActive;
     }
 
     // Timer to delay hiding the bar after mouse leaves
