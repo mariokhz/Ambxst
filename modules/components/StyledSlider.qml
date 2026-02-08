@@ -49,6 +49,7 @@ Item {
     property real iconScale: 1
     property bool sliderVisible: true
     property bool iconClickable: true
+    property bool showHandle: true
 
     // Step and snap properties
     property real stepSize: 0  // 0 means no stepping
@@ -131,6 +132,7 @@ Item {
                 radius: Styling.radius(0)
                 color: Colors.overBackground
                 z: 2
+                visible: root.showHandle
                 Behavior on width {
                     enabled: root.smoothDrag
                     NumberAnimation {
@@ -229,6 +231,7 @@ Item {
                 radius: Styling.radius(0)
                 color: iconColor
                 z: 2
+                visible: root.showHandle
                 Behavior on width {
                     enabled: root.smoothDrag
                     NumberAnimation {

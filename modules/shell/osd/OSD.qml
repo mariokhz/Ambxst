@@ -33,6 +33,8 @@ PanelWindow {
     // Internal state for responsiveness
     property real osdValue: 0
     property bool osdMuted: false
+    
+    readonly property int criticalLevel: 10
 
     // Centering wrapper
     Item {
@@ -40,7 +42,7 @@ PanelWindow {
 
         StyledRect {
             id: osdRect
-            variant: "popup"
+            variant: (GlobalStates.osdIndicator === "battery" && Battery.percentage < root.criticalLevel && !Battery.isPluggedIn) ? "error" : "popup"
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             implicitWidth: 220
@@ -53,7 +55,7 @@ PanelWindow {
                 anchors.rightMargin: 24
                 anchors.topMargin: 8
                 anchors.bottomMargin: 8
-                spacing: 14
+                spacing: 10
 
                 Text {
                     id: iconText
@@ -62,13 +64,20 @@ PanelWindow {
                             return Audio.volumeIcon(root.osdValue, root.osdMuted);
                         } else if (GlobalStates.osdIndicator === "mic") {
                             return root.osdMuted ? Icons.micSlash : Icons.mic;
+                        } else if (GlobalStates.osdIndicator === "battery") {
+                            if (Battery.isPluggedIn) return Icons.plug;
+                            if (Battery.percentage < 10) return Icons.batteryEmpty;
+                            if (Battery.percentage < 30) return Icons.batteryLow;
+                            if (Battery.percentage < 70) return Icons.batteryMedium;
+                            if (Battery.percentage < 90) return Icons.batteryHigh;
+                            return Icons.batteryFull;
                         } else {
                             return Icons.sun;
                         }
                     }
                     font.family: Icons.font
                     font.pixelSize: 22
-                    color: Colors.overBackground
+                    color: osdRect.item
                     Layout.alignment: Qt.AlignVCenter
 
                     rotation: GlobalStates.osdIndicator === "brightness" ? (root.osdValue * 180) : 0
@@ -108,12 +117,14 @@ PanelWindow {
                                     return "Microphone";
                                 if (GlobalStates.osdIndicator === "brightness")
                                     return "Brightness";
+                                if (GlobalStates.osdIndicator === "battery")
+                                    return "Battery";
                                 return "";
                             }
                             font.family: Config.theme.font
                             font.pixelSize: 15
                             font.bold: false
-                            color: Colors.overBackground
+                            color: osdRect.item
                             Layout.alignment: Qt.AlignBottom
                         }
 
@@ -126,7 +137,7 @@ PanelWindow {
                             font.family: Config.theme.font
                             font.pixelSize: 15
                             font.bold: false
-                            color: Colors.overBackground
+                            color: osdRect.item
                             Layout.alignment: Qt.AlignBottom
                         }
                     }
@@ -139,8 +150,9 @@ PanelWindow {
                         enabled: false
                         thickness: 3
                         handleSpacing: 0
-                        progressColor: root.osdMuted ? Colors.outline : Styling.srItem("overprimary")
-                        backgroundColor: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.2)
+                        progressColor: (GlobalStates.osdIndicator === "battery" && Battery.percentage < root.criticalLevel && !Battery.isPluggedIn) ? osdRect.item : Styling.srItem("overprimary")
+                        backgroundColor: (GlobalStates.osdIndicator === "battery" && Battery.percentage < root.criticalLevel && !Battery.isPluggedIn) ? Qt.rgba(osdRect.item.r, osdRect.item.g, osdRect.item.b, 0.2) : Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.2)
+                        showHandle: GlobalStates.osdIndicator !== "battery"
                     }
                 }
             }
@@ -202,6 +214,27 @@ PanelWindow {
                 GlobalStates.osdVisible = true;
                 hideTimer.restart();
             }
+        }
+    }
+
+    Connections {
+        target: Battery
+        function onIsPluggedInChanged() {
+            root.osdValue = Battery.percentage / 100;
+            root.osdMuted = false;
+            GlobalStates.osdIndicator = "battery";
+            GlobalStates.osdVisible = true;
+            hideTimer.restart();
+        }
+        function onPercentageChanged() {
+            // Optional: Trigger OSD on low battery?
+             if (Battery.percentage < root.criticalLevel && !Battery.isPluggedIn) {
+                root.osdValue = Battery.percentage / 100;
+                root.osdMuted = false;
+                GlobalStates.osdIndicator = "battery";
+                GlobalStates.osdVisible = true;
+                hideTimer.restart();
+             }
         }
     }
 }
