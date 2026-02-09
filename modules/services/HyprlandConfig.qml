@@ -167,6 +167,7 @@ QtObject {
         batchCommand += ` ; keyword decoration:blur:input_methods ${Config.hyprland.blurInputMethods}`;
         batchCommand += ` ; keyword decoration:blur:input_methods_ignorealpha ${Config.hyprland.blurInputMethodsIgnorealpha}`;
         // Note: workspacesAnimation is calculated but exact animation param syntax depends on user config, omitting for safety unless we have a default.
+        batchCommand += ` ; keyword animation workspaces,1,6,default,${workspacesAnimation}`;
 
         console.log(`HyprlandConfig: Applying ignorealpha: ${ignoreAlphaValue}, explicit: ${Config.hyprland.blurExplicitIgnoreAlpha}`);
         batchCommand += ` ; keyword layerrule noanim,quickshell ; keyword layerrule blur,quickshell ; keyword layerrule blurpopups,quickshell ; keyword layerrule ignorealpha ${ignoreAlphaValue},quickshell`;

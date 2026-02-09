@@ -27,59 +27,6 @@ WlSessionLockSurface {
     color: "transparent"
 
     // Wallpaper background con Blur integrado
-    TintedWallpaper {
-        id: wallpaperBackground
-        anchors.fill: parent
-        z: 1
-        radius: 0
-        tintEnabled: GlobalStates.wallpaperManager ? GlobalStates.wallpaperManager.tintEnabled : false
-
-        property string lockscreenFramePath: {
-            if (!GlobalStates.wallpaperManager)
-                return "";
-            return GlobalStates.wallpaperManager.getLockscreenFramePath(GlobalStates.wallpaperManager.currentWallpaper);
-        }
-
-        source: lockscreenFramePath ? "file://" + lockscreenFramePath : ""
-
-        // Animación de opacidad (visibilidad)
-        opacity: startAnim ? 1 : 0
-        visible: true
-
-        Behavior on opacity {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Config.animDuration * 2
-                easing.type: Easing.OutQuint
-            }
-        }
-
-        // Efecto de Blur y Zoom mediante capa
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            blurEnabled: true
-            blur: startAnim ? 1 : 0
-            blurMax: 64
-        }
-
-        // Zoom animation
-        property real zoomScale: startAnim ? 1.25 : 1.0
-        transform: Scale {
-            origin.x: wallpaperBackground.width / 2
-            origin.y: wallpaperBackground.height / 2
-            xScale: wallpaperBackground.zoomScale
-            yScale: wallpaperBackground.zoomScale
-        }
-
-        Behavior on zoomScale {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Config.animDuration * 2
-                easing.type: Easing.OutExpo
-            }
-        }
-    }
-
     // Screen capture background (fondo absoluto con zoom sincronizado)
     ScreencopyView {
         id: screencopyBackground
@@ -97,6 +44,13 @@ WlSessionLockSurface {
             origin.y: screencopyBackground.height / 2
             xScale: screencopyBackground.zoomScale
             yScale: screencopyBackground.zoomScale
+        }
+
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            blurEnabled: true
+            blur: 1
+            blurMax: 32
         }
 
         Behavior on zoomScale {
