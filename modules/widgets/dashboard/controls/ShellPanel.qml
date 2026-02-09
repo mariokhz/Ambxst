@@ -1056,6 +1056,71 @@ Item {
                                 }
                             }
                         }
+
+                        ToggleRow {
+                            label: "Disable Hover Expansion"
+                            checked: Config.notch.disableHoverExpansion ?? true
+                            onToggled: value => {
+                                if (value !== Config.notch.disableHoverExpansion) {
+                                    GlobalStates.markShellChanged();
+                                    Config.notch.disableHoverExpansion = value;
+                                }
+                            }
+                        }
+
+                        Separator {
+                            Layout.fillWidth: true
+                        }
+
+                        Text {
+                            text: "No Media Display"
+                            font.family: Config.theme.font
+                            font.pixelSize: Styling.fontSize(-1)
+                            font.weight: Font.Medium
+                            color: Colors.overSurfaceVariant
+                            Layout.bottomMargin: -4
+                        }
+
+                        SelectorRow {
+                            label: ""
+                            options: [
+                                {
+                                    label: "User@Host",
+                                    value: "userHost",
+                                    icon: Icons.user
+                                },
+                                {
+                                    label: "Compositor",
+                                    value: "compositor",
+                                    icon: Icons.compositor
+                                },
+                                {
+                                    label: "Custom",
+                                    value: "custom",
+                                    icon: Icons.textT
+                                }
+                            ]
+                            value: Config.notch.noMediaDisplay ?? "userHost"
+                            onValueSelected: newValue => {
+                                if (newValue !== Config.notch.noMediaDisplay) {
+                                    GlobalStates.markShellChanged();
+                                    Config.notch.noMediaDisplay = newValue;
+                                }
+                            }
+                        }
+
+                        TextInputRow {
+                            label: "Custom Text"
+                            visible: Config.notch.noMediaDisplay === "custom"
+                            value: Config.notch.customText ?? "Ambxst"
+                            placeholder: "Enter text..."
+                            onValueEdited: newValue => {
+                                if (newValue !== Config.notch.customText) {
+                                    GlobalStates.markShellChanged();
+                                    Config.notch.customText = newValue;
+                                }
+                            }
+                        }
                     }
 
                     Separator {

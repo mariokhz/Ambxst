@@ -454,7 +454,7 @@ WlSessionLockSurface {
                         // User icon / Spinner
                         Text {
                             id: userIcon
-                            text: authenticating ? Icons.spinnerGap : Icons.user
+                            text: authenticating ? Icons.circleNotch : Icons.user
                             font.family: Icons.font
                             font.pixelSize: 24
                             color: passwordFieldBg.item

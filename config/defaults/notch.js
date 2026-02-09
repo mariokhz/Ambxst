@@ -4,5 +4,8 @@ var data = {
     "theme": "default",
     "position": "top",
     "hoverRegionHeight": 8,
-    "keepHidden": false
+    "keepHidden": false,
+    "noMediaDisplay": "userHost",
+    "customText": "Ambxst",
+    "disableHoverExpansion": true
 }

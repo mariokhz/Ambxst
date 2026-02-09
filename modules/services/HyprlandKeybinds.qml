@@ -106,13 +106,13 @@ QtObject {
     }
 
     function applyKeybindsInternal() {
-        // Verificar que el adapter esté cargado
+        // Ensure adapter is loaded.
         if (!Config.keybindsLoader.loaded) {
             console.log("HyprlandKeybinds: Esperando que se cargue el adapter...");
             return;
         }
 
-        // Esperar a que el layout esté listo
+        // Wait for layout to be ready.
         if (!GlobalStates.hyprlandLayoutReady) {
             console.log("HyprlandKeybinds: Esperando que se detecte el layout de Hyprland...");
             return;
@@ -120,45 +120,45 @@ QtObject {
 
         console.log("HyprlandKeybinds: Aplicando keybindings (layout: " + GlobalStates.hyprlandLayout + ")...");
 
-        // Construir lista de unbinds
+        // Build unbind list.
         let unbindCommands = [];
 
-        // Helper function para formatear modifiers
+        // Format modifiers.
         function formatModifiers(modifiers) {
             if (!modifiers || modifiers.length === 0)
                 return "";
             return modifiers.join(" ");
         }
 
-        // Helper function para crear un bind command (old format for ambxst binds)
+        // Create bind command (old format).
         function createBindCommand(keybind, flags) {
             const mods = formatModifiers(keybind.modifiers);
             const key = keybind.key;
             const dispatcher = keybind.dispatcher;
             const argument = keybind.argument || "";
             const bindKeyword = flags ? `bind${flags}` : "bind";
-            // Para bindm no se incluye argumento si está vacío
+            // For bindm, omit argument if empty.
             if (flags === "m" && !argument) {
                 return `keyword ${bindKeyword} ${mods},${key},${dispatcher}`;
             }
             return `keyword ${bindKeyword} ${mods},${key},${dispatcher},${argument}`;
         }
 
-        // Helper function para crear un unbind command (old format)
+        // Create unbind command (old format).
         function createUnbindCommand(keybind) {
             const mods = formatModifiers(keybind.modifiers);
             const key = keybind.key;
             return `keyword unbind ${mods},${key}`;
         }
 
-        // Helper function para crear unbind command desde key object (new format)
+        // Create unbind command from key object (new format).
         function createUnbindFromKey(keyObj) {
             const mods = formatModifiers(keyObj.modifiers);
             const key = keyObj.key;
             return `keyword unbind ${mods},${key}`;
         }
 
-        // Helper function para crear bind command desde key + action (new format)
+        // Create bind command from key + action (new format).
         function createBindFromKeyAction(keyObj, action) {
             const mods = formatModifiers(keyObj.modifiers);
             const key = keyObj.key;
@@ -166,14 +166,14 @@ QtObject {
             const argument = action.argument || "";
             const flags = action.flags || "";
             const bindKeyword = flags ? `bind${flags}` : "bind";
-            // Para bindm no se incluye argumento si está vacío
+            // For bindm, omit argument if empty.
             if (flags === "m" && !argument) {
                 return `keyword ${bindKeyword} ${mods},${key},${dispatcher}`;
             }
             return `keyword ${bindKeyword} ${mods},${key},${dispatcher},${argument}`;
         }
 
-        // Construir batch command con todos los binds
+        // Build batch command for all binds.
         let batchCommands = [];
 
         // First, unbind previous keybinds if we have them stored
@@ -217,7 +217,7 @@ QtObject {
             }
         }
 
-        // Procesar Ambxst core keybinds
+        // Process core keybinds.
         const ambxst = Config.keybindsLoader.adapter.ambxst;
 
         // Core keybinds
@@ -263,7 +263,7 @@ QtObject {
         if (system.reload) batchCommands.push(createBindCommand(system.reload, system.reload.flags || ""));
         if (system.quit) batchCommands.push(createBindCommand(system.quit, system.quit.flags || ""));
 
-        // Procesar custom keybinds (new format with keys[] and actions[])
+        // Process custom keybinds (keys[] and actions[] format).
         const customBinds = Config.keybindsLoader.adapter.custom;
         if (customBinds && customBinds.length > 0) {
             for (let i = 0; i < customBinds.length; i++) {
@@ -302,7 +302,7 @@ QtObject {
 
         storePreviousBinds();
 
-        // Combinar unbind y bind en un solo batch
+        // Combine unbind and bind in a single batch.
         const fullBatchCommand = unbindCommands.join("; ") + "; " + batchCommands.join("; ");
 
         console.log("HyprlandKeybinds: Ejecutando batch command");
@@ -348,7 +348,7 @@ QtObject {
     }
 
     Component.onCompleted: {
-        // Si el loader ya está cargado, aplicar inmediatamente
+        // Apply immediately if loader is ready.
         if (Config.keybindsLoader.loaded) {
             applyKeybinds();
         }

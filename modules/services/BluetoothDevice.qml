@@ -17,7 +17,7 @@ QtObject {
 
     signal infoUpdated()
 
-    // Connect with auto-trust for new devices
+    // Connect (auto-trust new devices)
     function connect() {
         connecting = true;
         let p;

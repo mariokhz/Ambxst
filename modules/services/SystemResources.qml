@@ -51,12 +51,12 @@ Singleton {
     property int maxHistoryPoints: 50
     property int totalDataPoints: 0
 
-    // Update interval (passed to python or managed by restart if needed)
+    // Update interval
     property int updateInterval: 2000
 
-    // The unified monitor process
-    // Only runs when the dashboard is open to save resources.
-    // GPU polling is internally optimized in the script to avoid waking up dGPUs.
+    // Unified monitor process.
+    // Resource-efficient: only runs when dashboard is open.
+    // Optimized GPU polling avoids waking dGPUs.
     property Process monitorProcess: Process {
         id: monitorProcess
         running: GlobalStates.dashboardOpen && GlobalStates.dashboardCurrentTab === 2 && root.validDisks.length > 0
@@ -71,7 +71,7 @@ Singleton {
                 try {
                     const stats = JSON.parse(data);
                     
-                    // Handle static info (received once at start)
+                    // Static info (received once at start)
                     if (stats.static) {
                         root.cpuModel = stats.static.cpu_model || root.cpuModel;
                         root.gpuNames = stats.static.gpu_names || [];

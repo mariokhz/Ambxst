@@ -103,7 +103,7 @@ Singleton {
 
     function rescanWifi(): void {
         const now = Date.now();
-        if (now - lastScanTime < 10000) { // 10 seconds throttle
+        if (now - lastScanTime < 10000) { // 10s throttle
             getNetworks.running = true;
             return;
         }
@@ -164,7 +164,7 @@ Singleton {
         Quickshell.execDetached(["xdg-open", "https://nmcheck.gnome.org/"]);
     }
 
-    // Helper function for wifi icon based on strength
+    // WiFi icon by strength
     function wifiIconForStrength(strength: int): string {
         if (strength > 80) return Icons.wifiHigh;
         if (strength > 55) return Icons.wifiMedium;
@@ -173,7 +173,7 @@ Singleton {
         return Icons.wifiOff;
     }
 
-    // Status update
+    // Update status
     Timer {
         id: updateDebouncer
         interval: 200
@@ -188,9 +188,9 @@ Singleton {
     function performUpdate() {
         if (isUpdating) return;
         
-        // If UI is closed, we can skip heavy updates or delay them
-        // But for now, let's just run them. The nmcli monitor is event based so it shouldn't spam too much.
-        // Optimization: Only update signal strength if UI is open
+        // Skip/delay updates if UI closed
+        // nmcli monitor is event-based; safe to run.
+        // Optimization: Only update signal strength when UI open
         const uiOpen = GlobalStates.dashboardOpen || GlobalStates.launcherOpen || GlobalStates.overviewOpen;
         
         isUpdating = true;
@@ -353,7 +353,7 @@ Singleton {
                 const wifiNetworksData = Array.from(networkMap.values());
                 const rNetworks = root.wifiNetworks;
 
-                // Sync current list with new data
+                // Sync with new data
                 // 1. Remove gone networks
                 for (let i = rNetworks.length - 1; i >= 0; i--) {
                     const rn = rNetworks[i];
@@ -364,7 +364,7 @@ Singleton {
                     }
                 }
 
-                // 2. Update existing or add new
+                // 2. Add/update networks
                 for (let i = 0; i < wifiNetworksData.length; i++) {
                     const data = wifiNetworksData[i];
                     const existing = rNetworks.find(n => n.frequency === data.frequency && n.ssid === data.ssid && n.bssid === data.bssid);

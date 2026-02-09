@@ -59,6 +59,13 @@ Item {
     // Close expanded options when selection changes to a different item is handled in onSelectedIndexChanged
     {}
 
+    // Refresh tmux sessions when tab becomes visible
+    onVisibleChanged: {
+        if (visible) {
+            refreshTmuxSessions();
+        }
+    }
+
     function adjustScrollForExpandedItem(index) {
         if (index < 0 || index >= sessionsModel.count)
             return;

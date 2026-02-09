@@ -23,16 +23,16 @@ Singleton {
     property var forecast: []
 
     // Sun position data
-    property string sunrise: ""  // HH:MM format
-    property string sunset: ""   // HH:MM format
-    property real sunProgress: 0.0  // 0.0-1.0 position on the arc
+    property string sunrise: ""  // HH:MM
+    property string sunset: ""   // HH:MM
+    property real sunProgress: 0.0  // Arc position (0.0-1.0)
     property bool isDay: true
     property string timeOfDay: "Day"  // "Day", "Evening", "Night"
     property string weatherDescription: ""
 
     // Debug mode
     property bool debugMode: false
-    property real debugHour: 12.0  // 0-24 hour format (e.g., 14.5 = 2:30 PM)
+    property real debugHour: 12.0  // 0-24 hour (e.g. 14.5 = 2:30 PM)
     property int debugWeatherCode: 0
 
     // Script path
@@ -85,7 +85,7 @@ Singleton {
         onTriggered: root.updateWeather()
     }
 
-    // Parse "HH:MM" to hours as decimal (e.g., "14:30" -> 14.5)
+    // Convert "HH:MM" to decimal hours
     function parseTime(timeStr) {
         if (!timeStr)
             return 0;
@@ -431,11 +431,11 @@ Singleton {
                             var forecastData = [];
                             var dayCount = Math.min(7, daily.time ? daily.time.length : 0);
                             for (var i = 0; i < dayCount; i++) {
-                                // Parse date string manually to avoid timezone issues with UTC midnight
-                                // Format is "YYYY-MM-DD"
+                                // Manual date parse to avoid UTC midnight issues
+                                // "YYYY-MM-DD"
                                 var dateParts = daily.time[i].split("-");
                                 var year = parseInt(dateParts[0]);
-                                var month = parseInt(dateParts[1]) - 1; // Months are 0-indexed
+                                var month = parseInt(dateParts[1]) - 1; // 0-indexed months
                                 var day = parseInt(dateParts[2]);
                                 
                                 var dayDate = new Date(year, month, day);
@@ -477,7 +477,7 @@ Singleton {
         }
 
         onExited: function (code) {
-            // Code 15 = SIGTERM, means we cancelled the process intentionally
+            // SIGTERM (15) = intentional cancellation
             if (code !== 0 && code !== 15) {
                 console.warn("WeatherService: Script exited with code", code);
                 root.dataAvailable = false;

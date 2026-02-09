@@ -8,9 +8,9 @@ import qs.modules.services
 import qs.modules.theme
 
 /**
- * A nice wrapper for default Pipewire audio sink and source.
- * Provides volume control, mute toggling, and access to app nodes and devices.
- * Includes volume protection to prevent sudden loud spikes ("ear-bang" protection).
+ * Default Pipewire audio sink/source wrapper.
+ * Handles volume, mute, app nodes, and devices.
+ * Includes "ear-bang" protection against volume spikes.
  */
 Singleton {
     id: root
@@ -21,12 +21,12 @@ Singleton {
     readonly property real hardMaxValue: 2.00
     property real value: sink?.audio?.volume ?? 0
 
-    // Volume protection settings (persisted via StateService)
+    // Volume protection (persisted)
     property bool protectionEnabled: true
     readonly property real maxVolumeJump: 0.15  // 15% max jump
     property bool protectionTriggered: false
 
-    // Load protection state when StateService is ready
+    // Load state
     Connections {
         target: StateService
         function onStateLoaded() {
@@ -34,7 +34,7 @@ Singleton {
         }
     }
 
-    // Toggle protection and persist
+    // Persist protection
     function setProtectionEnabled(enabled: bool) {
         root.protectionEnabled = enabled;
         StateService.set("volumeProtectionEnabled", enabled);
@@ -48,7 +48,7 @@ Singleton {
         objects: [sink, source]
     }
 
-    // Connect to volume changes for OSD
+    // Volume signals for OSD
     Connections {
         target: root.sink?.audio ?? null
         ignoreUnknownSignals: true
@@ -79,7 +79,7 @@ Singleton {
         }
     }
 
-    // Helper functions
+    // Helpers
     function friendlyDeviceName(node) {
         return (node?.nickname || node?.description || "Unknown");
     }
@@ -88,7 +88,7 @@ Singleton {
         return (node?.properties?.["application.name"] || node?.description || node?.name || "Unknown");
     }
 
-    // Filter functions for nodes
+    // Node filters
     function correctType(node, isSink) {
         return (node?.isSink === isSink) && node?.audio;
     }
@@ -105,13 +105,13 @@ Singleton {
         });
     }
 
-    // Filtered lists for output and input
+    // IO lists
     readonly property list<var> outputAppNodes: root.appNodes(true)
     readonly property list<var> inputAppNodes: root.appNodes(false)
     readonly property list<var> outputDevices: root.devices(true)
     readonly property list<var> inputDevices: root.devices(false)
 
-    // Volume protection - limit sudden jumps
+    // Volume jump limiter
     function protectedSetVolume(node, targetVolume: real, currentVolume: real) {
         if (!root.protectionEnabled) {
             return targetVolume;
@@ -119,18 +119,18 @@ Singleton {
 
         const jump = targetVolume - currentVolume;
         
-        // Only protect against increases, not decreases
+        // Limit increases only
         if (jump <= 0) {
             root.protectionTriggered = false;
             return targetVolume;
         }
 
-        // Check if jump exceeds maximum
+        // Limit excessive jumps
         if (jump > root.maxVolumeJump) {
             root.protectionTriggered = true;
             root.sinkProtectionTriggered("Volume jump limited");
             
-            // Clear the trigger after a short delay
+            // Reset trigger after delay
             protectionResetTimer.restart();
             
             return currentVolume + root.maxVolumeJump;
@@ -146,7 +146,7 @@ Singleton {
         onTriggered: root.protectionTriggered = false
     }
 
-    // Control functions
+    // Controls
     function toggleMute() {
         if (sink?.audio) {
             sink.audio.muted = !sink.audio.muted;
@@ -189,7 +189,7 @@ Singleton {
         }
     }
 
-    // Set node volume with protection
+    // Protected volume set
     function setNodeVolume(node, volume: real) {
         if (node?.audio) {
             const current = node.audio.volume;
@@ -206,7 +206,7 @@ Singleton {
         Pipewire.preferredDefaultAudioSource = node;
     }
 
-    // Volume icon helper
+    // Icon helper
     function volumeIcon(volume: real, muted: bool): string {
         if (muted) return Icons.speakerX;
         if (volume <= 0) return Icons.speakerNone;

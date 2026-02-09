@@ -63,7 +63,7 @@ ShellRoot {
         }
     }
 
-    // Unified Visual Panel and Reservation Windows
+    // Visual panel & reservations
     Variants {
         model: Quickshell.screens
 
@@ -71,7 +71,7 @@ ShellRoot {
             id: screenShellContainer
             required property ShellScreen modelData
 
-            // Unified Visual Panel (Bar, Notch, Dock, Frame, Corners)
+            // Panel components (Bar, Notch, Dock, Frame, Corners)
             UnifiedShellPanel {
                 id: unifiedPanel
                 targetScreen: screenShellContainer.modelData
@@ -81,7 +81,7 @@ ShellRoot {
                 screen: screenShellContainer.modelData
             }
 
-            // Reservation Windows for Exclusive Zones
+            // Exclusive zone reservations
             ReservationWindows {
                 screen: screenShellContainer.modelData
 
@@ -116,7 +116,7 @@ ShellRoot {
         }
     }
 
-    // Overview popup window (separate from notch)
+    // Overview popup
     Variants {
         model: {
             const screens = Quickshell.screens;
@@ -136,7 +136,7 @@ ShellRoot {
         }
     }
 
-    // Presets popup window
+    // Presets popup
     Variants {
         model: {
             const screens = Quickshell.screens;
@@ -156,12 +156,12 @@ ShellRoot {
         }
     }
 
-    // Secure lockscreen using WlSessionLock
+    // Secure WlSessionLock lockscreen
     WlSessionLock {
         id: sessionLock
         locked: GlobalStates.lockscreenVisible
 
-        // WlSessionLockSurface creates automatically for each screen
+        // Surface auto-created per screen
         LockScreen {}
     }
 
@@ -173,7 +173,7 @@ ShellRoot {
         id: hyprlandKeybinds
     }
 
-    // Screenshot Tool
+    // Screenshot tool
     Variants {
         model: Quickshell.screens
 
@@ -187,7 +187,7 @@ ShellRoot {
         }
     }
 
-    // Screenshot Overlay (Preview)
+    // Screenshot preview overlay
     Variants {
         model: Quickshell.screens
 
@@ -201,7 +201,7 @@ ShellRoot {
         }
     }
 
-    // Screen Record Tool
+    // Screen recording tool
     Loader {
         id: screenRecordLoader
         active: SuspendManager.wakeReady
@@ -231,21 +231,21 @@ ShellRoot {
         }
     }
 
-    // Mirror Tool
+    // Mirror tool
     Loader {
         id: mirrorLoader
         active: SuspendManager.wakeReady
         source: "modules/tools/MirrorWindow.qml"
     }
 
-    // Settings Window
+    // Settings
     Loader {
         id: settingsWindowLoader
         active: SuspendManager.wakeReady
         source: "modules/widgets/config/SettingsWindow.qml"
     }
 
-    // OSD
+    // On-screen display
     Variants {
         model: Quickshell.screens
 
@@ -254,7 +254,7 @@ ShellRoot {
         }
     }
 
-    // Initialize clipboard service at startup to ensure clipboard watching starts immediately
+    // Init clipboard service
     Connections {
         target: ClipboardService
         function onListCompleted() {
@@ -262,12 +262,12 @@ ShellRoot {
         }
     }
 
-    // Force initialization of control services at startup
+    // Force service init at startup
     QtObject {
         id: serviceInitializer
 
         Component.onCompleted: {
-            // Reference the services to force their creation
+            // Trigger service creation
             let _ = NightLightService.active;
             _ = GameModeService.toggled;
             _ = CaffeineService.inhibit;

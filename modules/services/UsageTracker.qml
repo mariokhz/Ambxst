@@ -6,18 +6,18 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    // Path to usage.json file in dataPath
+    // usage.json path
     property string usageFilePath: Quickshell.cachePath("usage.json")
 
-    // In-memory cache: { appId: { count: N, lastUsed: timestamp } }
+    // Cache: { appId: { count, lastUsed } }
     property var usageData: ({})
     property bool dataLoaded: false
     property bool fileReady: false
 
-    // Signal emitted when data is loaded
+    // Signal when data is ready
     signal usageDataReady
 
-    // Decay factor for time-based scoring (apps used recently get higher scores)
+    // Time-based scoring decay (favor recent apps)
     readonly property int maxBoostScore: 200
     readonly property int dayInMs: 86400000
 
@@ -113,12 +113,11 @@ Singleton {
         var now = Date.now();
         var daysSinceLastUse = (now - data.lastUsed) / dayInMs;
 
-        // Time decay: apps used within last day get full boost, then decay exponentially
-        // Formula: baseScore + (maxBoost * e^(-daysSinceLastUse/7))
-        // This gives apps used in the last week a significant boost, with decay over time
+        // Exponential time decay: baseScore + (maxBoost * e^(-daysSinceLastUse/7))
+        // Boosts apps used within the last week.
         var timeBoost = maxBoostScore * Math.exp(-daysSinceLastUse / 7);
 
-        // Frequency score: logarithmic scale to prevent over-weighting heavily used apps
+        // Frequency score: logarithmic to prevent over-weighting
         var frequencyScore = Math.log(data.count + 1) * 20;
 
         return timeBoost + frequencyScore;

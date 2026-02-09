@@ -10,7 +10,7 @@ QtObject {
     property bool isRecording: false
     property string duration: ""
     property string lastError: ""
-    property bool canRecordDirectly: true // Default optimistic
+    property bool canRecordDirectly: true // Optimistic default
 
     property Process checkCapabilitiesProcess: Process {
         id: checkCapabilitiesProcess
@@ -25,14 +25,14 @@ QtObject {
 
     property string videosDir: ""
 
-    // Resolve XDG_VIDEOS_DIR
+    // Resolve Videos dir
     property Process xdgVideosProcess: Process {
         id: xdgVideosProcess
         command: ["bash", "-c", "xdg-user-dir VIDEOS"]
-        running: true // Run on startup
+        running: true // Run at startup
         stdout: StdioCollector {
             onTextChanged: {
-                // Not strictly necessary here as we read in onExited
+                // Handled in onExited
             }
         }
         onExited: exitCode => {
@@ -48,7 +48,7 @@ QtObject {
         }
     }
 
-    // Poll status
+    // Poll
     property Timer statusTimer: Timer {
         interval: 1000
         repeat: true
@@ -91,7 +91,7 @@ QtObject {
         if (isRecording) {
             stopProcess.running = true;
         } else {
-            // Default behavior: Portal, no audio
+            // Default: Portal, no audio
             startRecording(false, false, "portal", "");
         }
     }
@@ -103,7 +103,7 @@ QtObject {
         var outputFile = root.videosDir + "/" + new Date().toISOString().replace(/[:.]/g, "-") + ".mp4";
         var cmd = "gpu-screen-recorder -f 60";
 
-        // Window mode: -w based on mode
+        // Window mode
         if (mode === "portal") {
             cmd += " -w portal";
         } else if (mode === "screen") {
@@ -115,7 +115,7 @@ QtObject {
             }
         }
 
-        // Audio
+        // Audio sources
         var audioSources = [];
         if (recordAudioOutput)
             audioSources.push("default_output");
@@ -136,7 +136,7 @@ QtObject {
         prepareProcess.running = true;
     }
 
-    // 1. Ensure directory exists
+    // 1. Create dir
     property Process prepareProcess: Process {
         id: prepareProcess
         command: ["mkdir", "-p", root.videosDir]
@@ -146,13 +146,13 @@ QtObject {
         }
     }
 
-    // 2. Notify start
+    // 2. Notify
     property Process notifyStartProcess: Process {
         id: notifyStartProcess
         command: ["notify-send", "Screen Recorder", "Starting recording..."]
     }
 
-    // 3. Start recording (Foreground)
+    // 3. Start
     property Process startProcess: Process {
         id: startProcess
         command: ["bash", "-c", "echo 'Error: Command not set'"]
@@ -164,13 +164,13 @@ QtObject {
             id: stderrCollector
             onTextChanged: {
                 console.warn("[ScreenRecorder] ERR: " + text);
-                // root.lastError = text // gpu-screen-recorder is verbose
+                // root.lastError = text // verbose
             }
         }
 
         onExited: exitCode => {
             console.log("[ScreenRecorder] Exited with code: " + exitCode);
-            if (exitCode !== 0 && exitCode !== 130 && exitCode !== 2) { // 2 is SIGINT sometimes
+            if (exitCode !== 0 && exitCode !== 130 && exitCode !== 2) { // 2 = SIGINT
                 root.isRecording = false;
                 notifyErrorProcess.running = true;
             } else {

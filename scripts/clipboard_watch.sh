@@ -7,16 +7,17 @@ DB_PATH="$2"
 INSERT_SCRIPT="$3"
 DATA_DIR="$4"
 
-# Function to check clipboard
+# Function to check clipboard and output refresh signal on success
 check_clipboard() {
-    if "$CHECK_SCRIPT" "$DB_PATH" "$INSERT_SCRIPT" "$DATA_DIR" 2>&1; then
-        echo "REFRESH_LIST"
-    fi
+	if "$CHECK_SCRIPT" "$DB_PATH" "$INSERT_SCRIPT" "$DATA_DIR" 2>/dev/null; then
+		echo "REFRESH_LIST"
+	fi
 }
 
+# Export function and variables for use by wl-paste --watch
+export -f check_clipboard
+export CHECK_SCRIPT DB_PATH INSERT_SCRIPT DATA_DIR
+
 # Watch clipboard and check on every change
-wl-paste --watch sh -c "echo 'CLIPBOARD_CHANGE'" | while IFS= read -r line; do
-    if [ "$line" = "CLIPBOARD_CHANGE" ]; then
-        check_clipboard
-    fi
-done
+# wl-paste --watch runs the given command with clipboard content on stdin
+exec wl-paste --watch bash -c 'check_clipboard'

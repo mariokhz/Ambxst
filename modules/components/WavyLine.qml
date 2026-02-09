@@ -1,89 +1,62 @@
 import QtQuick
-import qs.config
 import qs.modules.theme
 
-Item {
+Canvas {
     id: root
-    property real amplitudeMultiplier: 0.5
-    property real frequency: 6
+
+    // =========================================================================
+    // API Properties
+    // =========================================================================
     property color color: Styling.srItem("overprimary")
-    property real lineWidth: 4
+    property real lineWidth: 2
+    property real frequency: 2
+    property real amplitudeMultiplier: 0.5
     property real fullLength: width
-    property real speed: 2.4
+    property bool running: true
 
-    // Factor de supersampling optimizado
-    readonly property real supersampleFactor: 1.0
-
-    // Control for animations - can be disabled from parent to save GPU
+    // Legacy compatibility
+    property real amplitude: lineWidth * amplitudeMultiplier
+    property real speed: 5  // Not used with Date.now() technique, kept for API compat
     property bool animationsEnabled: true
 
-    // Contenedor para el shader renderizado a mayor resolución
-    Item {
-        id: shaderContainer
-        anchors.fill: parent
-        visible: Config.performance.wavyLine
+    // =========================================================================
+    // Rendering
+    // =========================================================================
+    readonly property bool shouldAnimate: running && animationsEnabled && 
+                                          visible && width > 0 && opacity > 0
 
-        ShaderEffect {
-            id: wavyShader
-            // Renderizar a 4x la resolución
-            width: root.width * root.supersampleFactor
-            height: root.height * root.supersampleFactor
+    onPaint: {
+        var ctx = getContext("2d");
+        ctx.clearRect(0, 0, width, height);
 
-            // Escalar hacia abajo al tamaño original
-            scale: 1.0 / root.supersampleFactor
-            transformOrigin: Item.TopLeft
+        if (width <= 0 || height <= 0) return;
 
-            property real phase: 0
-            property real amplitude: root.lineWidth * root.amplitudeMultiplier * root.supersampleFactor
-            property real frequency: root.frequency
-            property vector4d shaderColor: Qt.vector4d(root.color.r, root.color.g, root.color.b, root.color.a)
-            property real lineWidth: root.lineWidth * root.supersampleFactor
-            property real canvasWidth: root.width * root.supersampleFactor
-            property real canvasHeight: root.height * root.supersampleFactor
-            property real fullLength: root.fullLength * root.supersampleFactor
+        var amp = root.lineWidth * root.amplitudeMultiplier;
+        var freq = root.frequency;
+        var phase = Date.now() / 400.0;
+        var centerY = height / 2;
 
-            vertexShader: Qt.resolvedUrl("wavyline.vert.qsb")
-            fragmentShader: Qt.resolvedUrl("wavyline.frag.qsb")
+        ctx.strokeStyle = root.color;
+        ctx.lineWidth = root.lineWidth;
+        ctx.lineCap = "round";
+        ctx.beginPath();
 
-            smooth: true
-            antialiasing: true
-            blending: true  // Habilitar blending para mejor antialiasing
-
-            // Layer con MSAA y tamaño completo
-            layer.enabled: true
-            layer.smooth: true
-            layer.samples: 4  // Multisampling antialiasing
-            layer.textureSize: Qt.size(width, height)
-            layer.mipmap: true
-
-            Component.onCompleted: {
-                if (Config.performance.wavyLine) {
-                    animationFrameAnimation.start();
-                }
-            }
-
-            FrameAnimation {
-                id: animationFrameAnimation
-                running: Config.performance.wavyLine && wavyShader.visible && root.visible && root.animationsEnabled
-                onTriggered: {
-                    var deltaTime = 0.016; // ~60fps default
-                    wavyShader.phase += root.speed * deltaTime;
-                }
-            }
+        for (var x = ctx.lineWidth / 2; x <= root.width - ctx.lineWidth / 2; x += 1) {
+            var waveY = centerY + amp * Math.sin(freq * 2 * Math.PI * x / root.fullLength + phase);
+            if (x === ctx.lineWidth / 2)
+                ctx.moveTo(x, waveY);
+            else
+                ctx.lineTo(x, waveY);
         }
+
+        ctx.stroke();
     }
 
-    Rectangle {
-        id: simpleRect
-        anchors.verticalCenter: parent.verticalCenter
-        width: parent.width
-        height: 4
-        visible: !Config.performance.wavyLine
-        color: root.color
-        radius: 2
-    }
-
-    function requestPaint() {
-    // Mantenido por compatibilidad
+    // =========================================================================
+    // Animation Driver - FrameAnimation for smooth 60fps
+    // =========================================================================
+    FrameAnimation {
+        running: root.shouldAnimate
+        onTriggered: root.requestPaint()
     }
 }

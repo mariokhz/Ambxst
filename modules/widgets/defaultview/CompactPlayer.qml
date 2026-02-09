@@ -1,9 +1,14 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
+import Quickshell
+import Quickshell.Io
+import Quickshell.Wayland
 import Quickshell.Widgets
+import Quickshell.Hyprland
 import Quickshell.Services.Mpris
 import qs.modules.theme
+import qs.modules.bar.workspaces
 import qs.modules.services
 import qs.modules.components
 import qs.config
@@ -29,6 +34,57 @@ Item {
         let path = GlobalStates.wallpaperManager.currentWallpaper;
         let frame = GlobalStates.wallpaperManager.getLockscreenFramePath(path);
         return frame ? "file://" + frame : "";
+    }
+
+    readonly property string focusedTitle: {
+        const activeWsId = Hyprland.focusedMonitor?.activeWorkspace?.id;
+        if (!activeWsId) return "";
+        const windows = HyprlandData.workspaceWindowsMap[activeWsId] || [];
+        if (windows.length === 0) return "";
+        const best = windows.reduce((best, win) => {
+            const bestFocus = best?.focusHistoryID ?? Infinity;
+            const winFocus = win?.focusHistoryID ?? Infinity;
+            return winFocus < bestFocus ? win : best;
+        }, null);
+        return best ? best.title : "";
+    }
+
+    property string hostname: ""
+
+    Process {
+        id: hostnameReader
+        running: true
+        command: ["hostname"]
+
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                const host = text.trim();
+                if (host) {
+                    compactPlayer.hostname = host;
+                }
+            }
+        }
+    }
+
+    readonly property string userHostText: {
+        const user = Quickshell.env("USER") || "user";
+        const host = hostname || "host";
+        return user + "@" + host;
+    }
+
+    readonly property string noMediaText: {
+        const displayType = Config.notch.noMediaDisplay ?? "userHost";
+        if (displayType === "userHost") return userHostText;
+        if (displayType === "compositor") return "Hyprland";
+        return Config.notch.customText ?? "Ambxst";
+    }
+
+    readonly property string displayedTitle: {
+        if (player) {
+            return (player.trackArtist ? player.trackArtist + " - " : "") + (player.trackTitle || "Unknown");
+        }
+        return focusedTitle || noMediaText;
     }
 
     function getPlayerIcon(player) {
@@ -74,26 +130,24 @@ Item {
         anchors.fill: parent
         radius: Styling.radius(-4)
 
-        CarouselProgress {
-            id: noPlayerDots
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.margins: -4
-            frequency: 4
-            color: Colors.surfaceBright
-            amplitudeMultiplier: 4
-            height: 24
-            lineWidth: 2
-            fullLength: width
-            visible: compactPlayer.player === null
-            opacity: 1.0
-            // Enable animations for carousel effect
-            animationsEnabled: true
-            active: true
-            Behavior on color {
+        Text {
+            id: mediaTitle
+            anchors.centerIn: parent
+            width: parent.width - 32
+            text: compactPlayer.displayedTitle
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(0)
+            font.bold: true
+            color: Colors.overBackground
+            elide: Text.ElideRight
+            visible: opacity > 0
+            opacity: compactPlayer.notchHovered ? 0.0 : 1.0
+            horizontalAlignment: Text.AlignHCenter
+            z: 5
+
+            Behavior on opacity {
                 enabled: Config.animDuration > 0
-                ColorAnimation {
+                NumberAnimation {
                     duration: Config.animDuration
                     easing.type: Easing.OutQuart
                 }
@@ -155,7 +209,15 @@ Item {
             spacing: (compactPlayer.player !== null && compactPlayer.notchHovered) ? 4 : 0
             layer.enabled: true
             layer.effect: BgShadow {}
-            visible: compactPlayer.player !== null
+            opacity: compactPlayer.notchHovered ? 1.0 : 0.0
+            visible: opacity > 0
+            Behavior on opacity {
+                enabled: Config.animDuration > 0
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
+            }
             Behavior on spacing {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
@@ -168,6 +230,7 @@ Item {
                 id: artworkContainer
                 Layout.preferredWidth: 24
                 Layout.preferredHeight: 24
+                visible: compactPlayer.notchHovered
                 ClippingRectangle {
                     anchors.fill: parent
                     radius: compactPlayer.isPlaying ? Styling.radius(-8) : Styling.radius(-4)
@@ -185,7 +248,7 @@ Item {
                         anchors.fill: parent
                         source: artworkImage
                         // Only enable blur when there's content to blur (saves GPU)
-                        blurEnabled: hasArtwork || wallpaperPath !== ""
+                        blurEnabled: (hasArtwork || wallpaperPath !== "") && compactPlayer.notchHovered
                         blurMax: 32
                         blur: 0.75
                         opacity: (hasArtwork || wallpaperPath !== "") ? 1.0 : 0.0 // Simplificado
@@ -201,8 +264,17 @@ Item {
                     StyledRect {
                         anchors.fill: parent
                         variant: "internalbg"
-                        opacity: (hasArtwork || wallpaperPath !== "") ? 0.5 : 0.0
+                        opacity: ((hasArtwork || wallpaperPath !== "") && compactPlayer.notchHovered) ? 0.5 : 0.0
+                        radius: parent.radius
+                        Behavior on opacity {
+                            enabled: Config.animDuration > 0
+                            NumberAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+                        }
                     }
+
                     Text {
                         id: playPauseBtn
                         anchors.centerIn: parent
@@ -211,10 +283,18 @@ Item {
                         color: playPauseHover.hovered ? ((hasArtwork || wallpaperPath !== "") ? Styling.srItem("overprimary") : Styling.srItem("overprimary")) : ((hasArtwork || wallpaperPath !== "") ? Colors.overBackground : Colors.overBackground)
                         font.pixelSize: 16
                         font.family: Icons.font
-                        opacity: compactPlayer.player?.canPause ?? false ? 1.0 : 0.3
+                        opacity: (compactPlayer.player?.canPause ?? false) && compactPlayer.notchHovered ? 1.0 : 0.0
                         scale: 1.0
                         layer.enabled: true
                         layer.effect: BgShadow {}
+                        visible: opacity > 0
+                        Behavior on opacity {
+                            enabled: Config.animDuration > 0
+                            NumberAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+                        }
                         Behavior on color {
                             enabled: Config.animDuration > 0
                             ColorAnimation {
@@ -232,12 +312,12 @@ Item {
                         }
                         HoverHandler {
                             id: playPauseHover
-                            enabled: compactPlayer.player !== null
+                            enabled: compactPlayer.player !== null && compactPlayer.notchHovered
                         }
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: compactPlayer.player ? Qt.PointingHandCursor : Qt.ArrowCursor
-                            enabled: compactPlayer.player !== null
+                            enabled: compactPlayer.player !== null && compactPlayer.notchHovered
                             onClicked: {
                                 playPauseBtn.scale = 1.1;
                                 compactPlayer.player?.togglePlaying();
@@ -261,7 +341,7 @@ Item {
                 font.pixelSize: 16
                 font.family: Icons.font
                 opacity: compactPlayer.player?.canGoPrevious ?? false ? 1.0 : 0.3
-                visible: compactPlayer.player !== null && compactPlayer.notchHovered && opacity > 0
+                visible: compactPlayer.player !== null && compactPlayer.notchHovered && (compactPlayer.player?.canGoPrevious ?? false)
                 clip: true
                 scale: 1.0
                 readonly property real naturalWidth: implicitWidth
@@ -316,7 +396,7 @@ Item {
                 Layout.leftMargin: compactPlayer.notchHovered ? 0 : 8
                 Layout.rightMargin: compactPlayer.notchHovered ? 0 : 8
                 player: compactPlayer.player
-                // Le pasamos 'hasArtwork' para que el slider también pueda usar los colores dinámicos
+                visible: compactPlayer.notchHovered
                 hasArtwork: compactPlayer.hasArtwork || compactPlayer.wallpaperPath !== ""
             }
 
@@ -330,6 +410,7 @@ Item {
                 opacity: compactPlayer.player?.canGoNext ?? false ? 1.0 : 0.3
                 clip: true
                 scale: 1.0
+                visible: compactPlayer.notchHovered
                 readonly property real naturalWidth: implicitWidth
                 Layout.preferredWidth: (compactPlayer.player !== null && compactPlayer.notchHovered) ? naturalWidth : 0
                 Behavior on Layout.preferredWidth {
@@ -403,6 +484,7 @@ Item {
                 }
                 clip: true
                 scale: 1.0
+                visible: compactPlayer.notchHovered
                 readonly property real naturalWidth: implicitWidth
                 Layout.preferredWidth: (compactPlayer.player !== null && compactPlayer.notchHovered) ? naturalWidth : 0
                 Behavior on Layout.preferredWidth {
@@ -465,8 +547,9 @@ Item {
                 font.pixelSize: 20
                 font.family: Icons.font
                 verticalAlignment: Text.AlignVCenter
-                Layout.preferredWidth: compactPlayer.player !== null ? implicitWidth : 0
-                Layout.rightMargin: compactPlayer.player !== null ? 4 : 0
+                visible: compactPlayer.notchHovered
+                Layout.preferredWidth: (compactPlayer.player !== null && compactPlayer.notchHovered) ? implicitWidth : 0
+                Layout.rightMargin: (compactPlayer.player !== null && compactPlayer.notchHovered) ? 4 : 0
                 Behavior on Layout.preferredWidth {
                     enabled: Config.animDuration > 0
                     NumberAnimation {

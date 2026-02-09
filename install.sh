@@ -109,7 +109,7 @@ install_dependencies() {
 
 	fedora)
 		log_info "Enabling COPR repositories..."
-		sudo dnf install -y dnf-plugins-core
+		sudo dnf install -y --best --allowerasing --setopt=install_weak_deps=False dnf-plugins-core
 		yes | sudo dnf copr enable errornointernet/quickshell
 		yes | sudo dnf copr enable solopasha/hyprland
 		yes | sudo dnf copr enable zirconium/packages
@@ -133,7 +133,7 @@ install_dependencies() {
 
 		log_info "Installing dependencies..."
 		# shellcheck disable=SC2046
-		sudo dnf install -y $(filter_packages "${PKGS[@]}")
+		sudo dnf install -y --best --allowerasing --setopt=install_weak_deps=False $(filter_packages "${PKGS[@]}")
 
 		log_info "Installing Gradia (Flatpak)..."
 		flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
@@ -185,7 +185,7 @@ install_dependencies() {
 		FILTERED=($(filter_packages "${PKGS[@]}"))
 
 		if [[ ${#FILTERED[@]} -gt 0 ]]; then
-			$AUR_HELPER -S --noconfirm "${FILTERED[@]}"
+			$AUR_HELPER -S --needed --noconfirm "${FILTERED[@]}"
 		else
 			log_info "All packages already installed"
 		fi

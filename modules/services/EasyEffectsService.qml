@@ -7,10 +7,10 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    // Whether EasyEffects is available on the system
+    // EasyEffects availability
     property bool available: false
     
-    // Bypass state: false = effects active, true = bypassed
+    // Bypass: false = active, true = bypassed
     property bool bypassed: false
     
     // Available presets
@@ -32,20 +32,20 @@ Singleton {
         bypassToggleProcess.running = true;
     }
 
-    // Load a preset (optimistic update)
+    // Load preset (optimistic)
     function loadOutputPreset(name: string) {
-        root.activeOutputPreset = name;  // Optimistic update
+        root.activeOutputPreset = name;  // Optimistic
         loadPresetProcess.command = ["easyeffects", "-l", name];
         loadPresetProcess.running = true;
     }
 
     function loadInputPreset(name: string) {
-        root.activeInputPreset = name;  // Optimistic update
+        root.activeInputPreset = name;  // Optimistic
         loadPresetProcess.command = ["easyeffects", "-l", name];
         loadPresetProcess.running = true;
     }
 
-    // Legacy function for compatibility
+    // Compatibility legacy function
     function loadPreset(name: string) {
         loadPresetProcess.command = ["easyeffects", "-l", name];
         loadPresetProcess.running = true;
@@ -61,7 +61,7 @@ Singleton {
         Quickshell.execDetached(["easyeffects"]);
     }
 
-    // Check if easyeffects is available
+    // Check EasyEffects availability
     Process {
         id: checkAvailableProcess
         command: ["which", "easyeffects"]
@@ -105,12 +105,12 @@ Singleton {
         id: loadPresetProcess
         running: false
         onExited: {
-            // Small delay to let EasyEffects apply the preset
+            // Delay for preset application
             refreshDelayTimer.restart();
         }
     }
 
-    // Delay timer for refresh after preset load
+    // Refresh delay after preset load
     property var refreshDelayTimer: Timer {
         id: refreshDelayTimer
         interval: 100
@@ -148,7 +148,7 @@ Singleton {
                 if (trimmed.toLowerCase().includes("output")) {
                     isOutput = true;
                     isInput = false;
-                    // Check if presets are on same line after colon
+                    // Check if presets follow colon
                     const parts = trimmed.split(":");
                     if (parts.length > 1 && parts[1].trim()) {
                         outputList = parts[1].trim().split(",").map(p => p.trim()).filter(p => p);
@@ -206,7 +206,7 @@ Singleton {
         }
     }
 
-    // Poll for state changes periodically
+    // Periodically poll state
     property var pollTimer: Timer {
         interval: 5000
         running: root.available && !SuspendManager.isSuspending

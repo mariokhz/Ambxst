@@ -11,10 +11,10 @@ ApiStrategy {
     }
 
     function getBody(messages, model, tools) {
-        // Convert messages to Gemini format
+        // Gemini format conversion
         let contents = messages.map(msg => {
             if (msg.role === "assistant") {
-                // If we preserved raw Gemini parts (e.g. thought + function call), use them
+                // Use preserved raw parts (thought + call) if present
                 if (msg.geminiParts) {
                     return {
                         role: "model",
@@ -83,13 +83,13 @@ ApiStrategy {
                 let content = json.candidates[0].content;
                 if (content && content.parts && content.parts.length > 0) {
                     
-                    // Look for function calls and thoughts
+                    // Scan for tools and thoughts
                     let hasFunctionCall = false;
                     let textContent = "";
                     let funcCall = null;
                     
-                    // We must preserve specific structure for Gemini if tool calls are involved
-                    // We'll store the raw parts to send back in history
+                    // Preserve structure for history if tools involved
+                    // Store raw parts
                     let rawParts = content.parts;
                     
                     for (let i = 0; i < content.parts.length; i++) {
@@ -105,7 +105,7 @@ ApiStrategy {
                     if (hasFunctionCall) {
                         return {
                             functionCall: funcCall,
-                            content: textContent.trim(), // Optional thought text
+                            content: textContent.trim(), // Optional thought
                             geminiParts: rawParts // Store raw parts for history
                         };
                     }

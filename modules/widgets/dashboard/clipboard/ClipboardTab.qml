@@ -71,6 +71,13 @@ Item {
     // Close expanded options when selection changes to a different item is handled in onSelectedIndexChanged
     {}
 
+    // Refresh clipboard list when tab becomes visible
+    onVisibleChanged: {
+        if (visible) {
+            ClipboardService.list();
+        }
+    }
+
     function adjustScrollForExpandedItem(index) {
         if (index < 0 || index >= itemsModel.count)
             return;

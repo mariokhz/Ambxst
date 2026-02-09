@@ -49,10 +49,10 @@ Singleton {
                     if (content) {
                         states = JSON.parse(content)
                     }
-                    // Update only our state
+                    // Update state
                     states.gameMode = root.toggled
                     
-                    // Write back
+                    // Persist
                     writeStateProcess.command = ["sh", "-c", 
                         `printf '%s' '${JSON.stringify(states)}' > "${root.stateFile}"`]
                     writeStateProcess.running = true
@@ -62,7 +62,7 @@ Singleton {
             }
         }
         onExited: (code) => {
-            // If file doesn't exist, create new with our state
+            // Create if missing
             if (code !== 0) {
                 const states = { gameMode: root.toggled }
                 writeStateProcess.command = ["sh", "-c", 
@@ -83,7 +83,7 @@ Singleton {
                         if (states.gameMode !== undefined) {
                             root.toggled = states.gameMode
                             
-                            // If state says it should be enabled, apply it
+                            // Apply if enabled
                             if (root.toggled) {
                                 enableProcess.command = ["hyprctl", "--batch", 
                                     "keyword animations:enabled 0; keyword decoration:shadow:enabled 0; keyword decoration:blur:enabled 0; keyword general:gaps_in 0; keyword general:gaps_out 0; keyword general:border_size 1; keyword decoration:rounding 0"]
@@ -98,7 +98,7 @@ Singleton {
             }
         }
         onExited: (code) => {
-            // If file doesn't exist, just mark as initialized
+            // Mark initialized if missing
             if (code !== 0) {
                 root.initialized = true
             }
@@ -126,7 +126,7 @@ Singleton {
         readStateProcess.running = true
     }
 
-    // Auto-initialize on creation
+    // Init on creation
     Timer {
         interval: 100
         running: true
