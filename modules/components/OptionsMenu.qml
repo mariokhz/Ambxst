@@ -260,6 +260,7 @@ Menu {
                         Component {
                             id: imageIconComponent
                             Image {
+                                mipmap: true
                                 source: iconLoader.iconSource
                                 width: 16
                                 height: 16

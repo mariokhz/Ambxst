@@ -404,6 +404,7 @@ WlSessionLockSurface {
                     anchors.verticalCenter: parent.verticalCenter
 
                     Image {
+                        mipmap: true
                         id: userAvatar
                         anchors.fill: parent
                         source: `file://${Quickshell.env("HOME")}/.face.icon`

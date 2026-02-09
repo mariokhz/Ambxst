@@ -500,6 +500,7 @@ Item {
                                     visible: isUser
 
                                     Image {
+                                        mipmap: true
                                         anchors.fill: parent
                                         source: "file://" + Quickshell.env("HOME") + "/.face.icon"
                                         fillMode: Image.PreserveAspectCrop

@@ -2120,6 +2120,7 @@ Item {
 
                                 // Favicon for URLs (now outside StyledRect for independent sizing/background)
                                 Image {
+                                    mipmap: true
                                     id: faviconImage
                                     anchors.fill: parent
                                     sourceSize.width: 32
@@ -2445,6 +2446,7 @@ Item {
 
                     // Preview para imagen estática
                     Image {
+                        mipmap: true
                         id: previewImage
                         anchors.fill: parent
                         fillMode: Image.PreserveAspectFit
@@ -2670,6 +2672,7 @@ Item {
                                             property bool triedFallback: false
 
                                             Image {
+                                                mipmap: true
                                                 id: videoFaviconPrimary
                                                 anchors.fill: parent
                                                 sourceSize.width: 40
@@ -2688,6 +2691,7 @@ Item {
                                             }
 
                                             Image {
+                                                mipmap: true
                                                 id: videoFaviconFallback
                                                 anchors.fill: parent
                                                 sourceSize.width: 40
@@ -2721,6 +2725,7 @@ Item {
                                         visible: root.linkPreviewData && root.linkPreviewData.image
 
                                         Image {
+                                            mipmap: true
                                             id: videoThumbnail
                                             anchors.fill: parent
                                             source: root.linkPreviewData && root.linkPreviewData.image ? root.linkPreviewData.image : ""
@@ -2841,6 +2846,7 @@ Item {
                                                 property bool triedFallback: false
 
                                                 Image {
+                                                    mipmap: true
                                                     id: linkFaviconPrimary
                                                     anchors.fill: parent
                                                     sourceSize.width: 40
@@ -2859,6 +2865,7 @@ Item {
                                                 }
 
                                                 Image {
+                                                    mipmap: true
                                                     id: linkFaviconFallback
                                                     anchors.fill: parent
                                                     sourceSize.width: 40
@@ -2921,6 +2928,7 @@ Item {
                                         anchors.verticalCenter: parent.verticalCenter
 
                                         Image {
+                                            mipmap: true
                                             anchors.fill: parent
                                             source: root.linkPreviewData && root.linkPreviewData.image ? root.linkPreviewData.image : ""
                                             fillMode: Image.PreserveAspectCrop
@@ -3034,6 +3042,7 @@ Item {
                                             radius: Styling.radius(-4)
 
                                             Image {
+                                                mipmap: true
                                                 id: previewFavicon
                                                 anchors.centerIn: parent
                                                 width: 24

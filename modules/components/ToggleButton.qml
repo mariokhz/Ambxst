@@ -34,7 +34,7 @@ Button {
         id: bg
         variant: "bg"
         enableShadow: root.enableShadow && Config.showBackground
-        
+
         // Map start/end to corners based on vertical property
         topLeftRadius: root.vertical ? root.startRadius : root.startRadius
         topRightRadius: root.vertical ? root.startRadius : root.endRadius

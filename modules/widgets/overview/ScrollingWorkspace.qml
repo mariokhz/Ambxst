@@ -400,6 +400,7 @@ Item {
 
                     // Icon
                     Image {
+                        mipmap: true
                         id: windowIcon
                         readonly property real iconSize: Math.round(Math.min(windowDelegate.targetWidth, windowDelegate.targetHeight) * (windowDelegate.compactMode ? 0.6 : 0.35))
                         anchors.centerIn: parent
@@ -426,6 +427,7 @@ Item {
 
                     // Corner icon when preview available
                     Image {
+                        mipmap: true
                         visible: windowPreview.hasContent && !windowDelegate.compactMode && Config.performance.windowPreview
                         anchors.bottom: parent.bottom
                         anchors.right: parent.right

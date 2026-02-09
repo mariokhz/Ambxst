@@ -43,6 +43,7 @@ StyledRect {
         color: "transparent"
 
         Image {
+            mipmap: true
             id: lockPlayerBgArt
             sourceSize: Qt.size(64, 64)
             anchors.fill: parent
@@ -161,6 +162,7 @@ StyledRect {
                 color: Colors.surface
 
                 Image {
+                    mipmap: true
                     id: albumArt
                     sourceSize: Qt.size(128, 128)
                     anchors.fill: parent

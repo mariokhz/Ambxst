@@ -475,6 +475,7 @@ Item {
 
             // Image Icon (with effect)
             Image {
+                mipmap: true
                 visible: tabBtn.image !== ""
                 source: tabBtn.image
                 Layout.preferredWidth: 16

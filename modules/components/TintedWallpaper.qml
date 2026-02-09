@@ -72,6 +72,7 @@ Item {
         }
 
         Image {
+            mipmap: true
             id: rawImage
             anchors.fill: parent
             source: root.source

@@ -167,6 +167,7 @@ Item {
 
     // Overlay content when preview is not available
     Image {
+        mipmap: true
         id: windowIcon
         readonly property real iconSize: Math.round(Math.min(root.targetWindowWidth, root.targetWindowHeight) * (root.compactMode ? 0.6 : 0.35))
         anchors.centerIn: parent
@@ -213,6 +214,7 @@ Item {
 
     // Overlay icon when preview is available (smaller, in corner)
     Image {
+        mipmap: true
         visible: windowPreview.hasContent && !root.compactMode && Config.performance.windowPreview
         anchors.bottom: parent.bottom
         anchors.right: parent.right

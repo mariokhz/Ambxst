@@ -203,6 +203,7 @@ Item {
 
                         // Small app icon similar to NotificationAppIcon's overlay
                         Image {
+                            mipmap: true
                             id: groupSmallAppIcon
                             Layout.preferredWidth: 16
                             Layout.preferredHeight: 16

@@ -133,6 +133,41 @@ QtObject {
             console.log(`HyprlandConfig: Auto ignorealpha calculated: ${ignoreAlphaValue} (bg: ${bgOpacity}, bar: ${barBgOpacity})`);
         }
 
+        let batchCommand = "";
+        batchCommand += `keyword general:border_size ${Config.hyprland.borderSize}`;
+        batchCommand += ` ; keyword general:gaps_in ${Config.hyprland.gapsIn}`;
+        batchCommand += ` ; keyword general:gaps_out ${Config.hyprland.gapsOut}`;
+        batchCommand += ` ; keyword general:col.active_border ${activeColorFormatted}`;
+        batchCommand += ` ; keyword general:col.inactive_border ${inactiveColorFormatted}`;
+        batchCommand += ` ; keyword general:layout ${GlobalStates.hyprlandLayout}`;
+        batchCommand += ` ; keyword decoration:rounding ${Config.hyprland.rounding}`;
+        batchCommand += ` ; keyword decoration:shadow:enabled ${Config.hyprland.shadowEnabled}`;
+        batchCommand += ` ; keyword decoration:shadow:range ${Config.hyprland.shadowRange}`;
+        batchCommand += ` ; keyword decoration:shadow:render_power ${Config.hyprland.shadowRenderPower}`;
+        batchCommand += ` ; keyword decoration:shadow:sharp ${Config.hyprland.shadowSharp}`;
+        batchCommand += ` ; keyword decoration:shadow:ignore_window ${Config.hyprland.shadowIgnoreWindow}`;
+        batchCommand += ` ; keyword decoration:shadow:color ${shadowColorFormatted}`;
+        batchCommand += ` ; keyword decoration:shadow:color_inactive ${shadowColorInactiveFormatted}`;
+        batchCommand += ` ; keyword decoration:shadow:offset ${Config.hyprland.shadowOffset}`;
+        batchCommand += ` ; keyword decoration:shadow:scale ${Config.hyprland.shadowScale}`;
+        batchCommand += ` ; keyword decoration:blur:enabled ${Config.hyprland.blurEnabled}`;
+        batchCommand += ` ; keyword decoration:blur:size ${Config.hyprland.blurSize}`;
+        batchCommand += ` ; keyword decoration:blur:passes ${Config.hyprland.blurPasses}`;
+        batchCommand += ` ; keyword decoration:blur:ignore_opacity ${Config.hyprland.blurIgnoreOpacity}`;
+        batchCommand += ` ; keyword decoration:blur:new_optimizations ${Config.hyprland.blurNewOptimizations}`;
+        batchCommand += ` ; keyword decoration:blur:xray ${Config.hyprland.blurXray}`;
+        batchCommand += ` ; keyword decoration:blur:noise ${Config.hyprland.blurNoise}`;
+        batchCommand += ` ; keyword decoration:blur:contrast ${Config.hyprland.blurContrast}`;
+        batchCommand += ` ; keyword decoration:blur:brightness ${Config.hyprland.blurBrightness}`;
+        batchCommand += ` ; keyword decoration:blur:vibrancy ${Config.hyprland.blurVibrancy}`;
+        batchCommand += ` ; keyword decoration:blur:vibrancy_darkness ${Config.hyprland.blurVibrancyDarkness}`;
+        batchCommand += ` ; keyword decoration:blur:special ${Config.hyprland.blurSpecial}`;
+        batchCommand += ` ; keyword decoration:blur:popups ${Config.hyprland.blurPopups}`;
+        batchCommand += ` ; keyword decoration:blur:popups_ignorealpha ${Config.hyprland.blurPopupsIgnorealpha}`;
+        batchCommand += ` ; keyword decoration:blur:input_methods ${Config.hyprland.blurInputMethods}`;
+        batchCommand += ` ; keyword decoration:blur:input_methods_ignorealpha ${Config.hyprland.blurInputMethodsIgnorealpha}`;
+        // Note: workspacesAnimation is calculated but exact animation param syntax depends on user config, omitting for safety unless we have a default.
+
         console.log(`HyprlandConfig: Applying ignorealpha: ${ignoreAlphaValue}, explicit: ${Config.hyprland.blurExplicitIgnoreAlpha}`);
         batchCommand += ` ; keyword layerrule noanim,quickshell ; keyword layerrule blur,quickshell ; keyword layerrule blurpopups,quickshell ; keyword layerrule ignorealpha ${ignoreAlphaValue},quickshell`;
         console.log("HyprlandConfig: Applying hyprctl batch command.");
@@ -152,6 +187,9 @@ QtObject {
 
     property Connections hyprlandConfigConnections: Connections {
         target: Config.hyprland
+        function onLayoutChanged() {
+            GlobalStates.setHyprlandLayout(Config.hyprland.layout);
+        }
         function onBorderSizeChanged() {
             applyHyprlandConfig();
         }

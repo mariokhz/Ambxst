@@ -136,6 +136,7 @@ Item {
     Component {
         id: normalIconComponent
         Image {
+            mipmap: true
             property bool thumbnailExists: false
             source: {
                 root.thumbnailRefresh;
@@ -179,6 +180,7 @@ Item {
         id: tintedIconComponent
         Tinted {
             sourceItem: Image {
+                mipmap: true
                 property bool thumbnailExists: false
                 source: {
                     root.thumbnailRefresh;

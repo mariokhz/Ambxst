@@ -990,6 +990,7 @@ FocusScope {
     Component {
         id: staticImageComponent
         Image {
+            mipmap: true
             source: {
                 if (!parent.sourceFile || !GlobalStates.wallpaperManager)
                     return "";

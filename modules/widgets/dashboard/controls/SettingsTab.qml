@@ -386,6 +386,7 @@ Rectangle {
                                         visible: !sidebarButton.modelData.isIcon && (root.searchQuery.length === 0 || !sidebarButton.modelData.subSection)
 
                                         Image {
+                                            mipmap: true
                                             id: svgIcon
                                             width: 20
                                             height: 20

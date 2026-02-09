@@ -141,7 +141,7 @@ Item {
             color: Colors.overBackground
             elide: Text.ElideRight
             visible: opacity > 0
-            opacity: compactPlayer.notchHovered ? 0.0 : 1.0
+            opacity: (compactPlayer.notchHovered && compactPlayer.player) ? 0.0 : 1.0
             horizontalAlignment: Text.AlignHCenter
             z: 5
 
@@ -160,6 +160,7 @@ Item {
             color: "transparent"
 
             Image {
+                mipmap: true
                 id: backgroundArt
                 anchors.fill: parent
                 source: (compactPlayer.player?.trackArtUrl ?? "") !== "" ? compactPlayer.player.trackArtUrl : compactPlayer.wallpaperPath
@@ -209,7 +210,7 @@ Item {
             spacing: (compactPlayer.player !== null && compactPlayer.notchHovered) ? 4 : 0
             layer.enabled: true
             layer.effect: BgShadow {}
-            opacity: compactPlayer.notchHovered ? 1.0 : 0.0
+            opacity: (compactPlayer.notchHovered && compactPlayer.player) ? 1.0 : 0.0
             visible: opacity > 0
             Behavior on opacity {
                 enabled: Config.animDuration > 0
@@ -236,6 +237,7 @@ Item {
                     radius: compactPlayer.isPlaying ? Styling.radius(-8) : Styling.radius(-4)
                     color: "transparent"
                     Image {
+                        mipmap: true
                         id: artworkImage
                         anchors.fill: parent
                         source: (compactPlayer.player?.trackArtUrl ?? "") !== "" ? compactPlayer.player.trackArtUrl : compactPlayer.wallpaperPath

@@ -71,6 +71,7 @@ ClippingRectangle {
         anchors.fill: parent
         visible: item && item.status !== Image.Error
         sourceComponent: Image {
+            mipmap: true
             id: appIconImage
             anchors.fill: parent
             source: root.appIcon ? "image://icon/" + root.appIcon : ""
@@ -94,6 +95,7 @@ ClippingRectangle {
                 color: "transparent"
 
                 Image {
+                    mipmap: true
                     id: notifImage
                     anchors.fill: parent
                     source: status === Image.Error && root.appIcon ? "image://icon/" + root.appIcon : root.image
@@ -119,6 +121,7 @@ ClippingRectangle {
                 sourceComponent: ClippingRectangle {
                     radius: root.radius * root.smallAppIconScale
                     Image {
+                        mipmap: true
                         anchors.fill: parent
                         source: root.appIcon ? "image://icon/" + root.appIcon : ""
                         fillMode: Image.PreserveAspectCrop

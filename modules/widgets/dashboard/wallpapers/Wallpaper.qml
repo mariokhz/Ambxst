@@ -1272,6 +1272,7 @@ PanelWindow {
                 }
 
                 Image {
+                    mipmap: true
                     id: rawImage
                     anchors.fill: parent
                     source: parent.sourceFile ? "file://" + parent.sourceFile : ""

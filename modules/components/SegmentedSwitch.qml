@@ -92,6 +92,7 @@ StyledRect {
 
                         // Image Icon
                         Image {
+                            mipmap: true
                             visible: typeof optionButton.modelData === "object" && !!optionButton.modelData.image
                             source: visible ? optionButton.modelData.image : ""
                             sourceSize.width: 16

@@ -51,6 +51,7 @@ Item {
     // Static Image - shown when NOT animating (no GPU activity)
     // =========================================================================
     Image {
+        mipmap: true
         id: staticImage
         anchors.fill: parent
         visible: !root.shouldAnimate && source !== ""

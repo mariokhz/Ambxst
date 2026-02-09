@@ -190,6 +190,7 @@ PanelWindow {
             clip: true
             
             Image {
+                mipmap: true
                 id: previewImage
                 // Now we display a monitor-specific image which exactly matches our bounds
                 fillMode: Image.Stretch

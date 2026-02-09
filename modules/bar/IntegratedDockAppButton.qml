@@ -95,6 +95,7 @@ Button {
                     }
 
                     Image {
+                        mipmap: true
                         id: appIcon
                         anchors.fill: parent
                         source: "image://icon/" + appIconContainer.iconName
