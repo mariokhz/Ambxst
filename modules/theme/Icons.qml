@@ -229,11 +229,11 @@ QtObject {
     readonly property string camera: ""
     readonly property string speaker: ""
 
-    readonly property string batteryFull: "\ue7c6"
-    readonly property string batteryHigh: "\ue7c4"
-    readonly property string batteryMedium: "\ue7c2"
-    readonly property string batteryLow: "\ue7c0"
-    readonly property string batteryEmpty: "\ue7be"
+    readonly property string batteryFull: "\ue7c4"
+    readonly property string batteryHigh: "\ue7c2"
+    readonly property string batteryMedium: "\ue7c0"
+    readonly property string batteryLow: "\ue7be"
+    readonly property string batteryEmpty: "\ue7c6"
     readonly property string batteryCharging: ""
 
     readonly property string waveform: ""
