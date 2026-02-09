@@ -34,32 +34,24 @@ WlSessionLockSurface {
         captureSource: root.screen
         live: false
         paintCursor: false
-        visible: startAnim  // Visible solo cuando startAnim es true
+        visible: true  // Visible solo cuando startAnim es true
         z: 0  // Capa más baja - fondo absoluto
-
-        property real zoomScale: startAnim ? 1.25 : 1.0
-
-        transform: Scale {
-            origin.x: screencopyBackground.width / 2
-            origin.y: screencopyBackground.height / 2
-            xScale: screencopyBackground.zoomScale
-            yScale: screencopyBackground.zoomScale
-        }
 
         layer.enabled: true
         layer.effect: MultiEffect {
             blurEnabled: true
-            blur: 1
+            blur: startAnim ? 1 : 0
             blurMax: 32
-        }
 
-        Behavior on zoomScale {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Config.animDuration * 2
-                easing.type: Easing.OutExpo
+            Behavior on blur {
+                enabled: Config.animDuration > 0
+                NumberAnimation {
+                    duration: Config.animDuration * 2
+                    easing.type: Easing.OutCircle
+                }
             }
         }
+
     }
 
     // Overlay for dimming
