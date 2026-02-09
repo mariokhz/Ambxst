@@ -23,8 +23,8 @@ WlSessionLockSurface {
     property string errorMessage: ""
     property int failLockSecondsLeft: 0
 
-    // Opaque background to prevent live content bleed-through
-    color: "black"
+    
+    color: "transparent"
 
     // Wallpaper background con Blur integrado
     // Screen capture background (fondo absoluto con zoom sincronizado)
@@ -34,8 +34,8 @@ WlSessionLockSurface {
         captureSource: root.screen
         live: false
         paintCursor: false
-        visible: true 
-        z: 0  // Capa más baja - fondo absoluto
+        visible: true
+        z: 1  // Capa más baja - fondo absoluto
 
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -54,12 +54,29 @@ WlSessionLockSurface {
 
     }
 
+    // Background to prevent transparency issues (ghosting) while avoiding black flash on start
+    Rectangle {
+        anchors.fill: parent
+        color: "black"
+        z: 0
+        opacity: startAnim ? 1 : 0
+        visible: true
+
+        Behavior on opacity {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration * 2
+                easing.type: Easing.OutExpo
+            }
+        }
+    }
+
     // Overlay for dimming
     Rectangle {
         id: dimOverlay
         anchors.fill: parent
         color: "black"
-        opacity: startAnim ? 0.25 : 0
+        opacity: 0
         z: 3
 
         property real zoomScale: startAnim ? 1.1 : 1.0
