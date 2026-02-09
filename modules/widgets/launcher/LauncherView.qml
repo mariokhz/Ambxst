@@ -749,7 +749,6 @@ Rectangle {
                                 anchors.fill: parent
                                 source: "image://icon/" + appIcon
                                 fillMode: Image.PreserveAspectFit
-                                mipmap: true
                                 smooth: true
                                 antialiasing: true
                                 
