@@ -23,8 +23,8 @@ WlSessionLockSurface {
     property string errorMessage: ""
     property int failLockSecondsLeft: 0
 
-    // Always transparent - blur background handles the visuals
-    color: "transparent"
+    // Opaque background to prevent live content bleed-through
+    color: "black"
 
     // Wallpaper background con Blur integrado
     // Screen capture background (fondo absoluto con zoom sincronizado)
@@ -34,7 +34,7 @@ WlSessionLockSurface {
         captureSource: root.screen
         live: false
         paintCursor: false
-        visible: true  // Visible solo cuando startAnim es true
+        visible: true 
         z: 0  // Capa más baja - fondo absoluto
 
         layer.enabled: true
