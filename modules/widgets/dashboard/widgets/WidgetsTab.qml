@@ -60,7 +60,8 @@ Rectangle {
                         model: Audio.outputAppNodes
                         delegate: AudioVolumeEntry {
                             required property var modelData
-                            Layout.fillWidth: true
+                            Layout.fillWidth: false
+                            Layout.preferredWidth: 254
                             node: modelData
                             isMainDevice: false
                         }
