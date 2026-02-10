@@ -192,8 +192,8 @@ Item {
         hoverEnabled: true
 
         // Size includes margins
-        width: root.orientation === "horizontal" ? root.width : (root.reveal ? root.totalBarWidth : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4) + root.frameOffset + barBg.displacement)
-        height: root.orientation === "vertical" ? root.height : (root.reveal ? root.totalBarHeight : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4) + root.frameOffset + barBg.displacement)
+        width: root.orientation === "horizontal" ? root.width : (root.reveal ? root.totalBarWidth : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4) + root.frameOffset)
+        height: root.orientation === "vertical" ? root.height : (root.reveal ? root.totalBarHeight : Math.max(Config.bar?.hoverRegionHeight ?? 8, 4) + root.frameOffset)
 
 
         // Position using x/y
