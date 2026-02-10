@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtMultimedia
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
@@ -234,7 +235,14 @@ PanelWindow {
                 GlobalStates.osdIndicator = "battery";
                 GlobalStates.osdVisible = true;
                 hideTimer.restart();
+                criticalBatterySound.play();
              }
         }
+    }
+
+    SoundEffect {
+        id: criticalBatterySound
+        source: Quickshell.shellDir + "/assets/sound/critical_battery.wav"
+        volume: 1.0
     }
 }

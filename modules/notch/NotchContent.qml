@@ -82,7 +82,7 @@ Item {
         
         // Check active toplevel first (fast path)
         const toplevel = ToplevelManager.activeToplevel;
-        if (toplevel && toplevel.fullscreen && Hyprland.focusedMonitor.id === monId) {
+        if (toplevel && toplevel.fullscreen && toplevel.activated && Hyprland.focusedMonitor.id === monId) {
              return true;
         }
 
