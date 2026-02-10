@@ -591,8 +591,13 @@ Item {
                     // Copy file URI with text/uri-list MIME type, removing carriage returns
                     copyProcess.command = ["sh", "-c", "sqlite3 '" + ClipboardService.dbPath + "' \"SELECT full_content FROM clipboard_items WHERE id = " + itemId + ";\" | tr -d '\\r' | wl-copy --type text/uri-list"];
                 } else {
-                    // Copy text as plain text
-                    copyProcess.command = ["sh", "-c", "sqlite3 '" + ClipboardService.dbPath + "' \"SELECT full_content FROM clipboard_items WHERE id = " + itemId + ";\" | wl-copy"];
+                    // Optimized path for text: use the already loaded safeCurrentContent if it matches
+                    if (root.contentMatchesSelection && root.currentItemId === itemId && root.currentFullContent) {
+                        copyProcess.command = ["sh", "-c", "printf '%s' " + ClipboardUtils.escapeShellArg(root.currentFullContent) + " | wl-copy"];
+                    } else {
+                        // Fallback: Copy text as plain text from DB
+                        copyProcess.command = ["sh", "-c", "sqlite3 '" + ClipboardService.dbPath + "' \"SELECT full_content FROM clipboard_items WHERE id = " + itemId + ";\" | wl-copy"];
+                    }
                 }
                 copyProcess.running = true;
                 break;
@@ -685,10 +690,9 @@ Item {
         running: false
 
         onExited: function (code) {
-        // No cerrar el dashboard después de copiar
-        // if (code === 0) {
-        //     root.itemSelected();
-        // }
+            if (code === 0) {
+                ClipboardService.checkClipboard();
+            }
         }
     }
 

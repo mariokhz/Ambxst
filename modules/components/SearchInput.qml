@@ -105,8 +105,8 @@ StyledRect {
                 if (event.key === Qt.Key_Backspace && textField.text.length === 0) {
                     root.backspaceOnEmpty();
                     event.accepted = true;
-                } else if (event.key === Qt.Key_Tab && root.handleTabNavigation) {
-                    if (event.modifiers & Qt.ShiftModifier) {
+                } else if ((event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) && root.handleTabNavigation) {
+                    if (event.modifiers & Qt.ShiftModifier || event.key === Qt.Key_Backtab) {
                         root.shiftTabPressed();
                     } else {
                         root.tabPressed();

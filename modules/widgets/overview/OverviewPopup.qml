@@ -198,13 +198,29 @@ PanelWindow {
                     }
 
                     onTabPressed: {
-                        if (overviewLoader.item) {
+                        if (searchInput.text.length === 0) {
+                            const current = Hyprland.focusedWorkspace?.id || 1;
+                            const next = current + 1;
+                            if (next > Config.workspaces.shown) {
+                                Hyprland.dispatch("workspace 1");
+                            } else {
+                                Hyprland.dispatch("workspace r+1");
+                            }
+                        } else if (overviewLoader.item) {
                             overviewLoader.item.selectNextMatch();
                         }
                     }
-
+                    
                     onShiftTabPressed: {
-                        if (overviewLoader.item) {
+                        if (searchInput.text.length === 0) {
+                            const current = Hyprland.focusedWorkspace?.id || 1;
+                            const prev = current - 1;
+                            if (prev < 1) {
+                                Hyprland.dispatch("workspace " + Config.workspaces.shown);
+                            } else {
+                                Hyprland.dispatch("workspace r-1");
+                            }
+                        } else if (overviewLoader.item) {
                             overviewLoader.item.selectPrevMatch();
                         }
                     }
@@ -234,7 +250,13 @@ PanelWindow {
 
                     onLeftPressed: {
                         if (searchInput.text.length === 0) {
-                            Hyprland.dispatch("workspace r-1");
+                            const current = Hyprland.focusedWorkspace?.id || 1;
+                            const prev = current - 1;
+                            if (prev < 1) {
+                                Hyprland.dispatch("workspace " + Config.workspaces.shown);
+                            } else {
+                                Hyprland.dispatch("workspace r-1");
+                            }
                         } else if (overviewLoader.item) {
                             overviewLoader.item.selectPrevMatch();
                         }
@@ -242,7 +264,13 @@ PanelWindow {
 
                     onRightPressed: {
                         if (searchInput.text.length === 0) {
-                            Hyprland.dispatch("workspace r+1");
+                            const current = Hyprland.focusedWorkspace?.id || 1;
+                            const next = current + 1;
+                            if (next > Config.workspaces.shown) {
+                                Hyprland.dispatch("workspace 1");
+                            } else {
+                                Hyprland.dispatch("workspace r+1");
+                            }
                         } else if (overviewLoader.item) {
                             overviewLoader.item.selectNextMatch();
                         }
