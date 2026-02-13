@@ -18,6 +18,7 @@ import "../dashboard/calculator"
 
 Rectangle {
     id: root
+    anchors.fill: parent
     color: "transparent"
     
     readonly property bool isCompact: currentTab === 0 || currentTab === 2 || currentTab === 5
@@ -389,13 +390,7 @@ Rectangle {
         // Otherwise, item is already fully visible - no scroll needed
         }
 
-        Behavior on height {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Config.animDuration
-                easing.type: Easing.OutQuart
-            }
-        }
+
 
         Item {
             id: mainLayout
@@ -748,6 +743,8 @@ Rectangle {
                                 id: appIconImage
                                 anchors.fill: parent
                                 source: "image://icon/" + appIcon
+                                sourceSize.width: 64
+                                sourceSize.height: 64
                                 fillMode: Image.PreserveAspectFit
                                 smooth: true
                                 antialiasing: true
@@ -1100,9 +1097,12 @@ Rectangle {
         // Tab 1: Clipboard
         Loader {
             id: clipboardLoader
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             active: currentTab === 1 || item !== null
             sourceComponent: Component {
                 ClipboardTab {
+                    anchors.fill: parent
                     leftPanelWidth: root.leftPanelWidth
                     prefixIcon: Icons.clipboard
                     onBackspaceOnEmpty: {
@@ -1158,6 +1158,7 @@ Rectangle {
             active: currentTab === 3 || item !== null
             sourceComponent: Component {
                 TmuxTab {
+                    anchors.fill: parent
                     leftPanelWidth: root.leftPanelWidth
                     prefixIcon: Icons.terminal
                     onBackspaceOnEmpty: {

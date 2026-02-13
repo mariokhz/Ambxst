@@ -77,6 +77,8 @@ Item {
             visible: item && item.status !== Image.Error
             sourceComponent: Image {
                 mipmap: true
+                sourceSize.width: root.size * 2
+                sourceSize.height: root.size * 2
                 id: appIconImage
                 anchors.fill: parent
                 source: root.appIcon ? "image://icon/" + root.appIcon : ""
@@ -101,6 +103,8 @@ Item {
 
                     Image {
                         mipmap: true
+                        sourceSize.width: root.size * 2
+                        sourceSize.height: root.size * 2
                         id: notifImage
                         anchors.fill: parent
                         source: status === Image.Error && root.appIcon ? "image://icon/" + root.appIcon : root.image
@@ -130,6 +134,8 @@ Item {
             color: "transparent"
             Image {
                 mipmap: true
+                sourceSize.width: root.smallAppIconSize * 2
+                sourceSize.height: root.smallAppIconSize * 2
                 anchors.fill: parent
                 source: root.appIcon ? "image://icon/" + root.appIcon : ""
                 fillMode: Image.PreserveAspectCrop

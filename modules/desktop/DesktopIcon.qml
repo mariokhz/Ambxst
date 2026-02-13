@@ -137,6 +137,8 @@ Item {
         id: normalIconComponent
         Image {
             mipmap: true
+            sourceSize.width: Config.desktop.iconSize * 2
+            sourceSize.height: Config.desktop.iconSize * 2
             property bool thumbnailExists: false
             source: {
                 root.thumbnailRefresh;
@@ -181,6 +183,8 @@ Item {
         Tinted {
             sourceItem: Image {
                 mipmap: true
+                sourceSize.width: Config.desktop.iconSize * 2
+                sourceSize.height: Config.desktop.iconSize * 2
                 property bool thumbnailExists: false
                 source: {
                     root.thumbnailRefresh;

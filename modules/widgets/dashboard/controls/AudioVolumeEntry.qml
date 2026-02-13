@@ -59,6 +59,7 @@ Item {
                         height: 28
                         mipmap: true
                         antialiasing: true
+                        sourceSize: Qt.size(64, 64)
                         visible: source != "" && !root.isMuted && !root.isMainDevice
                         source: {
                             if (root.isMuted || root.isMainDevice) return "";
