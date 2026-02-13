@@ -20,7 +20,7 @@ Rectangle {
     id: root
     color: "transparent"
     
-    readonly property bool isCompact: currentTab === 0 || currentTab === 2
+    readonly property bool isCompact: currentTab === 0 || currentTab === 2 || currentTab === 5
     implicitWidth: isCompact ? 464 : 900
     implicitHeight: isCompact ? 296 : 392
     
