@@ -52,6 +52,13 @@ Item {
         updateModel();
     }
 
+    function copyToClipboard(text) {
+        var proc = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
+        proc.command = ["bash", "-c", "echo -n '" + text.replace(/'/g, "'\\''") + "' | wl-copy"];
+        proc.running = true;
+        proc.onExited.connect(() => proc.destroy());
+    }
+
     function updateModel() {
         resultsModel.clear();
         
@@ -162,14 +169,15 @@ Item {
                 onAccepted: {
                     if (resultList.count > 0 && resultList.currentIndex >= 0) {
                         let item = resultsModel.get(resultList.currentIndex);
+                        
+                        root.copyToClipboard(item.result);
+
                         if (item.type === "result") {
                             root.addToHistory(item.expression, item.result);
-                            Visibilities.setActiveModule("");
-                            ClipboardService.copy(item.result);
-                        } else {
-                            Visibilities.setActiveModule("");
-                            ClipboardService.copy(item.result);
                         }
+                        
+                        root.searchText = "";
+                        Visibilities.setActiveModule("");
                     }
                 }
                 
@@ -238,7 +246,7 @@ Item {
                     }
                     onExited: parent.isHovered = false
                     onClicked: {
-                        ClipboardService.copy(model.result);
+                        root.copyToClipboard(model.result);
                         Visibilities.setActiveModule("");
                     }
                 }
