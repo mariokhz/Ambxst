@@ -8,6 +8,9 @@ import qs.modules.components
     variant: "bg"
     id: root
 
+    // Hide when no tray items
+    visible: hasItems
+
     topLeftRadius: root.vertical ? root.startRadius : root.startRadius
     topRightRadius: root.vertical ? root.startRadius : root.endRadius
     bottomLeftRadius: root.vertical ? root.endRadius : root.startRadius
@@ -22,20 +25,24 @@ import qs.modules.components
     // Orientación derivada de la barra
     property bool vertical: bar.orientation === "vertical"
 
+    // Hide completely when empty - check both orientations
+    readonly property bool hasItems: rowRepeater.count > 0 || columnRepeater.count > 0
+
     // Ajustes de tamaño dinámicos según orientación
     height: vertical ? implicitHeight : parent.height
-    Layout.preferredWidth: (vertical ? columnLayout.implicitWidth : rowLayout.implicitWidth) + 16
-    implicitWidth: (vertical ? columnLayout.implicitWidth : rowLayout.implicitWidth) + 16
-    implicitHeight: (vertical ? columnLayout.implicitHeight : rowLayout.implicitHeight) + 16
+    Layout.preferredWidth: hasItems ? ((vertical ? columnLayout.implicitWidth : rowLayout.implicitWidth) + 16) : 0
+    implicitWidth: hasItems ? ((vertical ? columnLayout.implicitWidth : rowLayout.implicitWidth) + 16) : 0
+    implicitHeight: hasItems ? ((vertical ? columnLayout.implicitHeight : rowLayout.implicitHeight) + 16) : 0
 
     RowLayout {
         id: rowLayout
         visible: !root.vertical
-        anchors.centerIn: parent
+        anchors.fill: parent
         anchors.margins: 8
         spacing: 8
 
         Repeater {
+            id: rowRepeater
             model: SystemTray.items
 
             SysTrayItem {
@@ -49,11 +56,12 @@ import qs.modules.components
     ColumnLayout {
         id: columnLayout
         visible: root.vertical
-        anchors.centerIn: parent
+        anchors.fill: parent
         anchors.margins: 8
         spacing: 8
 
         Repeater {
+            id: columnRepeater
             model: SystemTray.items
 
             SysTrayItem {
