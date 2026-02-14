@@ -16,6 +16,7 @@ Item {
     property var image: ""
     property real scale: 1
     property real size: 48 * scale
+    property real imgSize: size
     property real appIconScale: scale
     property real smallAppIconScale: 0.4
     property real appIconSize: size * appIconScale
@@ -77,8 +78,8 @@ Item {
             visible: item && item.status !== Image.Error
             sourceComponent: Image {
                 mipmap: true
-                sourceSize.width: root.size * 2
-                sourceSize.height: root.size * 2
+                sourceSize.width: root.imgSize * 2
+                sourceSize.height: root.imgSize * 2
                 id: appIconImage
                 anchors.fill: parent
                 source: root.appIcon ? "image://icon/" + root.appIcon : ""
@@ -103,8 +104,8 @@ Item {
 
                     Image {
                         mipmap: true
-                        sourceSize.width: root.size * 2
-                        sourceSize.height: root.size * 2
+                        sourceSize.width: root.imgSize * 2
+                        sourceSize.height: root.imgSize * 2
                         id: notifImage
                         anchors.fill: parent
                         source: status === Image.Error && root.appIcon ? "image://icon/" + root.appIcon : root.image

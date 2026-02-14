@@ -430,6 +430,7 @@ Item {
                                             Layout.preferredHeight: iconSize
                                             Layout.alignment: Qt.AlignTop
                                             size: iconSize
+                                            imgSize: 48
                                             radius: Styling.radius(4)
                                             appName: notification ? notification.appName : ""
                                             appIcon: notification ? (notification.cachedAppIcon || notification.appIcon) : ""
