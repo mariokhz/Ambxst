@@ -432,6 +432,7 @@ Item {
                     implicitWidth: workspaceButtonWidth
                     implicitHeight: workspaceButtonWidth
                     property var focusedWindow: {
+                        const _rev = CompositorService.windowsRevision; // force re-evaluation
                         const windowsInThisWorkspace = CompositorService.workspaceWindowsMap[button.workspaceValue] || [];
                         if (windowsInThisWorkspace.length === 0)
                             return null;
@@ -440,9 +441,9 @@ Item {
                             const bestFocus = best?.focusHistoryID ?? Infinity;
                             const winFocus = win?.focusHistoryID ?? Infinity;
                             return winFocus < bestFocus ? win : best;
-                        }, null);
+                        }, windowsInThisWorkspace[0]);
                     }
-                    property var mainAppIconSource: Quickshell.iconPath(AppSearch.getCachedIcon(focusedWindow?.class), "image-missing")
+                    property var mainAppIconSource: Quickshell.iconPath(AppSearch.getCachedIcon(focusedWindow?.class || focusedWindow?.appId), "image-missing")
 
                     Text {
                         opacity: Config.workspaces.alwaysShowNumbers || ((Config.workspaces.showNumbers && (!Config.workspaces.showAppIcons || !workspaceButtonBackground.focusedWindow || Config.workspaces.alwaysShowNumbers)) || (Config.workspaces.alwaysShowNumbers && !Config.workspaces.showAppIcons)) ? 1 : 0
@@ -563,6 +564,7 @@ Item {
                     implicitWidth: workspaceButtonWidth
                     implicitHeight: workspaceButtonWidth
                     property var focusedWindow: {
+                        const _rev = CompositorService.windowsRevision; // force re-evaluation
                         const windowsInThisWorkspace = CompositorService.workspaceWindowsMap[buttonVert.workspaceValue] || [];
                         if (windowsInThisWorkspace.length === 0)
                             return null;
@@ -571,9 +573,9 @@ Item {
                             const bestFocus = best?.focusHistoryID ?? Infinity;
                             const winFocus = win?.focusHistoryID ?? Infinity;
                             return winFocus < bestFocus ? win : best;
-                        }, null);
+                        }, windowsInThisWorkspace[0]);
                     }
-                    property var mainAppIconSource: Quickshell.iconPath(AppSearch.getCachedIcon(focusedWindow?.class), "image-missing")
+                    property var mainAppIconSource: Quickshell.iconPath(AppSearch.getCachedIcon(focusedWindow?.class || focusedWindow?.appId), "image-missing")
 
                     Text {
                         opacity: Config.workspaces.alwaysShowNumbers || ((Config.workspaces.showNumbers && (!Config.workspaces.showAppIcons || !workspaceButtonBackgroundVert.focusedWindow || Config.workspaces.alwaysShowNumbers)) || (Config.workspaces.alwaysShowNumbers && !Config.workspaces.showAppIcons)) ? 1 : 0

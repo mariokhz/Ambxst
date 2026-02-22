@@ -28,24 +28,19 @@ Item {
     readonly property var screenVisibilities: Visibilities.getForScreen(screen.name)
     readonly property bool isScreenFocused: Hyprland.focusedMonitor && Hyprland.focusedMonitor.name === screen.name
 
-    // Monitor reference and refrence to toplevels on monitor
-    readonly property var hyprlandMonitor: Hyprland.monitorFor(screen)
-    readonly property var toplevels: hyprlandMonitor.activeWorkspace.toplevels.values
-
-    // Check if there are any windows on the current monitor and workspace
+    // Check if there are any windows on the active workspace or focused/activated
+    // Matched to dock behavior: hide if there is an activated toplevel
     readonly property bool hasWindows: {
-        if (!hyprlandMonitor) return false;
-        const activeWorkspaceId = hyprlandMonitor.activeWorkspace.id;
-        const monId = hyprlandMonitor.id;
-        const wins = CompositorService.windowList;
-        for (let i = 0; i < wins.length; i++) {
-            // We only care about windows on the current monitor and workspace
-            // that are not floating (floating windows usually don't trigger auto-hide)
-            if (wins[i].output === hyprlandMonitor?.name && wins[i].workspaceId === activeWorkspaceId && !wins[i].floating) {
-                return true;
-            }
-        }
-        return false;
+        const toplevel = ToplevelManager.activeToplevel;
+        return toplevel && toplevel.activated;
+    }
+
+    // Fullscreen detection - matches dock behavior using ToplevelManager
+    readonly property bool activeWindowFullscreen: {
+        const toplevel = ToplevelManager.activeToplevel;
+        if (!toplevel || !toplevel.activated)
+            return false;
+        return toplevel.fullscreen === true;
     }
 
     // Get the bar position for this screen
@@ -57,34 +52,18 @@ Item {
 
     // Check if bar is pinned (use bar state directly)
     readonly property bool barPinned: {
-        // If barPanelRef exists, trust its pinned state explicitly
         if (barPanelRef && typeof barPanelRef.pinned !== 'undefined') {
             return barPanelRef.pinned;
         }
-        // Fallback to config only if panel ref is missing
         return Config.bar?.pinnedOnStartup ?? true;
     }
-    
+
     // Check if bar is hovering (for synchronized reveal when bar is at same side)
     readonly property bool barHoverActive: {
         if (barPosition !== notchPosition)
             return false;
         if (barPanelRef && typeof barPanelRef.hoverActive !== 'undefined') {
             return barPanelRef.hoverActive;
-        }
-        return false;
-    }
-
-    // Fullscreen detection - check if active toplevel is fullscreen on this screen
-    readonly property bool activeWindowFullscreen: {
-        if (!hyprlandMonitor || !toplevels) return false;
-
-        // Check all toplevels on active workspcace
-        for (var i = 0; i < toplevels.length; i++) {
-            // Checks first if the wayland handle is ready
-            if (toplevels[i].wayland && toplevels[i].wayland.fullscreen == true) {
-               return true;
-            }
         }
         return false;
     }

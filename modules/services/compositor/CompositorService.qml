@@ -27,6 +27,7 @@ Singleton {
   property var windowList: []
   property var workspaceOccupationMap: ({})
   property var workspaceWindowsMap: ({})
+  property int windowsRevision: 0
 
   // Display scale data
   property var displayScales: ({})
@@ -263,6 +264,7 @@ Singleton {
     windowList = newWindowList;
     workspaceOccupationMap = occupationMap;
     workspaceWindowsMap = windowsMap;
+    windowsRevision++;
     // Emit signal to notify listeners that window list has been updated
     windowListChanged();
   }
