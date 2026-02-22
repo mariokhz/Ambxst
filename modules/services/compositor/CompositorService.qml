@@ -70,7 +70,7 @@ Singleton {
     const hyprlandSignature = Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE");
     const niriSocket = Quickshell.env("NIRI_SOCKET");
     const swaySock = Quickshell.env("SWAYSOCK");
-    const currentDesktop = Quickshell.env("DESKTOP_SESSION");
+    const currentDesktop = Quickshell.env("XDG_CURRENT_DESKTOP");
 
     // Check for MangoWC using XDG_CURRENT_DESKTOP environment variable
     // MangoWC sets XDG_CURRENT_DESKTOP=mango
