@@ -99,11 +99,13 @@ PopupWindow {
 
     // Focus grab for click-outside-to-close behavior
     property bool focusActive: false
+    property int keyboardFocus: WlrKeyboardFocus.OnDemand
 
-    HyprlandFocusGrab {
+    FocusGrab {
         id: focusGrab
         active: root.visible && root.focusActive
         windows: [root]
+        keyboardFocus: root.keyboardFocus
 
         onCleared: {
             if (root.closeOnFocusLost && root.isOpen) {

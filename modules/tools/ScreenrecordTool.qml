@@ -22,7 +22,7 @@ PanelWindow {
     color: "transparent"
 
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    WlrLayershell.keyboardFocus: focusGrab.active ? focusGrab.keyboardFocus : WlrKeyboardFocus.OnDemand
 
     visible: state !== "idle"
     exclusionMode: ExclusionMode.Ignore
@@ -155,10 +155,11 @@ PanelWindow {
         height: 0
     }
 
-    HyprlandFocusGrab {
+    FocusGrab {
         id: focusGrab
         windows: [screenrecordPopup]
         active: screenrecordPopup.visible
+        keyboardFocus: WlrKeyboardFocus.Exclusive
     }
 
     FocusScope {

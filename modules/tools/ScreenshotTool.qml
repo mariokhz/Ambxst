@@ -27,7 +27,7 @@ PanelWindow {
     color: "transparent"
 
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: screenshotPopup.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: focusGrab.active ? focusGrab.keyboardFocus : WlrKeyboardFocus.OnDemand
 
     // Visible only when explicitly opened
     visible: state !== "idle"
@@ -170,10 +170,11 @@ PanelWindow {
     }
 
     // Focus grabber
-    HyprlandFocusGrab {
+    FocusGrab {
         id: focusGrab
         windows: [screenshotPopup]
         active: screenshotPopup.visible
+        keyboardFocus: WlrKeyboardFocus.Exclusive
     }
 
     // Main Content

@@ -25,7 +25,8 @@ PanelWindow {
     color: "transparent"
 
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: focusGrab.active ? focusGrab.keyboardFocus : WlrKeyboardFocus.OnDemand
+
 
     // Get this screen's visibility state
     readonly property var screenVisibilities: Visibilities.getForScreen(screen.name)
@@ -52,10 +53,11 @@ PanelWindow {
         height: 0
     }
 
-    HyprlandFocusGrab {
+    FocusGrab {
         id: focusGrab
         windows: [presetsPopup]
         active: presetsOpen
+        keyboardFocus: WlrKeyboardFocus.Exclusive
 
         onCleared: {
             // Use Qt.callLater to avoid potential race conditions

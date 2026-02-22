@@ -29,7 +29,7 @@ PanelWindow {
 
     color: "transparent"
 
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: focusGrab.active ? focusGrab.keyboardFocus : WlrKeyboardFocus.OnDemand
     WlrLayershell.namespace: "ambxst"
     WlrLayershell.layer: WlrLayer.Overlay
     exclusionMode: ExclusionMode.Ignore
@@ -144,7 +144,7 @@ PanelWindow {
     }
 
     // Focus Grab for Notch
-    HyprlandFocusGrab {
+    FocusGrab {
         id: focusGrab
         windows: {
             let windowList = [unifiedPanel];
@@ -152,6 +152,7 @@ PanelWindow {
             return windowList;
         }
         active: notchContent.screenNotchOpen
+        keyboardFocus: WlrKeyboardFocus.Exclusive
 
         onCleared: {
             Visibilities.setActiveModule("");
