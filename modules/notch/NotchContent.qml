@@ -11,6 +11,7 @@ import qs.modules.widgets.dashboard
 import qs.modules.widgets.powermenu
 import qs.modules.widgets.tools
 import qs.modules.services
+import qs.modules.services.compositor
 import qs.modules.components
 import qs.modules.widgets.launcher
 import qs.modules.bar.workspaces
@@ -36,11 +37,11 @@ Item {
         if (!hyprlandMonitor) return false;
         const activeWorkspaceId = hyprlandMonitor.activeWorkspace.id;
         const monId = hyprlandMonitor.id;
-        const wins = HyprlandData.windowList;
+        const wins = CompositorService.windowList;
         for (let i = 0; i < wins.length; i++) {
             // We only care about windows on the current monitor and workspace
             // that are not floating (floating windows usually don't trigger auto-hide)
-            if (wins[i].monitor === monId && wins[i].workspace.id === activeWorkspaceId && !wins[i].floating) {
+            if (wins[i].output === hyprlandMonitor?.name && wins[i].workspaceId === activeWorkspaceId && !wins[i].floating) {
                 return true;
             }
         }

@@ -10,6 +10,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.bar.workspaces
 import qs.modules.services
+import qs.modules.services.compositor
 import qs.config
 
 Item {
@@ -30,10 +31,17 @@ Item {
     readonly property int workspaceGroup: Math.floor((monitor?.activeWorkspace?.id - 1 || 0) / workspacesShown)
 
     // Cache these references
-    readonly property var windowList: HyprlandData.windowList
-    readonly property var monitors: HyprlandData.monitors
+    readonly property var windowList: CompositorService.windowList
     readonly property int monitorId: monitor?.id ?? -1
-    readonly property var monitorData: monitors.find(m => m.id === monitorId) ?? null
+    readonly property var monitorData: monitor ? {
+        "id": monitor.id,
+        "name": monitor.name,
+        "x": monitor.x,
+        "y": monitor.y,
+        "width": monitor.width,
+        "height": monitor.height,
+        "scale": monitor.scale
+    } : null
 
     readonly property string barPosition: Config.bar.position
     readonly property var barPanel: monitor ? Visibilities.getBarPanelForScreen(monitor.name) : null

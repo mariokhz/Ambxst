@@ -8,6 +8,7 @@ import qs.modules.globals
 import qs.modules.theme
 import qs.modules.bar.workspaces
 import qs.modules.services
+import qs.modules.services.compositor
 import qs.modules.components
 import qs.config
 
@@ -26,8 +27,15 @@ Item {
     property var currentScreen: null
     readonly property var monitor: currentScreen ? Hyprland.monitorFor(currentScreen) : Hyprland.focusedMonitor
     readonly property int monitorId: monitor?.id ?? -1
-    readonly property var monitors: HyprlandData.monitors
-    readonly property var monitorData: monitors.find(m => m.id === monitorId) ?? null
+    readonly property var monitorData: monitor ? {
+        "id": monitor.id,
+        "name": monitor.name,
+        "x": monitor.x,
+        "y": monitor.y,
+        "width": monitor.width,
+        "height": monitor.height,
+        "scale": monitor.scale
+    } : null
 
     readonly property string barPosition: Config.bar.position
     readonly property var barPanel: monitor ? Visibilities.getBarPanelForScreen(monitor.name) : null
@@ -35,7 +43,7 @@ Item {
     readonly property int barReserved: isBarPinned ? (Config.showBackground ? 44 : 40) : 0
 
     // Window data
-    readonly property var windowList: HyprlandData.windowList
+    readonly property var windowList: CompositorService.windowList
 
     // Focused window address for centering
     readonly property string focusedWindowAddress: Hyprland.focusedClient?.address ?? ""

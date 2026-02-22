@@ -320,15 +320,9 @@ Item {
                         // Move to workspace and set position
                         Hyprland.dispatch(`movetoworkspacesilent ${targetWorkspace}, address:${windowData?.address}`);
                         Hyprland.dispatch(`movewindowpixel exact ${percentageX}% ${percentageY}%, address:${windowData?.address}`);
-                        
-                        // Force immediate window data update
-                        HyprlandData.updateWindowList();
                     } else {
                         // Just move workspace without repositioning
                         Hyprland.dispatch(`movetoworkspacesilent ${targetWorkspace}, address:${windowData?.address}`);
-                        
-                        // Force immediate window data update
-                        HyprlandData.updateWindowList();
                     }
                     
                     // Reset position in overview
@@ -346,9 +340,6 @@ Item {
                     const draggedY = root.y;
                     
                     Hyprland.dispatch(`movewindowpixel exact ${percentageX}% ${percentageY}%, address:${windowData?.address}`);
-                    
-                    // Force immediate window data update
-                    HyprlandData.updateWindowList();
                     
                     // Set override position for immediate visual update
                     root.overrideX = draggedX;

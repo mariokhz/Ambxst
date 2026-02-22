@@ -577,14 +577,10 @@ Item {
                                             Hyprland.dispatch(`movetoworkspacesilent ${targetWs}, address:${windowDelegate.windowData?.address}`);
                                             Hyprland.dispatch(`movewindowpixel exact ${percentageX}% ${percentageY}%, address:${windowDelegate.windowData?.address}`);
                                             
-                                            // Force immediate window data update
-                                            HyprlandData.updateWindowList();
                                         } else {
                                             // Just move workspace without repositioning for tiled windows
                                             Hyprland.dispatch(`movetoworkspacesilent ${targetWs}, address:${windowDelegate.windowData?.address}`);
                                             
-                                            // Force immediate window data update
-                                            HyprlandData.updateWindowList();
                                         }
                                         
                                         // Restore original parent and reset position
@@ -638,9 +634,6 @@ Item {
                                         
                                         // Dispatch movewindowpixel command
                                         Hyprland.dispatch(`movewindowpixel exact ${percentageX}% ${percentageY}%, address:${windowDelegate.windowData?.address}`);
-                                        
-                                        // Force immediate window data update
-                                        HyprlandData.updateWindowList();
                                         
                                         // Restore original parent
                                         if (windowDelegate.originalParent) {

@@ -10,6 +10,7 @@ import Quickshell.Services.Mpris
 import qs.modules.theme
 import qs.modules.bar.workspaces
 import qs.modules.services
+import qs.modules.services.compositor
 import qs.modules.components
 import qs.config
 
@@ -39,7 +40,7 @@ Item {
     readonly property string focusedTitle: {
         const activeWsId = Hyprland.focusedMonitor?.activeWorkspace?.id;
         if (!activeWsId) return "";
-        const windows = HyprlandData.workspaceWindowsMap[activeWsId] || [];
+        const windows = CompositorService.workspaceWindowsMap[activeWsId] || [];
         if (windows.length === 0) return "";
         const best = windows.reduce((best, win) => {
             const bestFocus = best?.focusHistoryID ?? Infinity;

@@ -3,7 +3,8 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.config
-import qs.modules.bar.workspaces
+import qs.modules.services
+import qs.modules.services.compositor
 
 Item {
     id: root
@@ -27,9 +28,9 @@ Item {
         }
 
         // Check all windows on this monitor (robust path)
-        const wins = HyprlandData.windowList;
+        const wins = CompositorService.windowList;
         for (let i = 0; i < wins.length; i++) {
-            if (wins[i].monitor === monId && wins[i].fullscreen && wins[i].workspace.id === activeWorkspaceId) {
+            if (wins[i].output === monitor.name && wins[i].fullscreen && wins[i].workspaceId === activeWorkspaceId) {
                 return true;
             }
         }

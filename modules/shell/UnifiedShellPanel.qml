@@ -9,6 +9,7 @@ import qs.modules.notch
 import qs.modules.dock
 import qs.modules.frame
 import qs.modules.services
+import qs.modules.services.compositor
 import qs.modules.globals
 import qs.modules.components
 import qs.config
@@ -89,9 +90,9 @@ PanelWindow {
         }
 
         // Check all windows on this monitor (robust path)
-        const wins = HyprlandData.windowList;
+        const wins = CompositorService.windowList;
         for (let i = 0; i < wins.length; i++) {
-            if (wins[i].monitor === monId && wins[i].fullscreen && wins[i].workspace.id === activeWorkspaceId) {
+            if (wins[i].output === hyprlandMonitor.name && wins[i].fullscreen && wins[i].workspaceId === activeWorkspaceId) {
                 return true;
             }
         }
