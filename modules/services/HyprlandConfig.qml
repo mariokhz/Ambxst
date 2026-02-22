@@ -12,6 +12,25 @@ QtObject {
 
     property Process hyprctlProcess: Process {}
 
+    property var currentAnimationConfig: null
+    property Process readAnimationsProcess: Process {
+        command: ["hyprctl", "-j", "animations"]
+        onExited: {
+            if (exitCode === 0) {
+                try {
+                    const output = stdout.readAll();
+                    const parsed = JSON.parse(output);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        // hyprctl -j animations returns [animations, beziers]
+                        currentAnimationConfig = parsed;
+                    }
+                } catch (e) {
+                    console.error("HyprlandConfig: Error parsing animations:", e);
+                }
+            }
+        }
+    }
+
     property var barInstances: []
 
     function registerBar(barInstance) {
@@ -53,6 +72,7 @@ QtObject {
     }
 
     function applyHyprlandConfig() {
+        readAnimationsProcess.running = true;
         applyTimer.restart();
     }
 
@@ -117,7 +137,19 @@ QtObject {
         const shadowColorInactiveFormatted = formatColorForHyprland(shadowColorInactiveWithOpacity);
 
         const barOrientation = getBarOrientation();
-        const workspacesAnimation = barOrientation === "vertical" ? "slidefadevert 20%" : "slidefade 20%";
+        let speed = 2.5;
+        let bezier = "default";
+        
+        if (currentAnimationConfig && currentAnimationConfig[0]) {
+            const workspaceAnim = currentAnimationConfig[0].find(anim => anim.name === "workspaces");
+            if (workspaceAnim) {
+                speed = workspaceAnim.speed || speed;
+                bezier = workspaceAnim.bezier || bezier;
+            }
+        }
+
+        const workspacesAnimation = barOrientation === "vertical" ? `slidefadevert 20%` : `slidefade 20%`;
+        const workspaceCommand = `keyword animation workspaces,1,${speed},${bezier},${workspacesAnimation}`;
 
         // Calculate ignorealpha.
         let ignoreAlphaValue = 0.0;
