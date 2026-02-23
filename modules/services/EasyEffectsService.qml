@@ -61,11 +61,19 @@ Singleton {
         Quickshell.execDetached(["easyeffects"]);
     }
 
+    property bool _initialized: false
+
+    function initialize() {
+        if (_initialized) return;
+        _initialized = true;
+        checkAvailableProcess.running = true;
+    }
+
     // Check EasyEffects availability
     Process {
         id: checkAvailableProcess
         command: ["which", "easyeffects"]
-        running: true
+        running: false
         onExited: (exitCode, exitStatus) => {
             root.available = (exitCode === 0);
             if (root.available) {

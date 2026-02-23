@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import QtMultimedia
 import Quickshell
 import Quickshell.Io
 import qs.modules.theme
@@ -137,14 +136,19 @@ Item {
         isRunning = false;
         alarmActive = true;
         visualProgress = 0; // Ensure it's exactly 0
-        alarmSound.loops = Config.system.pomodoro.autoStart ? 2 : SoundEffect.Infinite;
         
-        // Play alarm if going to rest (Work finished) OR if spotify sync is disabled/spotify not found
-        if (root.isWorkSession || !(Config.system.pomodoro.syncSpotify && root.spotifyPlayer)) {
-            alarmSound.play();
-        } else if (Config.system.pomodoro.autoStart) {
-            // If no sound and auto, clear alarm state immediately
-            alarmActive = false;
+        if (alarmSoundLoader.item) {
+            alarmSoundLoader.item.loops = Config.system.pomodoro.autoStart ? 2 : 255; // Infinite approx
+            // Play alarm if going to rest (Work finished) OR if spotify sync is disabled/spotify not found
+            if (root.isWorkSession || !(Config.system.pomodoro.syncSpotify && root.spotifyPlayer)) {
+                alarmSoundLoader.active = true;
+                alarmSoundLoader.item.play();
+            } else if (Config.system.pomodoro.autoStart) {
+                // If no sound and auto, clear alarm state immediately
+                alarmActive = false;
+            }
+        } else {
+            alarmSoundLoader.active = true;
         }
 
         if (Config.system.pomodoro.autoStart) {
@@ -168,7 +172,9 @@ Item {
     }
 
     function stopAlarm() {
-        alarmSound.stop();
+        if (alarmSoundLoader.item) {
+            alarmSoundLoader.item.stop();
+        }
         alarmActive = false;
     }
 
@@ -182,12 +188,20 @@ Item {
         }
     }
 
-    SoundEffect {
-        id: alarmSound
-        source: Quickshell.shellDir + "/assets/sound/polite-warning-tone.wav"
-        onPlayingChanged: {
-            if (!playing && alarmActive && Config.system.pomodoro.autoStart) {
-                stopAlarm();
+    Loader {
+        id: alarmSoundLoader
+        active: false
+        source: "PomodoroSound.qml"
+        onLoaded: {
+            item.alarmActive = Qt.binding(() => root.alarmActive);
+            item.autoStart = Qt.binding(() => Config.system.pomodoro.autoStart);
+            item.stopAlarmRequested.connect(root.stopAlarm);
+            
+            item.loops = Config.system.pomodoro.autoStart ? 2 : 255;
+            if (root.alarmActive && (root.isWorkSession || !(Config.system.pomodoro.syncSpotify && root.spotifyPlayer))) {
+                item.play();
+            } else if (Config.system.pomodoro.autoStart && root.alarmActive) {
+                root.alarmActive = false;
             }
         }
     }

@@ -178,8 +178,8 @@ Item {
     readonly property int leftOuterMargin: (orientation === "horizontal" || barPosition === "left") ? barBg.outerMargin : 0
     readonly property int rightOuterMargin: (orientation === "horizontal" || barPosition === "right") ? barBg.outerMargin : 0
 
-    readonly property int contentImplicitWidth: orientation === "horizontal" ? horizontalLayout.implicitWidth : verticalLayout.implicitWidth
-    readonly property int contentImplicitHeight: orientation === "horizontal" ? horizontalLayout.implicitHeight : verticalLayout.implicitHeight
+    readonly property int contentImplicitWidth: orientation === "horizontal" ? (horizontalLoader.item?.implicitWidth ?? 0) : (verticalLoader.item?.implicitWidth ?? 0)
+    readonly property int contentImplicitHeight: orientation === "horizontal" ? (horizontalLoader.item?.implicitHeight ?? 0) : (verticalLoader.item?.implicitHeight ?? 0)
     
     readonly property int barTargetWidth: orientation === "vertical" ? (contentImplicitWidth + 2 * barPadding) : 0
     readonly property int barTargetHeight: orientation === "horizontal" ? (contentImplicitHeight + 2 * barPadding) : 0
@@ -358,296 +358,299 @@ Item {
                 anchors.fill: parent
                 position: root.barPosition
 
-                RowLayout {
-                    id: horizontalLayout
-                    visible: root.orientation === "horizontal"
+                Loader {
+                    id: horizontalLoader
+                    active: root.orientation === "horizontal"
                     anchors.fill: parent
-                    spacing: 4
+                    sourceComponent: RowLayout {
+                        spacing: 4
 
-                    // Obtener referencia al notch de esta pantalla
-                    readonly property var notchContainer: Visibilities.getNotchForScreen(root.screen.name)
+                        // Obtener referencia al notch de esta pantalla
+                        readonly property var notchContainer: Visibilities.getNotchForScreen(root.screen.name)
 
-                    LauncherButton {
-                        id: launcherButton
-                        startRadius: root.outerRadius
-                        endRadius: root.innerRadius
-                        enableShadow: root.shadowsEnabled
-                    }
-
-                    Workspaces {
-                        orientation: root.orientation
-                        bar: QtObject {
-                            property var screen: root.screen
+                        LauncherButton {
+                            id: launcherButton
+                            startRadius: root.outerRadius
+                            endRadius: root.innerRadius
+                            enableShadow: root.shadowsEnabled
                         }
-                        startRadius: root.innerRadius
-                        endRadius: root.innerRadius
-                    }
 
-                    LayoutSelectorButton {
-                        id: layoutSelectorButton
-                        bar: root
-                        layerEnabled: root.shadowsEnabled
-                        startRadius: root.innerRadius
-                        endRadius: (root.pinButtonVisible) ? root.innerRadius : (root.dockAtStart ? root.innerRadius : root.outerRadius)
-                    }
+                        Workspaces {
+                            orientation: root.orientation
+                            bar: QtObject {
+                                property var screen: root.screen
+                            }
+                            startRadius: root.innerRadius
+                            endRadius: root.innerRadius
+                        }
 
-                    // Pin button (horizontal)
-                    Loader {
-                        active: Config.bar?.showPinButton ?? true
-                        visible: active
-                        Layout.alignment: Qt.AlignVCenter
+                        LayoutSelectorButton {
+                            id: layoutSelectorButton
+                            bar: root
+                            layerEnabled: root.shadowsEnabled
+                            startRadius: root.innerRadius
+                            endRadius: (root.pinButtonVisible) ? root.innerRadius : (root.dockAtStart ? root.innerRadius : root.outerRadius)
+                        }
 
-                        sourceComponent: Button {
-                            id: pinButton
-                            implicitWidth: 36
-                            implicitHeight: 36
+                        // Pin button (horizontal)
+                        Loader {
+                            active: Config.bar?.showPinButton ?? true
+                            visible: active
+                            Layout.alignment: Qt.AlignVCenter
 
-                            background: StyledRect {
-                                id: pinButtonBg
-                                variant: root.pinned ? "primary" : "bg"
-                                enableShadow: root.shadowsEnabled
-                                
-                                // PinButton is typically last in group 1 (unless IntegratedDock follows at start)
-                                property real startRadius: root.innerRadius
-                                property real endRadius: root.dockAtStart ? root.innerRadius : root.outerRadius
-                                
-                                topLeftRadius: startRadius
-                                bottomLeftRadius: startRadius
-                                topRightRadius: endRadius
-                                bottomRightRadius: endRadius
+                            sourceComponent: Button {
+                                id: pinButton
+                                implicitWidth: 36
+                                implicitHeight: 36
 
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: Styling.srItem("overprimary")
-                                    opacity: root.pinned ? 0 : (pinButton.pressed ? 0.5 : (pinButton.hovered ? 0.25 : 0))
-                                    radius: parent.radius ?? 0
+                                background: StyledRect {
+                                    id: pinButtonBg
+                                    variant: root.pinned ? "primary" : "bg"
+                                    enableShadow: root.shadowsEnabled
+                                    
+                                    // PinButton is typically last in group 1 (unless IntegratedDock follows at start)
+                                    property real startRadius: root.innerRadius
+                                    property real endRadius: root.dockAtStart ? root.innerRadius : root.outerRadius
+                                    
+                                    topLeftRadius: startRadius
+                                    bottomLeftRadius: startRadius
+                                    topRightRadius: endRadius
+                                    bottomRightRadius: endRadius
 
-                                    Behavior on opacity {
-                                        enabled: (Config.animDuration ?? 0) > 0
-                                        NumberAnimation {
-                                            duration: (Config.animDuration ?? 0) / 2
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        color: Styling.srItem("overprimary")
+                                        opacity: root.pinned ? 0 : (pinButton.pressed ? 0.5 : (pinButton.hovered ? 0.25 : 0))
+                                        radius: parent.radius ?? 0
+
+                                        Behavior on opacity {
+                                            enabled: (Config.animDuration ?? 0) > 0
+                                            NumberAnimation {
+                                                duration: (Config.animDuration ?? 0) / 2
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-                            contentItem: Text {
-                                text: Icons.pin
-                                font.family: Icons.font
-                                font.pixelSize: 18
-                                color: root.pinned ? pinButtonBg.item : (pinButton.pressed ? Colors.background : (Styling.srItem("overprimary") || Colors.foreground))
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
+                                contentItem: Text {
+                                    text: Icons.pin
+                                    font.family: Icons.font
+                                    font.pixelSize: 18
+                                    color: root.pinned ? pinButtonBg.item : (pinButton.pressed ? Colors.background : (Styling.srItem("overprimary") || Colors.foreground))
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
 
-                                rotation: root.pinned ? 0 : 45
-                                Behavior on rotation {
-                                    enabled: Config.animDuration > 0
-                                    NumberAnimation {
-                                        duration: Config.animDuration / 2
+                                    rotation: root.pinned ? 0 : 45
+                                    Behavior on rotation {
+                                        enabled: Config.animDuration > 0
+                                        NumberAnimation {
+                                            duration: Config.animDuration / 2
+                                        }
+                                    }
+
+                                    Behavior on color {
+                                        enabled: Config.animDuration > 0
+                                        ColorAnimation {
+                                            duration: Config.animDuration / 2
+                                        }
                                     }
                                 }
 
-                                Behavior on color {
-                                    enabled: Config.animDuration > 0
-                                    ColorAnimation {
-                                        duration: Config.animDuration / 2
-                                    }
+                                onClicked: root.pinned = !root.pinned
+
+                                StyledToolTip {
+                                    show: pinButton.hovered
+                                    tooltipText: root.pinned ? "Unpin bar" : "Pin bar"
                                 }
-                            }
-
-                            onClicked: root.pinned = !root.pinned
-
-                            StyledToolTip {
-                                show: pinButton.hovered
-                                tooltipText: root.pinned ? "Unpin bar" : "Pin bar"
                             }
                         }
-                    }
 
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        visible: root.orientation === "horizontal" && integratedDockEnabled
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            visible: root.orientation === "horizontal" && integratedDockEnabled
 
-                        Bar.IntegratedDock {
-                            bar: root
-                            orientation: root.orientation
-                            anchors.verticalCenter: parent.verticalCenter
+                            Bar.IntegratedDock {
+                                bar: root
+                                orientation: root.orientation
+                                anchors.verticalCenter: parent.verticalCenter
+                                enableShadow: root.shadowsEnabled
+
+                                // Connect to left/right groups if at start/end
+                                startRadius: root.dockAtStart ? root.innerRadius : root.outerRadius
+                                endRadius: root.dockAtEnd ? root.innerRadius : root.outerRadius
+
+                                // Calculate target position based on config
+                                property real targetX: {
+                                    if (integratedDockPosition === "start")
+                                        return 0;
+                                    if (integratedDockPosition === "end")
+                                        return parent.width - width;
+
+                                    // Center logic (reactive using parent.x + margin offset)
+                                    // RowLayout has anchors.margins: 4, so offset is 4
+                                    return (bar.width - width) / 2 - (parent.x + 4);
+                                }
+
+                                // Clamp the x position so it never leaves the container (preventing overlap)
+                                x: Math.max(0, Math.min(parent.width - width, targetX))
+
+                                width: Math.min(implicitWidth, parent.width)
+                                height: implicitHeight
+                            }
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                            visible: !(root.orientation === "horizontal" && integratedDockEnabled)
+                        }
+
+                        PresetsButton {
+                            id: presetsButton
+                            startRadius: root.dockAtEnd ? root.innerRadius : root.outerRadius
+                            endRadius: root.innerRadius
                             enableShadow: root.shadowsEnabled
-
-                            // Connect to left/right groups if at start/end
-                            startRadius: root.dockAtStart ? root.innerRadius : root.outerRadius
-                            endRadius: root.dockAtEnd ? root.innerRadius : root.outerRadius
-
-                            // Calculate target position based on config
-                            property real targetX: {
-                                if (integratedDockPosition === "start")
-                                    return 0;
-                                if (integratedDockPosition === "end")
-                                    return parent.width - width;
-
-                                // Center logic (reactive using parent.x + margin offset)
-                                // RowLayout has anchors.margins: 4, so offset is 4
-                                return (bar.width - width) / 2 - (parent.x + 4);
-                            }
-
-                            // Clamp the x position so it never leaves the container (preventing overlap)
-                            x: Math.max(0, Math.min(parent.width - width, targetX))
-
-                            width: Math.min(implicitWidth, parent.width)
-                            height: implicitHeight
                         }
-                    }
 
-                    Item {
-                        Layout.fillWidth: true
-                        visible: !(root.orientation === "horizontal" && integratedDockEnabled)
-                    }
+                        ToolsButton {
+                            id: toolsButton
+                            startRadius: root.innerRadius
+                            endRadius: root.innerRadius
+                            enableShadow: root.shadowsEnabled
+                        }
 
-                    PresetsButton {
-                        id: presetsButton
-                        startRadius: root.dockAtEnd ? root.innerRadius : root.outerRadius
-                        endRadius: root.innerRadius
-                        enableShadow: root.shadowsEnabled
-                    }
+                        SysTray {
+                            bar: root
+                            enableShadow: root.shadowsEnabled
+                            startRadius: root.innerRadius
+                            endRadius: root.innerRadius
+                        }
 
-                    ToolsButton {
-                        id: toolsButton
-                        startRadius: root.innerRadius
-                        endRadius: root.innerRadius
-                        enableShadow: root.shadowsEnabled
-                    }
+                        ControlsButton {
+                            id: controlsButton
+                            bar: root
+                            layerEnabled: root.shadowsEnabled
+                            startRadius: root.innerRadius
+                            endRadius: root.innerRadius
+                        }
 
-                    SysTray {
-                        bar: root
-                        enableShadow: root.shadowsEnabled
-                        startRadius: root.innerRadius
-                        endRadius: root.innerRadius
-                    }
+                        Bar.BatteryIndicator {
+                            id: batteryIndicator
+                            bar: root
+                            layerEnabled: root.shadowsEnabled
+                            startRadius: root.innerRadius
+                            endRadius: root.innerRadius
+                        }
 
-                    ControlsButton {
-                        id: controlsButton
-                        bar: root
-                        layerEnabled: root.shadowsEnabled
-                        startRadius: root.innerRadius
-                        endRadius: root.innerRadius
-                    }
+                        Clock {
+                            id: clockComponent
+                            bar: root
+                            layerEnabled: root.shadowsEnabled
+                            startRadius: root.innerRadius
+                            endRadius: root.innerRadius
+                        }
 
-                    Bar.BatteryIndicator {
-                        id: batteryIndicator
-                        bar: root
-                        layerEnabled: root.shadowsEnabled
-                        startRadius: root.innerRadius
-                        endRadius: root.innerRadius
-                    }
-
-                    Clock {
-                        id: clockComponent
-                        bar: root
-                        layerEnabled: root.shadowsEnabled
-                        startRadius: root.innerRadius
-                        endRadius: root.innerRadius
-                    }
-
-                    PowerButton {
-                        id: powerButton
-                        startRadius: root.innerRadius
-                        endRadius: root.outerRadius
-                        enableShadow: root.shadowsEnabled
+                        PowerButton {
+                            id: powerButton
+                            startRadius: root.innerRadius
+                            endRadius: root.outerRadius
+                            enableShadow: root.shadowsEnabled
+                        }
                     }
                 }
 
-                ColumnLayout {
-                    id: verticalLayout
-                    visible: root.orientation === "vertical"
+                Loader {
+                    id: verticalLoader
+                    active: root.orientation === "vertical"
                     anchors.fill: parent
-                    spacing: 4
+                    sourceComponent: ColumnLayout {
+                        spacing: 4
 
-                    LauncherButton {
-                        id: launcherButtonVert
-                        Layout.preferredHeight: 36
-                        startRadius: root.outerRadius
-                        endRadius: root.innerRadius
-                        vertical: true
-                        enableShadow: root.shadowsEnabled
-                    }
+                        LauncherButton {
+                            id: launcherButtonVert
+                            Layout.preferredHeight: 36
+                            startRadius: root.outerRadius
+                            endRadius: root.innerRadius
+                            vertical: true
+                            enableShadow: root.shadowsEnabled
+                        }
 
-                    SysTray {
-                        bar: root
-                        enableShadow: root.shadowsEnabled
-                        startRadius: root.innerRadius
-                        endRadius: root.innerRadius
-                    }
+                        SysTray {
+                            bar: root
+                            enableShadow: root.shadowsEnabled
+                            startRadius: root.innerRadius
+                            endRadius: root.innerRadius
+                        }
 
-                    ToolsButton {
-                        id: toolsButtonVert
-                        startRadius: root.innerRadius
-                        endRadius: root.innerRadius
-                        vertical: true
-                        enableShadow: root.shadowsEnabled
-                    }
+                        ToolsButton {
+                            id: toolsButtonVert
+                            startRadius: root.innerRadius
+                            endRadius: root.innerRadius
+                            vertical: true
+                            enableShadow: root.shadowsEnabled
+                        }
 
-                    PresetsButton {
-                        id: presetsButtonVert
-                        startRadius: root.innerRadius
-                        endRadius: root.outerRadius
-                        vertical: true
-                        enableShadow: root.shadowsEnabled
-                    }
+                        PresetsButton {
+                            id: presetsButtonVert
+                            startRadius: root.innerRadius
+                            endRadius: root.outerRadius
+                            vertical: true
+                            enableShadow: root.shadowsEnabled
+                        }
 
-                    // Center Group Container
-                    Item {
-                        Layout.fillHeight: true
-                        Layout.fillWidth: true
+                        // Center Group Container
+                        Item {
+                            Layout.fillHeight: true
+                            Layout.fillWidth: true
 
-                        ColumnLayout {
-                            anchors.horizontalCenter: parent.horizontalCenter
+                            ColumnLayout {
+                                anchors.horizontalCenter: parent.horizontalCenter
 
-                            // Calculate target position to be absolutely centered in the bar (vertically)
-                            property real targetY: {
-                                if (!parent || !bar)
-                                    return 0;
+                                // Calculate target position to be absolutely centered in the bar (vertically)
+                                property real targetY: {
+                                    if (!parent || !bar)
+                                        return 0;
 
-                                // Force re-evaluation when parent moves
-                                var _trigger = parent.y;
+                                    // Force re-evaluation when parent moves
+                                    var _trigger = parent.y;
 
-                                var parentPos = parent.mapToItem(bar, 0, 0);
-                                return (bar.height - height) / 2 - parentPos.y;
-                            }
-
-                            // Clamp y position
-                            y: Math.max(0, Math.min(parent.height - height, targetY))
-
-                            height: Math.min(parent.height, implicitHeight)
-                            width: parent.width
-                            spacing: 4
-
-                            LayoutSelectorButton {
-                                id: layoutSelectorButtonVert
-                                bar: root
-                                layerEnabled: root.shadowsEnabled
-                                Layout.alignment: Qt.AlignHCenter
-                                startRadius: root.outerRadius
-                                endRadius: root.innerRadius
-                                vertical: true
-                            }
-
-                            Workspaces {
-                                id: workspacesVert
-                                orientation: root.orientation
-                                bar: QtObject {
-                                    property var screen: root.screen
+                                    var parentPos = parent.mapToItem(bar, 0, 0);
+                                    return (bar.height - height) / 2 - parentPos.y;
                                 }
-                                Layout.alignment: Qt.AlignHCenter
-                                startRadius: root.innerRadius
-                                endRadius: root.innerRadius
-                            }
 
-                            // Pin button (vertical)
-                            Loader {
-                                active: Config.bar?.showPinButton ?? true
-                                visible: active
-                            Layout.alignment: Qt.AlignHCenter
+                                // Clamp y position
+                                y: Math.max(0, Math.min(parent.height - height, targetY))
+
+                                height: Math.min(parent.height, implicitHeight)
+                                width: parent.width
+                                spacing: 4
+
+                                LayoutSelectorButton {
+                                    id: layoutSelectorButtonVert
+                                    bar: root
+                                    layerEnabled: root.shadowsEnabled
+                                    Layout.alignment: Qt.AlignHCenter
+                                    startRadius: root.outerRadius
+                                    endRadius: root.innerRadius
+                                    vertical: true
+                                }
+
+                                Workspaces {
+                                    id: workspacesVert
+                                    orientation: root.orientation
+                                    bar: QtObject {
+                                        property var screen: root.screen
+                                    }
+                                    Layout.alignment: Qt.AlignHCenter
+                                    startRadius: root.innerRadius
+                                    endRadius: root.innerRadius
+                                }
+
+                                // Pin button (vertical)
+                                Loader {
+                                    active: Config.bar?.showPinButton ?? true
+                                    visible: active
+                                Layout.alignment: Qt.AlignHCenter
                             
                             sourceComponent: Button {
                             id: pinButtonV
@@ -730,37 +733,38 @@ Item {
                         }
                     }
 
-                    ControlsButton {
-                        id: controlsButtonVert
-                        bar: root
-                        layerEnabled: root.shadowsEnabled
-                        startRadius: root.outerRadius
-                        endRadius: root.innerRadius
-                    }
+                        ControlsButton {
+                            id: controlsButtonVert
+                            bar: root
+                            layerEnabled: root.shadowsEnabled
+                            startRadius: root.outerRadius
+                            endRadius: root.innerRadius
+                        }
 
-                    Bar.BatteryIndicator {
-                        id: batteryIndicatorVert
-                        bar: root
-                        layerEnabled: root.shadowsEnabled
-                        startRadius: root.innerRadius
-                        endRadius: root.innerRadius
-                    }
+                        Bar.BatteryIndicator {
+                            id: batteryIndicatorVert
+                            bar: root
+                            layerEnabled: root.shadowsEnabled
+                            startRadius: root.innerRadius
+                            endRadius: root.innerRadius
+                        }
 
-                    Clock {
-                        id: clockComponentVert
-                        bar: root
-                        layerEnabled: root.shadowsEnabled
-                        startRadius: root.innerRadius
-                        endRadius: root.innerRadius
-                    }
+                        Clock {
+                            id: clockComponentVert
+                            bar: root
+                            layerEnabled: root.shadowsEnabled
+                            startRadius: root.innerRadius
+                            endRadius: root.innerRadius
+                        }
 
-                    PowerButton {
-                        id: powerButtonVert
-                        Layout.preferredHeight: 36
-                        startRadius: root.innerRadius
-                        endRadius: root.outerRadius
-                        vertical: true
-                        enableShadow: root.shadowsEnabled
+                        PowerButton {
+                            id: powerButtonVert
+                            Layout.preferredHeight: 36
+                            startRadius: root.innerRadius
+                            endRadius: root.outerRadius
+                            vertical: true
+                            enableShadow: root.shadowsEnabled
+                        }
                     }
                 }
             }

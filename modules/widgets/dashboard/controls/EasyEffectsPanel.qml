@@ -13,6 +13,8 @@ import qs.config
 Item {
     id: root
 
+    Component.onCompleted: EasyEffectsService.initialize()
+
     property int maxContentWidth: 480
     readonly property int contentWidth: Math.min(width, maxContentWidth)
     readonly property real sideMargin: (width - contentWidth) / 2

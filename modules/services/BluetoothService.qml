@@ -373,7 +373,11 @@ Singleton {
         BluetoothDevice {}
     }
 
-    Component.onCompleted: {
+    property bool _initialized: false
+
+    function initialize() {
+        if (_initialized) return;
+        _initialized = true;
         updateStatus();
     }
 }

@@ -31,6 +31,7 @@ PanelWindow {
     visible: Config.desktop.enabled
 
     Component.onCompleted: {
+        DesktopService.initialize();
         DesktopService.maxRowsHint = Qt.binding(() => iconContainer.maxRows);
         DesktopService.maxColumnsHint = Qt.binding(() => iconContainer.maxColumns);
     }

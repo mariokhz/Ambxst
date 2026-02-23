@@ -99,9 +99,11 @@ ActionGrid {
         console.log("Tools action triggered:", action.tooltip);
 
         if (action.tooltip === "Screenshot") {
+            Screenshot.initialize();
             GlobalStates.screenshotToolVisible = true;
             root.itemSelected();
         } else if (action.tooltip === "Screen Recorder") {
+            ScreenRecorder.initialize();
             GlobalStates.screenRecordToolVisible = true;
             root.itemSelected();
         } else if (action.tooltip === "Stop Recording") {

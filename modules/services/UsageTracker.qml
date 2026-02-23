@@ -28,7 +28,7 @@ Singleton {
         command: ["bash", "-c", "mkdir -p \"$(dirname '" + root.usageFilePath + "')\" && if [ ! -f '" + root.usageFilePath + "' ]; then echo '{}' > '" + root.usageFilePath + "'; fi"]
         onExited: {
             root.fileReady = true;
-            usageFile.reload();
+            Qt.callLater(() => usageFile.reload());
         }
     }
 
@@ -39,7 +39,7 @@ Singleton {
     }
 
     Component.onCompleted: {
-        usageFile.reload();
+        Qt.callLater(() => usageFile.reload());
     }
 
     // Load usage data from file

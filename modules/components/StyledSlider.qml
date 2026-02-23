@@ -161,22 +161,23 @@ Item {
                 z: 0
             }
 
-            CarouselProgress {
-                id: hWavyFill
+            Loader {
+                active: root.wavy
                 anchors.left: parent.left
                 anchors.right: hDragHandle.left
                 anchors.rightMargin: root.handleSpacing
                 anchors.verticalCenter: parent.verticalCenter
-                frequency: root.wavyFrequency
-                color: root.progressColor
-                amplitudeMultiplier: root.wavyAmplitude
-                height: parent.height * heightMultiplier
-                lineWidth: root.thickness
-                fullLength: parent.width
-                visible: root.wavy
-                active: root.playing
+                height: hSliderItem.height * root.heightMultiplier
                 z: 1
-                // CarouselProgress manages its own animation internally
+                sourceComponent: CarouselProgress {
+                    anchors.fill: parent
+                    frequency: root.wavyFrequency
+                    color: root.progressColor
+                    amplitudeMultiplier: root.wavyAmplitude
+                    lineWidth: root.thickness
+                    fullLength: hSliderItem.width
+                    active: root.playing
+                }
             }
             Rectangle {
                 anchors.left: parent.left
@@ -259,27 +260,28 @@ Item {
                 z: 0
             }
 
-            Item {
+            Loader {
+                active: root.wavy
                 anchors.top: vDragHandle.bottom
                 anchors.topMargin: root.handleSpacing
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width * heightMultiplier
-                visible: root.wavy
-                CarouselProgress {
-                    id: vWavyFill
-                    anchors.centerIn: parent
-                    rotation: -90
-                    frequency: root.wavyFrequency
-                    color: root.progressColor
-                    amplitudeMultiplier: root.wavyAmplitude
-                    height: parent.width
-                    width: parent.height
-                    lineWidth: root.thickness
-                    fullLength: vSliderItem.height
-                    z: 1
-                    active: root.playing
-                    // CarouselProgress manages its own animation internally
+                sourceComponent: Item {
+                    anchors.fill: parent
+                    CarouselProgress {
+                        anchors.centerIn: parent
+                        rotation: -90
+                        frequency: root.wavyFrequency
+                        color: root.progressColor
+                        amplitudeMultiplier: root.wavyAmplitude
+                        height: parent.width
+                        width: parent.height
+                        lineWidth: root.thickness
+                        fullLength: vSliderItem.height
+                        z: 1
+                        active: root.playing
+                    }
                 }
             }
             Rectangle {

@@ -497,12 +497,12 @@ Singleton {
     onConfigLocationChanged: {
         if (!_initialized) return;
         console.log("WeatherService: Location changed to '" + configLocation + "'");
-        updateWeather();
+        Qt.callLater(() => { updateWeather(); });
     }
     onConfigUnitChanged: {
         if (!_initialized) return;
         console.log("WeatherService: Unit changed to '" + configUnit + "'");
-        updateWeather();
+        Qt.callLater(() => { updateWeather(); });
     }
 
     function updateWeather() {
@@ -530,10 +530,16 @@ Singleton {
         weatherProcess.running = true;
     }
 
+    Timer {
+        id: startupDelay
+        interval: 2000
+        running: true
+        onTriggered: updateWeather()
+    }
+
     Component.onCompleted: {
         var now = new Date();
         currentHour = now.getHours() + now.getMinutes() / 60;
         _initialized = true;
-        updateWeather();
     }
 }

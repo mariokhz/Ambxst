@@ -385,6 +385,7 @@ Item {
     }
 
     Component.onCompleted: {
+        PresetsService.initialize();
         root.presets = PresetsService.presets;
         updateFilteredPresets();
     }

@@ -19,6 +19,8 @@ StyledRect {
     onVisibleChanged: {
         if (!visible) {
             root.expandedPanel = -1;
+        } else {
+            BluetoothService.initialize();
         }
     }
     

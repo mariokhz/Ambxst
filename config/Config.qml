@@ -64,128 +64,28 @@ Singleton {
     // ============================================
     // BATCH INITIALIZATION
     // ============================================
-    // Batch config check
+    // Ensure config directory exists (pure mkdir, no file checks)
     Process {
-        id: initConfigs
+        id: ensureConfigDir
         running: true
-        command: ["bash", "-c", `
-            mkdir -p "${root.configDir}"
-            cd "${root.configDir}"
-            MISSING=""
-            [ ! -f theme.json ] && MISSING="$MISSING theme"
-            [ ! -f bar.json ] && MISSING="$MISSING bar"
-            [ ! -f workspaces.json ] && MISSING="$MISSING workspaces"
-            [ ! -f overview.json ] && MISSING="$MISSING overview"
-            [ ! -f notch.json ] && MISSING="$MISSING notch"
-            [ ! -f hyprland.json ] && MISSING="$MISSING hyprland"
-            [ ! -f performance.json ] && MISSING="$MISSING performance"
-            [ ! -f weather.json ] && MISSING="$MISSING weather"
-            [ ! -f desktop.json ] && MISSING="$MISSING desktop"
-            [ ! -f lockscreen.json ] && MISSING="$MISSING lockscreen"
-            [ ! -f prefix.json ] && MISSING="$MISSING prefix"
-            [ ! -f system.json ] && MISSING="$MISSING system"
-            [ ! -f dock.json ] && MISSING="$MISSING dock"
-            [ ! -f ai.json ] && MISSING="$MISSING ai"
-            echo "$MISSING"
-        `]
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const missing = text.trim().split(" ");
-                if (missing.includes("theme")) {
-                    console.log("theme.json missing, creating default...");
-                    themeRawLoader.setText(JSON.stringify(ThemeDefaults.data, null, 4));
-                    root.themeReady = true;
-                }
-                if (missing.includes("bar")) {
-                    console.log("bar.json missing, creating default...");
-                    barRawLoader.setText(JSON.stringify(BarDefaults.data, null, 4));
-                    root.barReady = true;
-                }
-                if (missing.includes("workspaces")) {
-                    console.log("workspaces.json missing, creating default...");
-                    workspacesRawLoader.setText(JSON.stringify(WorkspacesDefaults.data, null, 4));
-                    root.workspacesReady = true;
-                }
-                if (missing.includes("overview")) {
-                    console.log("overview.json missing, creating default...");
-                    overviewRawLoader.setText(JSON.stringify(OverviewDefaults.data, null, 4));
-                    root.overviewReady = true;
-                }
-                if (missing.includes("notch")) {
-                    console.log("notch.json missing, creating default...");
-                    notchRawLoader.setText(JSON.stringify(NotchDefaults.data, null, 4));
-                    root.notchReady = true;
-                }
-                if (missing.includes("hyprland")) {
-                    console.log("hyprland.json missing, creating default...");
-                    hyprlandRawLoader.setText(JSON.stringify(HyprlandDefaults.data, null, 4));
-                    root.hyprlandReady = true;
-                }
-                if (missing.includes("performance")) {
-                    console.log("performance.json missing, creating default...");
-                    performanceRawLoader.setText(JSON.stringify(PerformanceDefaults.data, null, 4));
-                    root.performanceReady = true;
-                }
-                if (missing.includes("weather")) {
-                    console.log("weather.json missing, creating default...");
-                    weatherRawLoader.setText(JSON.stringify(WeatherDefaults.data, null, 4));
-                    root.weatherReady = true;
-                }
-                if (missing.includes("desktop")) {
-                    console.log("desktop.json missing, creating default...");
-                    desktopRawLoader.setText(JSON.stringify(DesktopDefaults.data, null, 4));
-                    root.desktopReady = true;
-                }
-                if (missing.includes("lockscreen")) {
-                    console.log("lockscreen.json missing, creating default...");
-                    lockscreenRawLoader.setText(JSON.stringify(LockscreenDefaults.data, null, 4));
-                    root.lockscreenReady = true;
-                }
-                if (missing.includes("prefix")) {
-                    console.log("prefix.json missing, creating default...");
-                    prefixRawLoader.setText(JSON.stringify(PrefixDefaults.data, null, 4));
-                    root.prefixReady = true;
-                }
-                if (missing.includes("system")) {
-                    console.log("system.json missing, creating default...");
-                    systemRawLoader.setText(JSON.stringify(SystemDefaults.data, null, 4));
-                    root.systemReady = true;
-                }
-                if (missing.includes("dock")) {
-                    console.log("dock.json missing, creating default...");
-                    dockRawLoader.setText(JSON.stringify(DockDefaults.data, null, 4));
-                    root.dockReady = true;
-                }
-                if (missing.includes("ai")) {
-                    console.log("ai.json missing, creating default...");
-                    aiRawLoader.setText(JSON.stringify(AiDefaults.data, null, 4));
-                    root.aiReady = true;
-                }
-            }
-        }
+        command: ["mkdir", "-p", root.configDir]
     }
 
     // ============================================
     // THEME MODULE
     // ============================================
     FileView {
-        id: themeRawLoader
-        path: root.configDir + "/theme.json"
-        onLoaded: {
-            if (!root.themeReady) {
-                validateModule("theme", themeRawLoader, ThemeDefaults.data, () => {
-                    root.themeReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: themeLoader
         path: root.configDir + "/theme.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.themeReady) {
+                validateModule("theme", themeLoader, ThemeDefaults.data, () => {
+                    root.themeReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -563,22 +463,17 @@ Singleton {
     // BAR MODULE
     // ============================================
     FileView {
-        id: barRawLoader
-        path: root.configDir + "/bar.json"
-        onLoaded: {
-            if (!root.barReady) {
-                validateModule("bar", barRawLoader, BarDefaults.data, () => {
-                    root.barReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: barLoader
         path: root.configDir + "/bar.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.barReady) {
+                validateModule("bar", barLoader, BarDefaults.data, () => {
+                    root.barReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -620,22 +515,17 @@ Singleton {
     // WORKSPACES MODULE
     // ============================================
     FileView {
-        id: workspacesRawLoader
-        path: root.configDir + "/workspaces.json"
-        onLoaded: {
-            if (!root.workspacesReady) {
-                validateModule("workspaces", workspacesRawLoader, WorkspacesDefaults.data, () => {
-                    root.workspacesReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: workspacesLoader
         path: root.configDir + "/workspaces.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.workspacesReady) {
+                validateModule("workspaces", workspacesLoader, WorkspacesDefaults.data, () => {
+                    root.workspacesReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -661,22 +551,17 @@ Singleton {
     // OVERVIEW MODULE
     // ============================================
     FileView {
-        id: overviewRawLoader
-        path: root.configDir + "/overview.json"
-        onLoaded: {
-            if (!root.overviewReady) {
-                validateModule("overview", overviewRawLoader, OverviewDefaults.data, () => {
-                    root.overviewReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: overviewLoader
         path: root.configDir + "/overview.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.overviewReady) {
+                validateModule("overview", overviewLoader, OverviewDefaults.data, () => {
+                    root.overviewReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -701,22 +586,17 @@ Singleton {
     // NOTCH MODULE
     // ============================================
     FileView {
-        id: notchRawLoader
-        path: root.configDir + "/notch.json"
-        onLoaded: {
-            if (!root.notchReady) {
-                validateModule("notch", notchRawLoader, NotchDefaults.data, () => {
-                    root.notchReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: notchLoader
         path: root.configDir + "/notch.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.notchReady) {
+                validateModule("notch", notchLoader, NotchDefaults.data, () => {
+                    root.notchReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -744,22 +624,17 @@ Singleton {
     // HYPRLAND MODULE
     // ============================================
     FileView {
-        id: hyprlandRawLoader
-        path: root.configDir + "/hyprland.json"
-        onLoaded: {
-            if (!root.hyprlandReady) {
-                validateModule("hyprland", hyprlandRawLoader, HyprlandDefaults.data, () => {
-                    root.hyprlandReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: hyprlandLoader
         path: root.configDir + "/hyprland.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.hyprlandReady) {
+                validateModule("hyprland", hyprlandLoader, HyprlandDefaults.data, () => {
+                    root.hyprlandReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -822,22 +697,17 @@ Singleton {
     // PERFORMANCE MODULE
     // ============================================
     FileView {
-        id: performanceRawLoader
-        path: root.configDir + "/performance.json"
-        onLoaded: {
-            if (!root.performanceReady) {
-                validateModule("performance", performanceRawLoader, PerformanceDefaults.data, () => {
-                    root.performanceReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: performanceLoader
         path: root.configDir + "/performance.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.performanceReady) {
+                validateModule("performance", performanceLoader, PerformanceDefaults.data, () => {
+                    root.performanceReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -864,22 +734,17 @@ Singleton {
     // WEATHER MODULE
     // ============================================
     FileView {
-        id: weatherRawLoader
-        path: root.configDir + "/weather.json"
-        onLoaded: {
-            if (!root.weatherReady) {
-                validateModule("weather", weatherRawLoader, WeatherDefaults.data, () => {
-                    root.weatherReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: weatherLoader
         path: root.configDir + "/weather.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.weatherReady) {
+                validateModule("weather", weatherLoader, WeatherDefaults.data, () => {
+                    root.weatherReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -902,22 +767,17 @@ Singleton {
     // DESKTOP MODULE
     // ============================================
     FileView {
-        id: desktopRawLoader
-        path: root.configDir + "/desktop.json"
-        onLoaded: {
-            if (!root.desktopReady) {
-                validateModule("desktop", desktopRawLoader, DesktopDefaults.data, () => {
-                    root.desktopReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: desktopLoader
         path: root.configDir + "/desktop.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.desktopReady) {
+                validateModule("desktop", desktopLoader, DesktopDefaults.data, () => {
+                    root.desktopReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -942,22 +802,17 @@ Singleton {
     // LOCKSCREEN MODULE
     // ============================================
     FileView {
-        id: lockscreenRawLoader
-        path: root.configDir + "/lockscreen.json"
-        onLoaded: {
-            if (!root.lockscreenReady) {
-                validateModule("lockscreen", lockscreenRawLoader, LockscreenDefaults.data, () => {
-                    root.lockscreenReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: lockscreenLoader
         path: root.configDir + "/lockscreen.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.lockscreenReady) {
+                validateModule("lockscreen", lockscreenLoader, LockscreenDefaults.data, () => {
+                    root.lockscreenReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -979,22 +834,17 @@ Singleton {
     // PREFIX MODULE
     // ============================================
     FileView {
-        id: prefixRawLoader
-        path: root.configDir + "/prefix.json"
-        onLoaded: {
-            if (!root.prefixReady) {
-                validateModule("prefix", prefixRawLoader, PrefixDefaults.data, () => {
-                    root.prefixReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: prefixLoader
         path: root.configDir + "/prefix.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.prefixReady) {
+                validateModule("prefix", prefixLoader, PrefixDefaults.data, () => {
+                    root.prefixReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -1021,22 +871,17 @@ Singleton {
     // SYSTEM MODULE
     // ============================================
     FileView {
-        id: systemRawLoader
-        path: root.configDir + "/system.json"
-        onLoaded: {
-            if (!root.systemReady) {
-                validateModule("system", systemRawLoader, SystemDefaults.data, () => {
-                    root.systemReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: systemLoader
         path: root.configDir + "/system.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.systemReady) {
+                validateModule("system", systemLoader, SystemDefaults.data, () => {
+                    root.systemReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -1101,22 +946,17 @@ Singleton {
     // DOCK MODULE
     // ============================================
     FileView {
-        id: dockRawLoader
-        path: root.configDir + "/dock.json"
-        onLoaded: {
-            if (!root.dockReady) {
-                validateModule("dock", dockRawLoader, DockDefaults.data, () => {
-                    root.dockReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: dockLoader
         path: root.configDir + "/dock.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.dockReady) {
+                validateModule("dock", dockLoader, DockDefaults.data, () => {
+                    root.dockReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -1153,25 +993,21 @@ Singleton {
     // Pinned apps (per-user)
     property bool pinnedAppsReady: false
 
-    Process {
-        id: checkPinnedAppsFile
-        running: true
-        command: ["test", "-f", Quickshell.dataPath("pinnedapps.json")]
-
-        onExited: exitCode => {
-            if (exitCode !== 0) {
-                console.log("pinnedapps.json not found, creating with default values...");
-                pinnedAppsLoader.writeAdapter();
-            }
-            root.pinnedAppsReady = true;
-        }
-    }
-
     FileView {
         id: pinnedAppsLoader
         path: Quickshell.dataPath("pinnedapps.json")
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.pinnedAppsReady) {
+                var raw = text();
+                if (!raw || raw.trim().length === 0) {
+                    console.log("pinnedapps.json not found, creating with default values...");
+                    pinnedAppsLoader.writeAdapter();
+                }
+                root.pinnedAppsReady = true;
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -1193,22 +1029,17 @@ Singleton {
     // AI MODULE
     // ============================================
     FileView {
-        id: aiRawLoader
-        path: root.configDir + "/ai.json"
-        onLoaded: {
-            if (!root.aiReady) {
-                validateModule("ai", aiRawLoader, AiDefaults.data, () => {
-                    root.aiReady = true;
-                });
-            }
-        }
-    }
-
-    FileView {
         id: aiLoader
         path: root.configDir + "/ai.json"
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.aiReady) {
+                validateModule("ai", aiLoader, AiDefaults.data, () => {
+                    root.aiReady = true;
+                });
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -1230,44 +1061,19 @@ Singleton {
     }
 
     // Keybinds (binds.json)
-    Process {
-        id: checkKeybindsFile
-        running: true
-        command: ["sh", "-c", "mkdir -p \"$(dirname '" + keybindsPath + "')\" && test -f \"" + keybindsPath + "\""]
-
-        onExited: exitCode => {
-            if (exitCode !== 0) {
-                console.log("binds.json not found, creating with default values...");
-                keybindsLoader.writeAdapter();
-            } else {
-                // File exists, check if it needs repair
-                repairKeybindsTimer.start();
-            }
-            root.keybindsInitialLoadComplete = true;
-        }
-    }
-
     // Timer to repair keybinds after initial load
     Timer {
         id: repairKeybindsTimer
         interval: 500
         repeat: false
         onTriggered: {
-            if (keybindsRawLoader.status === FileView.Ready) {
-                repairKeybinds();
-            }
+            repairKeybinds();
         }
-    }
-
-    // Binds repair loader
-    FileView {
-        id: keybindsRawLoader
-        path: keybindsPath
     }
 
     // Repair missing binds
     function repairKeybinds() {
-        const raw = keybindsRawLoader.text();
+        const raw = keybindsLoader.text();
         if (!raw) return;
 
         try {
@@ -1366,7 +1172,7 @@ Singleton {
 
             if (needsUpdate) {
                 console.log("Auto-repairing binds.json: adding missing binds");
-                keybindsRawLoader.setText(JSON.stringify(current, null, 4));
+                keybindsLoader.setText(JSON.stringify(current, null, 4));
             }
         } catch (e) {
             console.warn("Failed to repair binds.json:", e);
@@ -1378,6 +1184,19 @@ Singleton {
         path: keybindsPath
         atomicWrites: true
         watchChanges: true
+        onLoaded: {
+            if (!root.keybindsInitialLoadComplete) {
+                var raw = text();
+                if (!raw || raw.trim().length === 0) {
+                    console.log("binds.json not found, creating with default values...");
+                    keybindsLoader.writeAdapter();
+                } else {
+                    // File exists, check if it needs repair
+                    repairKeybindsTimer.start();
+                }
+                root.keybindsInitialLoadComplete = true;
+            }
+        }
         onFileChanged: {
             root.pauseAutoSave = true;
             reload();
@@ -3340,9 +3159,12 @@ Singleton {
     }
 
     // Validation helper
-    function validateModule(name, rawLoader, defaults, onComplete) {
-        var raw = rawLoader.text();
-        if (!raw) {
+    function validateModule(name, loader, defaults, onComplete) {
+        var raw = loader.text();
+        if (!raw || raw.trim().length === 0) {
+            // File is missing or empty — create with defaults
+            console.log(name + ".json missing or empty, creating default...");
+            loader.setText(JSON.stringify(defaults, null, 4));
             onComplete();
             return;
         }
@@ -3353,13 +3175,13 @@ Singleton {
 
             if (JSON.stringify(current) !== JSON.stringify(validated)) {
                 console.log("Merging and updating " + name + ".json...");
-                rawLoader.setText(JSON.stringify(validated, null, 4));
+                loader.setText(JSON.stringify(validated, null, 4));
             }
             onComplete();
         } catch (e) {
             console.log("Error validating " + name + " config (invalid JSON?): " + e);
             console.log("Overwriting with defaults due to error.");
-            rawLoader.setText(JSON.stringify(defaults, null, 4));
+            loader.setText(JSON.stringify(defaults, null, 4));
             onComplete();
         }
     }

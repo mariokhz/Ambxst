@@ -37,6 +37,14 @@ QtObject {
     // Store monitor scale factor for coordinate scaling
     property real monitorScale: 1.0
 
+    property bool _initialized: false
+
+    function initialize() {
+        if (_initialized) return;
+        _initialized = true;
+        xdgProcess.running = true;
+    }
+
     // Process to resolve XDG_PICTURES_DIR
     property Process xdgProcess: Process {
         id: xdgProcess
@@ -46,7 +54,7 @@ QtObject {
                 // Not running immediately, handled in onExited
              }
         }
-        running: true // Run on load
+        running: false
         onExited: exitCode => {
             if (exitCode === 0) {
                 var dir = xdgProcess.stdout.text.trim()
