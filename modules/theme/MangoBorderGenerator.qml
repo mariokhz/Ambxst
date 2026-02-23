@@ -18,7 +18,15 @@ QtObject {
         }
 
         const primaryHex = toHex(Colors.primary);
-        const conf = `focuscolor=0x${primaryHex}\n`;
+        const overPrimaryHex = toHex(Colors.overPrimary);
+        const secondaryHex = toHex(Colors.secondary);
+        const tertiaryHex = toHex(Colors.tertiary);
+
+        const conf = `focuscolor=0x${primaryHex}
+maximizescreen=0x${overPrimaryHex}
+scratchpadcolor=0x${secondaryHex}
+globalcolor=0x${tertiaryHex}
+`;
 
         const home = Quickshell.env("HOME");
         const mangoConfPath = home + "/.config/mango/ambxst/colors.conf";

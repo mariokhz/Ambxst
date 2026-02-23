@@ -23,10 +23,63 @@ WlSessionLockSurface {
     property string errorMessage: ""
     property int failLockSecondsLeft: 0
 
-    
+    // Always transparent - blur background handles the visuals
     color: "transparent"
 
     // Wallpaper background con Blur integrado
+    TintedWallpaper {
+        id: wallpaperBackground
+        anchors.fill: parent
+        z: 1
+        radius: 0
+        tintEnabled: GlobalStates.wallpaperManager ? GlobalStates.wallpaperManager.tintEnabled : false
+
+        property string lockscreenFramePath: {
+            if (!GlobalStates.wallpaperManager)
+                return "";
+            return GlobalStates.wallpaperManager.getLockscreenFramePath(GlobalStates.wallpaperManager.currentWallpaper);
+        }
+
+        source: lockscreenFramePath ? "file://" + lockscreenFramePath : ""
+
+        // Animación de opacidad (visibilidad)
+        opacity: startAnim ? 1 : 0
+        visible: true
+
+        Behavior on opacity {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration * 2
+                easing.type: Easing.OutQuint
+            }
+        }
+
+        // Efecto de Blur y Zoom mediante capa
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            blurEnabled: true
+            blur: startAnim ? 1 : 0
+            blurMax: 64
+        }
+
+        // Zoom animation
+        property real zoomScale: startAnim ? 1.25 : 1.0
+        transform: Scale {
+            origin.x: wallpaperBackground.width / 2
+            origin.y: wallpaperBackground.height / 2
+            xScale: wallpaperBackground.zoomScale
+            yScale: wallpaperBackground.zoomScale
+        }
+
+        Behavior on zoomScale {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration * 2
+                easing.type: Easing.OutExpo
+            }
+        }
+    }
+
     // Screen capture background (fondo absoluto con zoom sincronizado)
     ScreencopyView {
         id: screencopyBackground
@@ -34,35 +87,19 @@ WlSessionLockSurface {
         captureSource: root.screen
         live: false
         paintCursor: false
-        visible: true
-        z: 1  // Capa más baja - fondo absoluto
+        visible: startAnim  // Visible solo cuando startAnim es true
+        z: 0  // Capa más baja - fondo absoluto
 
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            blurEnabled: true
-            blur: startAnim ? 1 : 0
-            blurMax: 32
+        property real zoomScale: startAnim ? 1.25 : 1.0
 
-            Behavior on blur {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration * 2
-                    easing.type: Easing.OutCircle
-                }
-            }
+        transform: Scale {
+            origin.x: screencopyBackground.width / 2
+            origin.y: screencopyBackground.height / 2
+            xScale: screencopyBackground.zoomScale
+            yScale: screencopyBackground.zoomScale
         }
 
-    }
-
-    // Background to prevent transparency issues (ghosting) while avoiding black flash on start
-    Rectangle {
-        anchors.fill: parent
-        color: "black"
-        z: 0
-        opacity: startAnim ? 1 : 0
-        visible: true
-
-        Behavior on opacity {
+        Behavior on zoomScale {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration * 2
@@ -76,7 +113,7 @@ WlSessionLockSurface {
         id: dimOverlay
         anchors.fill: parent
         color: "black"
-        opacity: 0
+        opacity: startAnim ? 0.25 : 0
         z: 3
 
         property real zoomScale: startAnim ? 1.1 : 1.0
