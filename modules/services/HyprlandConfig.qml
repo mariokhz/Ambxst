@@ -15,11 +15,10 @@ QtObject {
     property var currentAnimationConfig: null
     property Process readAnimationsProcess: Process {
         command: ["hyprctl", "-j", "animations"]
-        onExited: {
-            if (exitCode === 0) {
+        stdout: StdioCollector {
+            onStreamFinished: {
                 try {
-                    const output = stdout.readAll();
-                    const parsed = JSON.parse(output);
+                    const parsed = JSON.parse(text);
                     if (Array.isArray(parsed) && parsed.length > 0) {
                         // hyprctl -j animations returns [animations, beziers]
                         currentAnimationConfig = parsed;
@@ -203,7 +202,7 @@ QtObject {
 
         console.log(`HyprlandConfig: Applying ignorealpha: ${ignoreAlphaValue}, explicit: ${Config.hyprland.blurExplicitIgnoreAlpha}`);
         batchCommand += ` ; keyword layerrule noanim,quickshell ; keyword layerrule blur,quickshell ; keyword layerrule blurpopups,quickshell ; keyword layerrule ignorealpha ${ignoreAlphaValue},quickshell`;
-        console.log("HyprlandConfig: Applying hyprctl batch command.");
+        console.log("HyprlandConfig: Applying hyprctl batch command:", batchCommand);
         hyprctlProcess.command = ["hyprctl", "--batch", batchCommand];
         hyprctlProcess.running = true;
     }

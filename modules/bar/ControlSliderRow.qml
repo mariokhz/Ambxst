@@ -133,21 +133,23 @@ Item {
             }
 
             // Progress fill (wavy or solid)
-            CarouselProgress {
+            Loader {
+                active: root.wavy
                 anchors.left: parent.left
                 anchors.right: dragHandle.left
                 anchors.rightMargin: 4
                 anchors.verticalCenter: parent.verticalCenter
-                frequency: root._animatedWavyFrequency
-                color: root.progressColor
-                amplitudeMultiplier: root._animatedWavyAmplitude
                 height: 32
-                lineWidth: 4
-                fullLength: sliderContainer.width
-                visible: root.wavy
-                active: true // Always active for now
                 z: 1
-                // CarouselProgress manages its own animation internally
+                sourceComponent: CarouselProgress {
+                    anchors.fill: parent
+                    frequency: root._animatedWavyFrequency
+                    color: root.progressColor
+                    amplitudeMultiplier: root._animatedWavyAmplitude
+                    lineWidth: 4
+                    fullLength: sliderContainer.width
+                    active: true
+                }
             }
 
             Rectangle {

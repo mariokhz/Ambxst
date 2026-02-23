@@ -865,6 +865,6 @@ QtObject {
     }
 
     Component.onCompleted: {
-        initialize();
+        Qt.callLater(() => initialize());
     }
 }

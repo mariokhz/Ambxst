@@ -77,8 +77,11 @@ ShellRoot {
                 targetScreen: screenShellContainer.modelData
             }
 
-            ScreenCorners {
-                screen: screenShellContainer.modelData
+            Loader {
+                active: Config.theme.enableCorners && Config.roundness > 0
+                sourceComponent: ScreenCorners {
+                    screen: screenShellContainer.modelData
+                }
             }
 
             // Exclusive zone reservations
@@ -128,7 +131,7 @@ ShellRoot {
 
         Loader {
             id: overviewLoader
-            active: (Config.overview?.enabled ?? true) && SuspendManager.wakeReady
+            active: (Config.overview?.enabled ?? true) && SuspendManager.wakeReady && (Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).overview : false)
             required property ShellScreen modelData
             sourceComponent: OverviewPopup {
                 screen: overviewLoader.modelData
@@ -148,7 +151,7 @@ ShellRoot {
 
         Loader {
             id: presetsLoader
-            active: SuspendManager.wakeReady
+            active: SuspendManager.wakeReady && (Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).presets : false)
             required property ShellScreen modelData
             sourceComponent: PresetsPopup {
                 screen: presetsLoader.modelData
@@ -204,8 +207,14 @@ ShellRoot {
     // Screen recording tool
     Loader {
         id: screenRecordLoader
-        active: SuspendManager.wakeReady
+        active: SuspendManager.wakeReady && GlobalStates.screenRecordToolVisible
         source: "modules/tools/ScreenrecordTool.qml"
+
+        onLoaded: {
+            if (GlobalStates.screenRecordToolVisible && item) {
+                item.open();
+            }
+        }
 
         Connections {
             target: GlobalStates
@@ -234,14 +243,14 @@ ShellRoot {
     // Mirror tool
     Loader {
         id: mirrorLoader
-        active: SuspendManager.wakeReady
+        active: SuspendManager.wakeReady && GlobalStates.mirrorWindowVisible
         source: "modules/tools/MirrorWindow.qml"
     }
 
     // Settings
     Loader {
         id: settingsWindowLoader
-        active: SuspendManager.wakeReady
+        active: SuspendManager.wakeReady && GlobalStates.settingsWindowVisible
         source: "modules/widgets/config/SettingsWindow.qml"
     }
 
@@ -249,8 +258,13 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        OSD {
-            targetScreen: modelData
+        Loader {
+            id: osdLoader
+            active: SuspendManager.wakeReady
+            required property ShellScreen modelData
+            sourceComponent: OSD {
+                targetScreen: osdLoader.modelData
+            }
         }
     }
 
@@ -262,17 +276,28 @@ ShellRoot {
         }
     }
 
-    // Force service init at startup
+    // Force service init at startup but defer it slightly so it doesn't block the UI
     QtObject {
         id: serviceInitializer
 
         Component.onCompleted: {
-            // Trigger service creation
+            // Critical services — init immediately (next tick)
+            Qt.callLater(() => {
+                let _ = CaffeineService.inhibit;
+                _ = IdleService.lockCmd; // Force init
+                _ = GlobalShortcuts.appId; // Force init (IPC pipe listener)
+            });
+        }
+
+    }
+
+    // Non-critical services — defer 2s after startup
+    Timer {
+        interval: 2000
+        running: true
+        onTriggered: {
             let _ = NightLightService.active;
             _ = GameModeService.toggled;
-            _ = CaffeineService.inhibit;
-            _ = IdleService.lockCmd; // Force init
-            _ = GlobalShortcuts.appId; // Force init
         }
     }
 }

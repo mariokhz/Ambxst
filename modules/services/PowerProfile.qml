@@ -15,7 +15,18 @@ Singleton {
 
     signal profileChanged(string profile)
 
-    Component.onCompleted: {
+    Timer {
+        id: startupDelay
+        interval: 2000
+        running: true
+        onTriggered: initialize()
+    }
+
+    property bool _initialized: false
+
+    function initialize() {
+        if (_initialized) return;
+        _initialized = true;
         console.info("PowerProfile: Component initialized");
         checkPowerProfilesCtl.running = true;
     }

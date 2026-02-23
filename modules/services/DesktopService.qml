@@ -327,8 +327,12 @@ Singleton {
         }
     }
 
-    Component.onCompleted: {
-        getDesktopDir();
+    property bool _initialized: false
+
+    function initialize() {
+        if (_initialized) return;
+        _initialized = true;
+        Qt.callLater(() => getDesktopDir());
     }
 
     Process {

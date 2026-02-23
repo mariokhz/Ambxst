@@ -48,11 +48,22 @@ Singleton {
     }
 
     Timer {
+        id: startupDelay
+        interval: 2000
+        running: true
+        onTriggered: {
+            if (Config.system.updateServiceEnabled) {
+                checkUpdates();
+            }
+            checkTimer.running = true;
+        }
+    }
+
+    Timer {
         id: checkTimer
         interval: 300000 // Every 5 minutes check if it's time
-        running: true
+        running: false
         repeat: true
-        triggeredOnStart: true
         onTriggered: {
             if (!Config.system.updateServiceEnabled) return;
             const now = Date.now();

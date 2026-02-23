@@ -298,7 +298,7 @@ Singleton {
     Process {
         id: wifiStatusProcess
         command: ["nmcli", "radio", "wifi"]
-        running: false
+        running: true
         environment: ({
             LANG: "C",
             LC_ALL: "C"
@@ -312,7 +312,7 @@ Singleton {
 
     Process {
         id: getNetworks
-        running: true
+        running: false
         command: ["nmcli", "-g", "ACTIVE,SIGNAL,FREQ,SSID,BSSID,SECURITY", "d", "w"]
         environment: ({
             LANG: "C",

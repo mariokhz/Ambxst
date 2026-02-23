@@ -509,8 +509,11 @@ Singleton {
         }
     }
 
-    // Initialize
-    Component.onCompleted: {
+    property bool _initialized: false
+
+    function initialize() {
+        if (_initialized) return;
+        _initialized = true;
         console.log("PresetsService created, presetsDir:", presetsDir)
         initProcess.running = true
     }

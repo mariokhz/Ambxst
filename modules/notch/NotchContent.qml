@@ -166,26 +166,30 @@ Item {
     }
 
     // Persistent views to avoid creation lag when opening the notch
-    LauncherView {
-        id: persistentLauncherView
-        visible: false
+    Loader {
+        id: persistentLauncherViewLoader
+        active: false
+        sourceComponent: Component { LauncherView { visible: false } }
     }
 
-    DashboardView {
-        id: persistentDashboardView
-        visible: false
+    Loader {
+        id: persistentDashboardViewLoader
+        active: false
+        sourceComponent: Component { DashboardView { visible: false } }
     }
 
     // Persistent power menu view
-    PowerMenuView {
-        id: persistentPowerMenuView
-        visible: false
+    Loader {
+        id: persistentPowerMenuViewLoader
+        active: false
+        sourceComponent: Component { PowerMenuView { visible: false } }
     }
 
     // Persistent tools menu view
-    ToolsMenuView {
-        id: persistentToolsMenuView
-        visible: false
+    Loader {
+        id: persistentToolsMenuViewLoader
+        active: false
+        sourceComponent: Component { ToolsMenuView { visible: false } }
     }
 
     // Notification view component
@@ -422,10 +426,15 @@ Item {
 
         function onLauncherChanged() {
             if (screenVisibilities.launcher) {
-                notchContainer.stackView.push(persistentLauncherView);
+                persistentLauncherViewLoader.active = true;
                 Qt.callLater(() => {
-                    if (notchContainer.stackView.currentItem) {
-                        notchContainer.stackView.currentItem.forceActiveFocus();
+                    if (persistentLauncherViewLoader.item) {
+                        notchContainer.stackView.push(persistentLauncherViewLoader.item);
+                        Qt.callLater(() => {
+                            if (notchContainer.stackView.currentItem) {
+                                notchContainer.stackView.currentItem.forceActiveFocus();
+                            }
+                        });
                     }
                 });
             } else {
@@ -439,10 +448,15 @@ Item {
 
         function onDashboardChanged() {
             if (screenVisibilities.dashboard) {
-                notchContainer.stackView.push(persistentDashboardView);
+                persistentDashboardViewLoader.active = true;
                 Qt.callLater(() => {
-                    if (notchContainer.stackView.currentItem) {
-                        notchContainer.stackView.currentItem.forceActiveFocus();
+                    if (persistentDashboardViewLoader.item) {
+                        notchContainer.stackView.push(persistentDashboardViewLoader.item);
+                        Qt.callLater(() => {
+                            if (notchContainer.stackView.currentItem) {
+                                notchContainer.stackView.currentItem.forceActiveFocus();
+                            }
+                        });
                     }
                 });
             } else {
@@ -456,10 +470,15 @@ Item {
 
         function onPowermenuChanged() {
             if (screenVisibilities.powermenu) {
-                notchContainer.stackView.push(persistentPowerMenuView);
+                persistentPowerMenuViewLoader.active = true;
                 Qt.callLater(() => {
-                    if (notchContainer.stackView.currentItem) {
-                        notchContainer.stackView.currentItem.forceActiveFocus();
+                    if (persistentPowerMenuViewLoader.item) {
+                        notchContainer.stackView.push(persistentPowerMenuViewLoader.item);
+                        Qt.callLater(() => {
+                            if (notchContainer.stackView.currentItem) {
+                                notchContainer.stackView.currentItem.forceActiveFocus();
+                            }
+                        });
                     }
                 });
             } else {
@@ -473,10 +492,15 @@ Item {
 
         function onToolsChanged() {
             if (screenVisibilities.tools) {
-                notchContainer.stackView.push(persistentToolsMenuView);
+                persistentToolsMenuViewLoader.active = true;
                 Qt.callLater(() => {
-                    if (notchContainer.stackView.currentItem) {
-                        notchContainer.stackView.currentItem.forceActiveFocus();
+                    if (persistentToolsMenuViewLoader.item) {
+                        notchContainer.stackView.push(persistentToolsMenuViewLoader.item);
+                        Qt.callLater(() => {
+                            if (notchContainer.stackView.currentItem) {
+                                notchContainer.stackView.currentItem.forceActiveFocus();
+                            }
+                        });
                     }
                 });
             } else {

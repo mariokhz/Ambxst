@@ -105,27 +105,29 @@ StyledRect {
         anchors.margins: 16
         visible: !MprisController.activePlayer && wallpaperPath === ""
 
-        CarouselProgress {
-            id: noPlayerDots
+        Loader {
+            active: noPlayerContainer.visible
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            frequency: 4
-            color: Colors.surfaceBright
-            amplitudeMultiplier: 4
             height: 24
-            lineWidth: 2
-            fullLength: width
-            visible: true
-            opacity: 1.0
-            animationsEnabled: true
-            active: true
+            sourceComponent: CarouselProgress {
+                anchors.fill: parent
+                frequency: 4
+                color: Colors.surfaceBright
+                amplitudeMultiplier: 4
+                lineWidth: 2
+                fullLength: width
+                opacity: 1.0
+                animationsEnabled: true
+                active: true
 
-            Behavior on color {
-                enabled: Config.animDuration > 0
-                ColorAnimation {
-                    duration: Config.animDuration
-                    easing.type: Easing.OutQuart
+                Behavior on color {
+                    enabled: Config.animDuration > 0
+                    ColorAnimation {
+                        duration: Config.animDuration
+                        easing.type: Easing.OutQuart
+                    }
                 }
             }
         }
