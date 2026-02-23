@@ -52,6 +52,10 @@ FileView {
         id: discordGenerator
     }
 
+    property MangoBorderGenerator mangoBorderGenerator: MangoBorderGenerator {
+        id: mangoBorderGenerator
+    }
+
     property Timer generationTimer: Timer {
         id: generationTimer
         interval: 100
@@ -63,6 +67,7 @@ FileView {
             kittyGenerator.generate(colors);
             nvChadGenerator.generate(colors);
             discordGenerator.generate(colors);
+            mangoBorderGenerator.generate(colors);
         }
     }
 
