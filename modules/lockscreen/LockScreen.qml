@@ -701,13 +701,39 @@ WlSessionLockSurface {
         z: 100
     }
 
+    Timer {
+        id: startAnimTimer
+        interval: 150
+        onTriggered: startAnim = true;
+    }
+
+    Timer {
+        id: fallbackStartTimer
+        interval: 1000
+        running: true
+        onTriggered: {
+            if (!startAnim) startAnim = true;
+        }
+    }
+
+    Connections {
+        target: screencopyBackground
+        function onHasContentChanged() {
+            if (screencopyBackground.hasContent && !startAnim) {
+                startAnimTimer.start();
+            }
+        }
+    }
+
     // Initialize when component is created (when lock becomes active)
     Component.onCompleted: {
         // Capture screen immediately
         screencopyBackground.captureFrame();
 
-        // Start animations
-        startAnim = true;
+        if (screencopyBackground.hasContent) {
+            startAnimTimer.start();
+        }
+
         passwordInput.forceActiveFocus();
     }
 }
