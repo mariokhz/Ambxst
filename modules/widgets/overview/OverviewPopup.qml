@@ -25,6 +25,7 @@ PanelWindow {
     color: "transparent"
 
     WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.namespace: "ambxst:overview"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
     // Get this screen's visibility state
